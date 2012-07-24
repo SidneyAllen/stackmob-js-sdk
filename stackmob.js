@@ -673,20 +673,21 @@
                 //Set the request body
                 if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') ) {
                     params['data'] = toParams(params['data']);
-                } else if (params['type'] == 'POST'
-                  || params['type'] == 'PUT') {
-                    if (method == 'resetPassword'
-                    || method == 'forgotPassword') {
-                        params['data'] = JSON
-                        .stringify(params['data']);
-                    } else if (method == 'addRelationship'
-                    || method == 'appendAndSave') {
-                        if (options
-                        && options[StackMob.ARRAY_VALUES])
-                        params['data'] = JSON
-                        .stringify(options[StackMob.ARRAY_VALUES]);
+                } else if (params['type'] == 'POST' || params['type'] == 'PUT') {
+                    if (method == 'resetPassword' || method == 'forgotPassword') {
+                        params['data'] = JSON.stringify(params['data']);
+                    } else if (method == 'addRelationship' || method == 'appendAndSave') {
+                        if (options && options[StackMob.ARRAY_VALUES])
+                        params['data'] = JSON.stringify(options[StackMob.ARRAY_VALUES]);
                     } else if (model) {
                         var json = model.toJSON();
+                        
+                        //Let developers ignore fields
+                        var ignorefields = options['remote_ignore'] || [];
+                        _.each(ignorefields, function(fieldname) {
+                          delete json[fieldname];
+                        });
+                        
                         delete json['lastmoddate'];
                         delete json['createddate'];
 
