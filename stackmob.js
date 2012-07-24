@@ -318,7 +318,7 @@
             "loginWithTempAndSetNewPassword" : "GET",
             "resetPassword" : "POST",
             
-            "loginWithFacebookToken" : "GET",
+            "facebookAccessToken" : "POST",
             "createUserWithFacebook" : "GET",
             "linkUserWithFacebook" : "GET",
             
@@ -484,6 +484,32 @@
             : this.getProdAPIBase();
             this.sync.call(StackMob, method, null, options);
         },
+        
+        processLogin : function(result) {
+          if (StackMob.isOAuth2Mode()) {
+              var oauth2Creds = result;
+              
+              var accessToken = oauth2Creds['access_token'];
+              var macKey = oauth2Creds['mac_key'];
+              var expires = oauth2Creds['expires_in'];
+              
+              var user = null;
+              
+              try {
+                user = result['stackmob'][StackMob['userSchema']][StackMob['loginField']];
+                var creds = StackMob.prepareCredsForSaving(accessToken, macKey, expires, user);
+              
+              //...then let's save the OAuth credentials to local storage.
+              StackMob.saveOAuthCredentials(creds);
+              StackMob.Storage.persist(StackMob.loggedInUserKey, user);
+              } catch(err) {
+                logger.error('Problem saving OAuth 2.0 credentials and user');
+              }
+          }
+          
+
+        },
+        
         sync : function(method, model, options) {
             options = options || {};
             //Override to allow 'Model#save' to force create even if the id (primary key) is set in the model and hence !isNew() in BackBone
@@ -579,7 +605,7 @@
                 }
                 
                 //let users overwrite this if they know what they're doing
-                if (StackMob.isOAuth2Mode() && method === 'accessToken') {
+                if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken')) {
                     params['contentType'] = 'application/x-www-form-urlencoded';
                 } else if (_.include([ 'PUT', 'POST' ],
                 StackMob.METHOD_MAP[method]))
@@ -644,11 +670,11 @@
                     return params.join('&');
                 }
                 
-                //Set the reqeuest body
-                if (StackMob.isOAuth2Mode() && method === 'accessToken' ) {
+                //Set the request body
+                if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') ) {
                     params['data'] = toParams(params['data']);
                 } else if (params['type'] == 'POST'
-                || params['type'] == 'PUT') {
+                  || params['type'] == 'PUT') {
                     if (method == 'resetPassword'
                     || method == 'forgotPassword') {
                         params['data'] = JSON
@@ -716,7 +742,7 @@
                 .retrieve('oauth2_expires');
                 
                 if (StackMob.isOAuth2Mode() && accessToken
-                && macKey) {
+                    && macKey) {
                     var authHeaders = generateMAC(
                     StackMob.METHOD_MAP[method]
                     || 'GET', accessToken,
@@ -776,6 +802,7 @@
          */
         StackMob.Model = Backbone.Model
         .extend({
+            
             
             urlRoot : StackMob['urlRoot'],
             
@@ -1031,23 +1058,7 @@
                 
                 var user = this;
                 
-                options['stackmob_onaccessToken'] = function(result) {
-                    if (StackMob.isOAuth2Mode()) {
-                        var oauth2Creds = result;
-                        
-                        var accessToken = oauth2Creds['access_token'];
-                        var macKey = oauth2Creds['mac_key'];
-                        var expires = oauth2Creds['expires_in'];
-                        
-                        var creds = StackMob.prepareCredsForSaving(accessToken, macKey, expires, user.get(StackMob.loginField));
-                        
-                        //...then let's save the OAuth credentials to local storage.
-                        StackMob.saveOAuthCredentials(creds);
-                    }
-                    
-                    StackMob.Storage.persist(StackMob.loggedInUserKey,
-                    user.get(StackMob['loginField']));
-                };
+                options['stackmob_onaccessToken'] = StackMob.processLogin;
                 
                 (this.sync || Backbone.sync).call(this, (StackMob.isOAuth2Mode() ? 'accessToken' : 'login'), this,
                 options);
@@ -1074,8 +1085,10 @@
                     "fb_at" : facebookAccessToken
                 });
                 
+                options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
+                
                 (this.sync || Backbone.sync).call(this,
-                "facebookLogin", this, options);
+                "facebookAccessToken", this, options);
             },
             createUserWithFacebook : function(facebookAccessToken,
             options) {
@@ -1327,7 +1340,7 @@
                         
                         model.clear();
                         
-                        if (StackMob.isOAuth2Mode() && method === 'accessToken' && result['stackmob']) {
+                        if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') && result['stackmob']) {
                             //If we have "stackmob" in the response, that means we're getting stackmob data back.
                             //pass the user back to the user's success callback
                             result = result['stackmob']['user'];
@@ -1387,7 +1400,7 @@
                     if (result) {
                         model.clear();
                         
-                        if (StackMob.isOAuth2Mode() && method === 'accessToken' && result['stackmob']) {
+                        if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') && result['stackmob']) {
                             //If we have "stackmob" in the response, that means we're getting stackmob data back.
                             //pass the user back to the user's success callback
                             result = result['stackmob']['user'];
@@ -1504,7 +1517,7 @@
                          * In OAuth 2.0 mode, a successful login response will have the OAuth 2.0 credentials as well as the full user object in the response.
                          * But the user's success callback is only expecting the user, so let's deal with that here.
                          */
-                        if (StackMob.isOAuth2Mode() && method === 'accessToken' && result['stackmob']) {
+                        if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') && result['stackmob']) {
                             //If we have "stackmob" in the response, that means we're getting stackmob data back.
                             //pass the user back to the user's success callback
                             result = result['stackmob']['user'];
