@@ -1410,8 +1410,14 @@
                 var error = params['error'];
                 
                 var defaultError = function(response, request) {
-                    var result = response.responseText ? JSON
-                    .parse(response.responseText) : response;
+                    var result;
+                    try {
+                      result = response.responseText ? JSON
+                      .parse(response.responseText) : response;
+                    } catch (err) {
+                      result = { error: 'Invalid JSON returned.'};  
+                    }
+                    
                     (function(m, d) {
                         error(d);
                     }).call(StackMob, model, result);
@@ -1449,8 +1455,13 @@
                     var data;
                     
                     if (jqXHR && (jqXHR.responseText || jqXHR.text)) {
-                        var result = JSON.parse(jqXHR.responseText
-                        || jqXHR.text);
+                        var result;
+                        try {
+                          result = JSON.parse(jqXHR.responseText
+                          || jqXHR.text);
+                        } catch (err) {
+                          result = { error: 'Invalid JSON returned.'};
+                        }
                         data = result;
                     }
                     
