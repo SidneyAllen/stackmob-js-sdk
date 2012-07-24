@@ -954,14 +954,21 @@
                 var success = options.success;
                 
                 var successFunc = function(xhr) {
+
                     if (xhr && xhr.getAllResponseHeaders) {
                         var responseHeader = xhr
                         .getResponseHeader('Content-Range');
-                        var count = -1;
+                        var count = 0;
                         if (responseHeader) {
                             count = responseHeader.substring(
                             responseHeader.indexOf('/') + 1,
                             responseHeader.length)
+                        }
+                        
+                        if (count === 0) {
+                          try {
+                            count = JSON.parse(xhr.responseText).length
+                          } catch(err) {}
                         }
                         
                         if (success) {
