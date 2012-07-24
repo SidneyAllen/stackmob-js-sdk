@@ -76,6 +76,8 @@
         HARD_DELETE : true,
         SOFT_DELETE : false,
         
+        API_SERVER: 'api.mob1.stackmob.com',
+                
         //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance. 
         apiVersion : 0,
         
@@ -178,7 +180,7 @@
         //An internally used method to get the development API URL.
         getDevAPIBase : function() {
 
-            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://api.mob1.stackmob.com/';
+            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
 
             
             //If you've requested a full URL path, then we'll use a full path.  Otherwise we'll use a relative path.
@@ -192,7 +194,7 @@
         //An internally used method to get the production API URL.    
         getProdAPIBase : function() {
         
-            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://api.mob1.stackmob.com/';
+            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
             
             return this.fullURL === true ? this.getScheme() + '://'
             + this.appName + '.' + this.clientSubdomain
