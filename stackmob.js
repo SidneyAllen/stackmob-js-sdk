@@ -663,6 +663,8 @@
                         var json = model.toJSON();
                         delete json['lastmoddate'];
                         delete json['createddate'];
+
+                        if (method == 'update') delete json[StackMob['passwordField']];                        
                         if (StackMob.isOAuth2Mode()) delete json['sm_owner'];
                         params['data'] = JSON.stringify(_
                         .extend(json, params['data']));
