@@ -567,8 +567,7 @@
                 //dont' let users overwrite the stackmob headers though..
                 _.extend(params['headers'], {
                     "X-StackMob-User-Agent" : "StackMob (JS; "
-                    + StackMob['sdkVersion'] + ")/"
-                    + StackMob['appName']
+                    + StackMob['sdkVersion'] + ")"
                 });
                 
                 if (StackMob['publicKey']
