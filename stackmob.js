@@ -76,11 +76,13 @@
         HARD_DELETE : true,
         SOFT_DELETE : false,
         
+        API_SERVER: 'api.mob1.stackmob.com',
+                
         //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance. 
         apiVersion : 0,
         
         //The current version of the JS SDK.
-        sdkVersion : "0.5.2",
+        sdkVersion : "0.5.5",
         
         //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
         publicKey : null,
@@ -178,7 +180,7 @@
         //An internally used method to get the development API URL.
         getDevAPIBase : function() {
 
-            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://api.mob1.stackmob.com/';
+            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
 
             
             //If you've requested a full URL path, then we'll use a full path.  Otherwise we'll use a relative path.
@@ -192,7 +194,7 @@
         //An internally used method to get the production API URL.    
         getProdAPIBase : function() {
         
-            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://api.mob1.stackmob.com/';
+            if (!(typeof PhoneGap === 'undefined')) return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
             
             return this.fullURL === true ? this.getScheme() + '://'
             + this.appName + '.' + this.clientSubdomain
@@ -565,8 +567,7 @@
                 //dont' let users overwrite the stackmob headers though..
                 _.extend(params['headers'], {
                     "X-StackMob-User-Agent" : "StackMob (JS; "
-                    + StackMob['sdkVersion'] + ")/"
-                    + StackMob['appName']
+                    + StackMob['sdkVersion'] + ")"
                 });
                 
                 if (StackMob['publicKey']
@@ -662,6 +663,7 @@
                         var json = model.toJSON();
                         delete json['lastmoddate'];
                         delete json['createddate'];
+                        if (StackMob.isOAuth2Mode()) delete json['sm_owner'];
                         params['data'] = JSON.stringify(_
                         .extend(json, params['data']));
                     } else
@@ -953,14 +955,21 @@
                 var success = options.success;
                 
                 var successFunc = function(xhr) {
+
                     if (xhr && xhr.getAllResponseHeaders) {
                         var responseHeader = xhr
                         .getResponseHeader('Content-Range');
-                        var count = -1;
+                        var count = 0;
                         if (responseHeader) {
                             count = responseHeader.substring(
                             responseHeader.indexOf('/') + 1,
                             responseHeader.length)
+                        }
+                        
+                        if (count === 0) {
+                          try {
+                            count = JSON.parse(xhr.responseText).length
+                          } catch(err) {}
                         }
                         
                         if (success) {
@@ -1401,8 +1410,14 @@
                 var error = params['error'];
                 
                 var defaultError = function(response, request) {
-                    var result = response.responseText ? JSON
-                    .parse(response.responseText) : response;
+                    var result;
+                    try {
+                      result = response.responseText ? JSON
+                      .parse(response.responseText) : response;
+                    } catch (err) {
+                      result = { error: 'Invalid JSON returned.'};  
+                    }
+                    
                     (function(m, d) {
                         error(d);
                     }).call(StackMob, model, result);
@@ -1440,8 +1455,13 @@
                     var data;
                     
                     if (jqXHR && (jqXHR.responseText || jqXHR.text)) {
-                        var result = JSON.parse(jqXHR.responseText
-                        || jqXHR.text);
+                        var result;
+                        try {
+                          result = JSON.parse(jqXHR.responseText
+                          || jqXHR.text);
+                        } catch (err) {
+                          result = { error: 'Invalid JSON returned.'};
+                        }
                         data = result;
                     }
                     
