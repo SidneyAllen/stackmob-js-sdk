@@ -1200,6 +1200,7 @@
         
         StackMob.Collection.Query = function() {
             this.params = {};
+            this.selectFields = [];
             this.orderBy = [];
             this.range = null;
         }
