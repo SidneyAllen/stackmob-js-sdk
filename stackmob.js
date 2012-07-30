@@ -82,7 +82,7 @@
         apiVersion : 0,
         
         //The current version of the JS SDK.
-        sdkVersion : "0.5.5",
+        sdkVersion : "0.6.0-beta",
         
         //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
         publicKey : null,
@@ -373,25 +373,6 @@
             this.publicKey = options['publicKey'];
             this.apiURL = options['apiURL'];
             
-            if (this.isOAuth2Mode()
-            && (!root.Crypto || (root.Crypto && !root.Crypto.HMAC))) {
-                var script = document.createElement('script');
-                script
-                .setAttribute('src',
-                'https://s3.amazonaws.com/static.stackmob.com/js/2.5.3-crypto-sha1-hmac.js');
-                script.setAttribute('type', 'text/javascript');
-                var loaded = false;
-                var loadFunction = function() {
-                    if (loaded)
-                    return;
-                    loaded = true;
-                };
-                script.onload = loadFunction;
-                script.onreadystatechange = loadFunction;
-                
-                var headID = document.getElementsByTagName("head")[0];
-                headID.appendChild(script);
-            }
             
             this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
             
@@ -449,10 +430,16 @@
         
         var base = createBaseString(ts, nonce, method, url, hostNoPort, port);
         
-        var bstring = bin2String(Crypto.HMAC(Crypto.SHA1, base, key, {
-            asBytes : true
-        }));
-        var mac = btoa(bstring);
+        var bstring = bin2String( CryptoJS.HmacSHA1( base, key ) );
+
+        var mac;
+        if ( typeof( btoa ) === 'function' ) { 
+			mac = btoa( bstring )
+		} else {
+			token = CryptoJS.enc.Utf8.parse( bstring );
+			mac = CryptoJS.enc.Base64.stringify( token )
+		}
+        
         return 'MAC id="' + id + '",ts="' + ts + '",nonce="' + nonce
         + '",mac="' + mac + '"';
     }
