@@ -1122,7 +1122,7 @@
                 options = options || {};
                 options['data'] = options['data'] || {};
                 var obj = {};
-                obj[StackMob.passwordField] = oldPassword;
+                obj[StackMob.passwordField] = tempPassword;
                 this.set(obj);
                 options['data'][StackMob.newPasswordField] = newPassword;
                 this.login(keepLoggedIn, options);
