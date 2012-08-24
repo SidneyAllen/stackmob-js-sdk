@@ -307,6 +307,10 @@
             "update" : "PUT",
             "delete" : "DELETE",
             
+            "post" : "POST",
+            "get" : "GET",
+            "put" : "PUT",
+            
             "addRelationship" : "POST",
             "appendAndSave" : "PUT",
             "deleteAndSave" : "DELETE",
@@ -473,11 +477,15 @@
             createStackMobCollection();
             createStackMobUserModel();
         },
-        cc : function(method, params, options) {
-            this.customcode(method, params, options);
+        cc : function(method, params, verb, options) {
+            this.customcode(method, params, verb, options);
         },
-        customcode : function(method, params, options) {
-            options = options || {};
+        customcode : function(method, params, verb, options) {
+        	if (_.isObject(verb)) options = verb || {};
+        	else {
+        		options = options || {};
+        		if (_.isString(verb) && !_.isUndefined(StackMob.METHOD_MAP[verb.toLowerCase()])) options['httpVerb'] = verb.toUpperCase();
+        	}
             options['data'] = options['data'] || {};
             _.extend(options['data'], params);
             options['url'] = this.debug ? this.getDevAPIBase()
@@ -570,10 +578,9 @@
                             ids = encodeURIComponent(options[StackMob.ARRAY_VALUES]);
                         }
                         
-                        params['url'] += '/' + ids
+                        params['url'] += '/' + ids;
                     }
                 }
-                
             }
             
             function _prepareHeaders(params, options) {
