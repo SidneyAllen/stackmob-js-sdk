@@ -49,27 +49,6 @@ describe("Custom Code Method Verb", function(){
 		});
 	});
 	
-	it("should have DELETE as the verb", function(){
-		var goodToContinue = false;
-		var result = '';
-		
-		StackMob.customcode('no_param', {}, 'DELETE', {
-			success: function(jsonResult) {
-				result = jsonResult.verb;
-				goodToContinue = true;
-			},
-			error: function(failure) {}
-		});
-		
-		waitsFor(function() {
-			return goodToContinue === true;
-		}, "to finish querying", 20000);
-		
-		runs(function() {
-			expect(result).toMatch('DELETE');
-		});
-	});
-	
 	it("should have PUT as the verb", function(){
 		var goodToContinue = false;
 		var result = '';
