@@ -100,7 +100,7 @@ describe("Geo points query", function() {
 		}, "the collection member", attrs.length * 1000);
 		
 		runs(function() {
-			expect(count).toEqual(1);
+			expect(count).toEqual(2);
 		});
 	});
 
@@ -148,7 +148,7 @@ describe("Geo points query", function() {
 	
 	it("is within " + kms + " kilometers", function() {
 		var q = new StackMob.Collection.Query();
-		q.isWithinMi('location', new StackMob.GeoPoint(37.77493, -122.419416), kms);
+		q.isWithinKm('location', new StackMob.GeoPoint(37.77493, -122.419416), kms);
 		var count = 0;
 		
 		var attrs = new Attractions();

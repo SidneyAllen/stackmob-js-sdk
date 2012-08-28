@@ -307,24 +307,26 @@ describe("Stored data types", function() {
 			username: myUser
 		});
 		
-		user.save({vegetarian:newVegetarian}, {
-			success: function(model) {
-				//should never reach here
-			},
-			error: function(model, failure) {
-				failureObject = failure;
-				user.fetch({
-					success: function(model) {
-						result = _.isBoolean(model['attributes']['vegetarian']);
-						goodToContinue = true;
-					}
-				});
-			}
+		runs(function(){
+			user.save({vegetarian: newVegetarian}, {
+				success: function(model) {
+					//should never reach here
+				},
+				error: function(model, failure) {
+					failureObject = failure;
+					user.fetch({
+						success: function(model) {
+							result = _.isBoolean(model['attributes']['vegetarian']);
+							goodToContinue = true;
+						}
+					});
+				}
+			});
 		});
 		
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
-		}, "to finish querying array type", waitTime);
+		}, "querying array type to finish", waitTime);
 		
 		runs(function() {
 			expect(result).toEqual(true);
@@ -338,20 +340,22 @@ describe("Stored data types", function() {
 		result = false;
 		
 		// try type double / float
-		newVegetarian = 10.32;
-		user.save({vegetarian:newVegetarian}, {
-			success: function(model) {
-				//should never reach here
-			},
-			error: function(model, failure) {
-				failureObject = failure;
-				user.fetch({
-					success: function(model) {
-						result = _.isBoolean(model['attributes']['vegetarian']);
-						goodToContinue = true;
-					}
-				});
-			}
+		runs(function(){
+			newVegetarian = 10.32;
+			user.save({vegetarian:newVegetarian}, {
+				success: function(model) {
+					//should never reach here
+				},
+				error: function(model, failure) {
+					failureObject = failure;
+					user.fetch({
+						success: function(model) {
+							result = _.isBoolean(model['attributes']['vegetarian']);
+							goodToContinue = true;
+						}
+					});
+				}
+			});
 		});
 		
 		waitsFor(function() {
@@ -370,24 +374,26 @@ describe("Stored data types", function() {
 		result = false;
 		
 		// try type of boolean
-		var result = false;
-		newVegetarian = true;
-		user.save({vegetarian:newVegetarian}, {
-			success: function(model) {
-				// result = true;
-				user.fetch({
-					success: function(model) {
-						var isVegetarian = model['attributes']['vegetarian'];
-						if (isVegetarian === newVegetarian && _.isBoolean(isVegetarian)) {
-							result = true;
+		runs(function(){
+			var result = false;
+			newVegetarian = true;
+			user.save({vegetarian:newVegetarian}, {
+				success: function(model) {
+					// result = true;
+					user.fetch({
+						success: function(model) {
+							var isVegetarian = model['attributes']['vegetarian'];
+							if (isVegetarian === newVegetarian && _.isBoolean(isVegetarian)) {
+								result = true;
+							}
+							goodToContinue = true;
 						}
-						goodToContinue = true;
-					}
-				});
-			},
-			error: function(model, failure) {
-				// should never reach here
-			}
+					});
+				},
+				error: function(model, failure) {
+					// should never reach here
+				}
+			});
 		});
 		
 		waitsFor(function() {
