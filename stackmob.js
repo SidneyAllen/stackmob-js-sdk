@@ -855,11 +855,6 @@
                 })
                 this.fetch(options);
             },
-            save : function(key, value) {
-              if (typeof value === 'undefined') {
-                Backbone.Model.prototype.save.call(this, null, key);
-              } else Backbone.Model.prototype.save.call(this, key, value);
-            },
             fetchExpanded : function(depth, options) {
                 if (depth < 0 || depth > 3)
                 StackMob
