@@ -1088,7 +1088,8 @@
                 options = options || {};
                 options['data'] = options['data'] || {};
                 _.extend(options['data'], {
-                    "fb_at" : facebookAccessToken
+                    "fb_at" : facebookAccessToken,
+                    "token_type": 'mac'
                 });
                 
                 options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
@@ -1116,7 +1117,8 @@
                 options = options || {};
                 options['data'] = options['data'] || {};
                 _.extend(options['data'], {
-                    "fb_at" : facebookAccessToken
+                    "fb_at" : facebookAccessToken,
+                    "token_type": "mac"
                 });
                 
                 (this.sync || Backbone.sync).call(this,
