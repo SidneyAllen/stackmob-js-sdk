@@ -52,7 +52,7 @@
         HARD_DELETE : true,
         SOFT_DELETE : false,
         
-        API_SERVER: 'api.mob1.stackmob.com',
+        API_SERVER: 'api.stackmob.com',
                 
         //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance. 
         apiVersion : 0,
