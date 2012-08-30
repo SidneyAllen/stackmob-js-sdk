@@ -741,6 +741,59 @@
                 params, method);
             }
         },
+        
+        onsuccess : function(model, method, params, result, success) {
+
+			/**
+             * If there's an internal success callback function, execute it.
+             */
+            if (result && params) {
+	            if (_.isFunction(params['stackmob_on' + method])) params['stackmob_on' + method](result);                
+	            if (_.isFunction(params['oncomplete'])) params['oncomplete'](result);
+            }
+        
+            if (success) {
+            	if (result) {
+            		/**
+             		 * In OAuth 2.0 mode, a successful login response will have the OAuth 2.0 credentials as well as the full user object in the response.
+			 		 * But the user's success callback is only expecting the user, so let's deal with that here.
+			 		 */
+					if (StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method) && result['stackmob']) {
+            			//If we have "stackmob" in the response, that means we're getting stackmob data back.
+            			//pass the user back to the user's success callback
+            			result = result['stackmob']['user'];
+           		 		success(result);  
+       		     	} else {      		 
+    	            	success(result);
+	            	}        
+
+            	} else success();
+        	}
+        },
+        
+        onerror: function(response, responseText, ajaxFunc, model, params, err) {
+        	var statusCode = response.status;
+            var result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (err) {
+                result = { error: 'Invalid JSON returned.'};
+            }
+                    
+			if (statusCode == 503) {
+                var wait = response.getResponseHeader('retry-after');
+				try {
+					wait = parseInt(responseHeaderValue); 
+				} catch(e) {}
+          		_.delay(function() { ajaxFunc(params); }, _.isNumber(wait) && !_.isNaN(wait) ? wait : StackMob.DEFAULT_RETRY_WAIT);
+            } else {
+                if (_.isFunction(params['oncomplete'])) params['oncomplete'](result);
+				(function(m, d) {
+					if (err) err(d);
+				}).call(StackMob, model, result);
+			}
+        },
+        
         isAccessTokenMethod: function(method) {
         	return _.include(['accessToken', 'facebookAccessToken', 'refreshToken'], method);
         }
@@ -1283,56 +1336,8 @@
     {
         ajaxOptions : {
             'sencha' : function(model, params, method) {
-                var success = params['success'];
-                var defaultSuccess = function(response, options) {
-                    
-                    var result = response && response.responseText ? JSON.parse(response.responseText) : null;
-                    
-                    if (_.isFunction(params['stackmob_on' + method]))
-                    params['stackmob_on' + method](result);
-                    
-                    if (result) {
-                        
-                        model.clear();
-                        
-                        if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') && result['stackmob']) {
-                            //If we have "stackmob" in the response, that means we're getting stackmob data back.
-                            //pass the user back to the user's success callback
-                            result = result['stackmob']['user'];
-                            success(result);  
-                        } else {
-                            if (params["stackmob_count"] === true) {
-                                success(response);
-                            } else if (!model.set(result))
-                            return false;
-                            success(model);
-                        }
-                    } else
-                    success();
-                    
-                };
-                params['success'] = defaultSuccess;
-                
-                var error = params['error'];
-                
-                var defaultError = function(response, request) {
-                    var result = null;
-                    
-                    try {
-                        result = response.responseText ? JSON
-                        .parse(response.responseText) : response;
-                    } catch(err) {
-                        //problems parsing json.  ignore.
-                    }
-                    
-                    (function(m, d) {
-                        error(d);
-                    }).call(StackMob, model, result);
-                    
-                }
-                params['error'] = defaultError;
-                
-                var hash = {};
+            
+	            var hash = {};
                 hash['url'] = params['url'];
                 hash['headers'] = params['headers'];
                 hash['params'] = params['data'];
@@ -1340,6 +1345,25 @@
                 hash['failure'] = params['error'];
                 hash['disableCaching'] = false;
                 hash['method'] = params['type'];
+                
+                var success = params['success'];
+                var defaultSuccess = function(response, options) {
+                    
+                    var result = response && response.responseText ? JSON.parse(response.responseText) : null;
+                    if (params["stackmob_count"] === true) result = response;
+                    
+                    StackMob.onsuccess(model, method, params, result, success);
+                    
+                };
+                params['success'] = defaultSuccess;
+                
+                var error = params['error'];
+                
+                var defaultError = function(response, options) {
+                    var responseText = response.responseText || response.text;
+                    StackMob.onerror(response, responseText, $.Ajax.request, model, hash, err);
+                }
+                params['error'] = defaultError;
                 
                 return $.Ajax.request(hash);
             },
@@ -1349,48 +1373,15 @@
                 var defaultSuccess = function(response, result, xhr) {
                     var result = response ? JSON.parse(response) : null;
                     
-                    if (_.isFunction(params['stackmob_on' + method]))
-                    params['stackmob_on' + method](result);
-                    
-                    if (result) {
-                        model.clear();
-                        
-                        if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') && result['stackmob']) {
-                            //If we have "stackmob" in the response, that means we're getting stackmob data back.
-                            //pass the user back to the user's success callback
-                            result = result['stackmob']['user'];
-                            success(result);  
-                        } else {
-                            //if we're not OAuth 2.0 login, just run the regular success.
-                            if (params["stackmob_count"] === true) {
-                                success(xhr);
-                            } else if (!model.set(result))
-                            return false;
-                            success(model);
-                        }
-                        
-                    } else success();
-                    
-                    
-                    
-                    
+                    StackMob.onsuccess(model, method, params, result, success);
                 };
                 params['success'] = defaultSuccess;
                 
                 var error = params['error'];
                 
-                var defaultError = function(response, request) {
-                    var result;
-                    try {
-                      result = response.responseText ? JSON
-                      .parse(response.responseText) : response;
-                    } catch (err) {
-                      result = { error: 'Invalid JSON returned.'};  
-                    }
-                    
-                    (function(m, d) {
-                        error(d);
-                    }).call(StackMob, model, result);
+                var defaultError = function(xhr, errorType, error) {
+                    var responseText = xhr.responseText || xhr.text;
+                    StackMob.onerror(xhr, responseText, $.ajax, model, params, err);
                 }
                 params['error'] = defaultError;
                 
@@ -1419,70 +1410,29 @@
                 
                 var err = params['error'];
                 
-                params['error'] = function(jqXHR, textStatus,
-                errorThrown) {
-                    
-                    var data;
-                    
-                    if (jqXHR && (jqXHR.responseText || jqXHR.text)) {
-                        var result;
-                        try {
-                          result = JSON.parse(jqXHR.responseText
-                          || jqXHR.text);
-                        } catch (err) {
-                          result = { error: 'Invalid JSON returned.'};
-                        }
-                        data = result;
-                    }
-                    
-                    (function(m, d) {
-                        if (err)
-                        err(d);
-                    }).call(StackMob, model, data);
+                params['error'] = function(jqXHR, textStatus, errorThrown) {
+                    var responseText = jqXHR.responseText || jqXHR.text;
+                	StackMob.onerror(jqXHR, responseText, $.ajax, model, params, err);
                 }
                 
                 var success = params['success'];
                 
                 var defaultSuccess = function(model, status, xhr) {
-                    
                     var result;
-                    if (model && model.toJSON) {
+                    
+                    if (params["stackmob_count"] === true) {
+                        result = xhr;
+                    } else if (model && model.toJSON) {
                         result = model;
                     } else if (model
                     && (model.responseText || model.text)) {
-                        var json = JSON.parse(model.responseText
-                        || model.text);
+                        var json = JSON.parse(model.responseText || model.text);
                         result = json;
                     } else if (model) {
                         result = model;
                     }
                     
-                    if (params["stackmob_count"] === true) {
-                        result = xhr;
-                    }
-                    
-                    /**
-                     * If there's an internal success callback function, execute it.
-                     */
-                    if (_.isFunction(params['stackmob_on' + method]))
-                    params['stackmob_on' + method](result);
-                    
-                    if (success) {
-                        /**
-                         * In OAuth 2.0 mode, a successful login response will have the OAuth 2.0 credentials as well as the full user object in the response.
-                         * But the user's success callback is only expecting the user, so let's deal with that here.
-                         */
-                        if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') && result['stackmob']) {
-                            //If we have "stackmob" in the response, that means we're getting stackmob data back.
-                            //pass the user back to the user's success callback
-                            result = result['stackmob']['user'];
-                            success(result);  
-                        } else {
-                            //if we're not OAuth 2.0 login, just run the regular success.
-                            success(result);
-                        }
-                        
-                    }
+                    StackMob.onsuccess(model, method, params, result, success);
                     
                 };
                 
