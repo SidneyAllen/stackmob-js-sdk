@@ -54,6 +54,8 @@
         
         API_SERVER: 'api.stackmob.com',
                 
+        DEFAULT_RETRY_WAIT : 30000,
+        
         //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance. 
         apiVersion : 0,
         
@@ -97,7 +99,7 @@
         getLoggedInUser : function() {
             
             var storedUser = ((!this.isOAuth2Mode() && this.Storage
-            .retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2_user'));
+            .retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
             //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
             return (this.isLoggedIn() && storedUser) ? storedUser : null;
         },
@@ -190,31 +192,34 @@
             return !isNaN(StackMob['publicKey'] && !StackMob['privateKey']);
         },
         
-        prepareCredsForSaving: function(accessToken, macKey, expires, user) {
+        prepareCredsForSaving: function(accessToken, refreshToken, macKey, expires, user) {
             //For convenience, the JS SDK will save the expiration date of these credentials locally so that the developer can check for it if need be.
             var unvalidated_expiretime = (new Date()).getTime()
             + (expires * 1000);  
             return {
-                'oauth2_accessToken' : accessToken,
-                'oauth2_macKey' : macKey,
-                'oauth2_expires' : unvalidated_expiretime,
-                'oauth2_user' : user
+                'oauth2.accessToken' : accessToken,
+                'oauth2.refreshToken' : refreshToken,
+                'oauth2.macKey' : macKey,
+                'oauth2.expires' : unvalidated_expiretime,
+                'oauth2.user' : user
             };              
         },
         
         //Saves the OAuth 2.0 credentials (passed in as JSON) to client storage.
         saveOAuthCredentials : function(creds) {
-            var accessToken = creds['oauth2_accessToken'];
+            var accessToken = creds['oauth2.accessToken'];
+            var refreshToken = creds['oauth2.refreshToken'];
             
             //Because the server sends back how long the credentials are valid for and not the expiration date, we construct the expiration date on the client side.  For the login scenario where we are using OAuth 2.0's redirect URL mechanism and where a user refreshes the logged-in redirected URL page, we don't want to incorrectly generate and save a new expiration date.  If the access token is the same, then leave the expiration date as is.
             //FIXME:  don't even pass in the expires value if we dont' intend to save it.  Move this logic out to handleOAuthCallback.  This check is happening too late down the line.      
-            if (this.Storage.retrieve('oauth2_accessToken') != accessToken) {
-                this.Storage.persist('oauth2_expires', creds['oauth2_expires']);
+            if (this.Storage.retrieve('oauth2.accessToken') != accessToken) {
+                this.Storage.persist('oauth2.expires', creds['oauth2.expires']);
             }
             
-            this.Storage.persist('oauth2_accessToken', accessToken);
-            this.Storage.persist('oauth2_macKey', creds['oauth2_macKey']);
-            this.Storage.persist('oauth2_user', creds['oauth2_user']);
+            this.Storage.persist('oauth2.accessToken', accessToken);
+            this.Storage.persist('oauth2.refreshToken', refreshToken);
+            this.Storage.persist('oauth2.macKey', creds['oauth2.macKey']);
+            this.Storage.persist('oauth2.user', creds['oauth2.user']);
         },
         
         //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
@@ -225,29 +230,52 @@
             
             //Check to see if we have all the necessary OAuth 2.0 credentials locally AND if the credentials have expired.
             var creds = this.getOAuthCredentials();
-            var expires = creds['oauth2_expires'] || 0;
-            return _.all([ creds['oauth2_accessToken'], creds['oauth2_macKey'],
-            expires ], _.identity)
-            && //if no accesstoken, mackey, or expires..
-            (new Date()).getTime() <= expires; //if the current time is past the expired time.
+            var expires = creds['oauth2.expires'] || 0;
+            return _.all([ creds['oauth2.accessToken'], 
+              creds['oauth2.macKey'], expires ], _.identity) && //if no accesstoken, mackey, or expires..
+              (new Date()).getTime() <= expires; //if the current time is past the expired time.
+        },
+        
+        shouldSendRefreshToken : function() {
+          return this.hasExpiredOAuth() && this.hasRefreshToken() && this.shouldKeepLoggedIn();
+        },
+        
+        keepLoggedIn : function(keep) {
+          StackMob.Storage.persist('oauth2.shouldKeepLoggedIn', keep === true);
+        },
+        
+        shouldKeepLoggedIn : function() {
+          return StackMob.Storage.retrieve('oauth2.shouldKeepLoggedIn') === 'true';
+        },
+        
+        hasRefreshToken: function() {
+          var creds = this.getOAuthCredentials();
+          return creds && (typeof creds['oauth2.refreshToken'] !== 'undefined');
+        },
+        
+        hasExpiredOAuth : function() {
+          return this.isOAuth2Mode() && (this.getOAuthExpireTime() == null) ||
+            (this.getOAuthExpireTime() <= (new Date()).getTime())
         },
         
         //Retrieve the OAuth 2.0 credentials from client storage.
         getOAuthCredentials : function() {
             var oauth_accessToken = StackMob.Storage
-            .retrieve('oauth2_accessToken');
-            var oauth_macKey = StackMob.Storage.retrieve('oauth2_macKey');
-            var oauth_expires = StackMob.Storage.retrieve('oauth2_expires');
+            .retrieve('oauth2.accessToken');
+            var oauth_macKey = StackMob.Storage.retrieve('oauth2.macKey');
+            var oauth_expires = StackMob.Storage.retrieve('oauth2.expires');
+            var oauth_refreshToken = StackMob.Storage.retrieve('oauth2.refreshToken');
             return {
-                'oauth2_accessToken' : oauth_accessToken,
-                'oauth2_macKey' : oauth_macKey,
-                'oauth2_expires' : oauth_expires
+                'oauth2.accessToken' : oauth_accessToken,
+                'oauth2.macKey' : oauth_macKey,
+                'oauth2.expires' : oauth_expires,
+                'oauth2.refreshToken' : oauth_refreshToken
             };
         },
         
         //Returns the date (in milliseconds) for when the current user's OAuth 2.0 credentials expire.
         getOAuthExpireTime : function() {
-            var expires = this.Storage.retrieve('oauth2_expires');
+            var expires = this.Storage.retrieve('oauth2.expires');
             return expires ? parseInt(expires) : null;
         },
         
@@ -264,6 +292,7 @@
             
             "login" : "GET",
             "accessToken" : "POST",
+            "refreshToken" : "POST",
             "logout" : "GET",
             "forgotPassword" : "POST",
             "loginWithTempAndSetNewPassword" : "GET",
@@ -438,6 +467,7 @@
               var oauth2Creds = result;
               
               var accessToken = oauth2Creds['access_token'];
+              var refreshToken = oauth2Creds['refresh_token'];
               var macKey = oauth2Creds['mac_key'];
               var expires = oauth2Creds['expires_in'];
               
@@ -445,7 +475,7 @@
               
               try {
                 user = result['stackmob'][StackMob['userSchema']][StackMob['loginField']];
-                var creds = StackMob.prepareCredsForSaving(accessToken, macKey, expires, user);
+                var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, user);
               
               //...then let's save the OAuth credentials to local storage.
               StackMob.saveOAuthCredentials(creds);
@@ -457,9 +487,36 @@
           
 
         },
-        
+        getCallId : function(method, model) {
+        	var id = {
+        	    method : method,
+        	    model: (model || {}),
+        		time: (new Date()).getTime()
+        	};
+        	
+        	return JSON.stringify(id);
+        },
         sync : function(method, model, options) {
             options = options || {};
+                    
+        	if ((typeof StackMob.refreshing === 'undefined') && !StackMob.isAccessTokenMethod(method) && 
+                StackMob.hasExpiredOAuth() && StackMob.shouldKeepLoggedIn()) {
+              
+              var originalMethod = method;
+              var originalOptions = options;
+              var originalModel = model;
+              var originalThis = this;
+              console.debug("Refreshing:" + StackMob.getCallId(originalMethod, originalModel));
+              
+              StackMob.refreshSession({
+                oncomplete: function() { //oncomplete because we don't care whether success or error
+                  StackMob.refreshing = 'done';
+                  StackMob.sync.call(originalThis, originalMethod, originalModel, originalOptions);
+                }
+              });
+              return false;
+            }
+
             //Override to allow 'Model#save' to force create even if the id (primary key) is set in the model and hence !isNew() in BackBone
             var forceCreateRequest = options[StackMob.FORCE_CREATE_REQUEST] === true
             if (forceCreateRequest) {
@@ -468,15 +525,12 @@
             
             function _prepareBaseURL(model, params) {
                 //User didn't override the URL so use the one defined in the model
-                if (!params['url']) {
-                    if (model)
-                    params['url'] = StackMob.getProperty(
-                    model, "url");
+                if (!params['url'] && model) {
+                    params['url'] = StackMob.getProperty(model, "url");
                 }
                 
                 var notCustomCode = method != 'cc';
-                var notNewModel = (model && model.isNew && !model
-                .isNew());
+                var notNewModel = (model && model.isNew && !model.isNew());
                 var notForcedCreateRequest = !forceCreateRequest;
                 var isArrayMethod = (method == 'addRelationship'
                 || method == 'appendAndSave' || method == 'deleteAndSave');
@@ -484,19 +538,12 @@
                 if (_isExtraMethodVerb(method)) {//Extra Method Verb? Add it to the model url. (e.g. /user/login)
                     var endpoint = method;
                     
+                    params['url'] += (params['url'].charAt(params['url'].length - 1) == '/' ? 
+                    	'' : '/')+ endpoint;
+                } else if (isArrayMethod || notCustomCode && notNewModel && notForcedCreateRequest) {//append ID in URL if necessary
                     params['url'] += (params['url']
-                    .charAt(params['url'].length - 1) == '/' ? ''
-                    : '/')
-                    + endpoint;
-                } else if (isArrayMethod || notCustomCode
-                && notNewModel
-                && notForcedCreateRequest) {//append ID in URL if necessary
-                    params['url'] += (params['url']
-                    .charAt(params['url'].length - 1) == '/' ? ''
-                    : '/')
-                    + encodeURIComponent(model
-                    .get(model
-                    .getPrimaryKeyField()));
+                    .charAt(params['url'].length - 1) == '/' ? 
+                    '' : '/') + encodeURIComponent(model.get(model.getPrimaryKeyField()));
                     
                     if (isArrayMethod) {
                         params['url'] += '/'
@@ -508,9 +555,7 @@
                         
                         if (_
                         .isArray(options[StackMob.ARRAY_VALUES])) {
-                            ids = _
-                            .map(
-                            options[StackMob.ARRAY_VALUES],
+                            ids = _.map(options[StackMob.ARRAY_VALUES],
                             function(id) {
                                 return encodeURIComponent(id);
                             }).join(',');
@@ -667,37 +712,32 @@
                 params['accepts'] = params['headers']["Accept"];
             }
             
-            function _prepareAuth(method, params) {
-                if (model && model.schemaName && (model.schemaName == StackMob['userSchema']) && _
-                .include([ 'create', 'accessToken' ],
-                method)) {//if you're creating a user or logging in
+            function _prepareAuth(theModel, method, params) {
+            	var isCreatingUser = theModel && theModel.schemaName && 
+            		(theModel.schemaName == StackMob['userSchema']) && method === 'create';
+            	//if you're creating a user or logging in	
+                if ( isCreatingUser || StackMob.isAccessTokenMethod(method)) {
                     return;
                     //then don't add an Authorization Header
                 }
                 
                 var host = StackMob.getBaseURL();
                 
-                var path = params['url'].replace(new RegExp(
-                host, 'g'), '/');
-                var sighost = host.replace(
-                new RegExp('^http://|^https://', 'g'),
-                '').replace(new RegExp('/'), '');
+                var path = params['url'].replace(new RegExp(host, 'g'), '/');
+                var sighost = host.replace(new RegExp('^http://|^https://', 'g'), '').
+                	replace(new RegExp('/'), '');
                 
-                var accessToken = StackMob.Storage
-                .retrieve('oauth2_accessToken');
-                var macKey = StackMob.Storage
-                .retrieve('oauth2_macKey');
-                var expires = StackMob.Storage
-                .retrieve('oauth2_expires');
+                var accessToken = StackMob.Storage.retrieve('oauth2.accessToken');
+                var macKey = StackMob.Storage.retrieve('oauth2.macKey');
+                var expires = StackMob.Storage.retrieve('oauth2.expires');
                 
                 if (StackMob.isOAuth2Mode() && accessToken
                     && macKey) {
                     var authHeaders = generateMAC(
-                    StackMob.METHOD_MAP[method]
-                    || 'GET', accessToken,
-                    macKey, sighost, path);
-                    if (authHeaders)
-                    params['headers']['Authorization'] = authHeaders;
+                    	StackMob.METHOD_MAP[method] || 'GET', 
+                    	accessToken, macKey, sighost, path);
+                    	
+                    if (authHeaders) params['headers']['Authorization'] = authHeaders;
                 }
             }
             
@@ -723,11 +763,44 @@
             _prepareHeaders(params, options);
             _prepareRequestBody(method, params, options);
             _prepareAjaxClientParams(params);
-            _prepareAuth(method, params);
+            if (!StackMob.isAccessTokenMethod(method)) _prepareAuth(model, method, params);
             
-            StackMob.makeAPICall(model, params, method);
+            StackMob.makeAPICall(model, params, method); 
         },
+        
+        refreshSession : function(options) {
+          //Make an ajax call here hitting the refreshToken access point and oncomplete, run whatever was passed in
+          var refreshOptions = {};
+          
+          if (StackMob.hasRefreshToken()) {
+            refreshOptions['data'] = {
+              refresh_token: this.getOAuthCredentials()['oauth2.refreshToken'],
+              grant_type: 'refresh_token',
+              token_type: 'mac',
+              mac_algorithm: 'hmac-sha1'
+            };
+            
+            refreshOptions['url'] = '/user';
+            refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
+            refreshOptions['stackmob_onrefreshToken'] = function(result) {
+              StackMob.processLogin(result);
+            }
+            
+            if (typeof options !== 'undefined' && options['oncomplete']) {
+              refreshOptions['oncomplete'] = function() {
+                options['oncomplete']();
+              }
+            }
+            
+            //Clear out the refresh token so that we don't always try to run refreshSession 
+            
+          
+            (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
+          }
+        },
+        
         makeAPICall : function(model, params, method) {
+
             if (StackMob['ajax']) {
                 return StackMob['ajax'](model, params, method);
             } else if (StackMob.isSencha()) {
@@ -807,8 +880,6 @@
          */
         StackMob.Model = Backbone.Model
         .extend({
-            
-            
             urlRoot : StackMob['urlRoot'],
             
             url : function() {
@@ -1049,26 +1120,18 @@
                 .get(StackMob['loginField']));
             },
             
-            /**
-             * Login method for non-OAuth 2.0.  
-             * 
-             * THIS WILL BE DEPRECATED IN FUTURE VERSIONS
-             */
             login : function(keepLoggedIn, options) {
                 options = options || {};
-                var remember = isNaN(keepLoggedIn) ? false
-                : keepLoggedIn;
+                var remember = (typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+                
+                StackMob.keepLoggedIn(remember);
                 
                 options['data'] = options['data'] || {};
                 
-                options['data'][StackMob.loginField] = this
-                .get(StackMob.loginField);
-                options['data'][StackMob.passwordField] = this
-                .get(StackMob.passwordField);
+                options['data'][StackMob.loginField] = this.get(StackMob.loginField);
+                options['data'][StackMob.passwordField] = this.get(StackMob.passwordField);
                 
-                if (StackMob.isOAuth2Mode()) options['data']['token_type'] = 'mac';    
-                
-                var user = this;
+                if (StackMob.isOAuth2Mode()) options['data']['token_type'] = 'mac';
                 
                 options['stackmob_onaccessToken'] = StackMob.processLogin;
                 
@@ -1080,10 +1143,11 @@
                 options['data'] = options['data'] || {};
                 options['stackmob_onlogout'] = function() {
                     StackMob.Storage.remove(StackMob.loggedInUserKey);
-                    StackMob.Storage.remove('oauth2_accessToken');
-                    StackMob.Storage.remove('oauth2_macKey');
-                    StackMob.Storage.remove('oauth2_expires');
-                    StackMob.Storage.remove('oauth2_user');
+                    StackMob.Storage.remove('oauth2.accessToken');
+                    StackMob.Storage.remove('oauth2.refreshToken');
+                    StackMob.Storage.remove('oauth2.macKey');
+                    StackMob.Storage.remove('oauth2.expires');
+                    StackMob.Storage.remove('oauth2.user');
                 };
                 
                 (this.sync || Backbone.sync).call(this, "logout", this,
