@@ -16,31 +16,7 @@
 
 (function() {
     var root = this;
-    
-    /**
-     * This is a utility method to read cookies.  Since we aren't guaranteed to have jQuery or other libraries, a cookie reader is bundled here.
-     */
-    function readCookie(name) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for ( var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) == ' ')
-            c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0)
-            return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-    
-    /**
-     * Convenience method to get the StackMob session cookie value.
-     */
-    function getSessionCookieValue() {
-        return readCookie(StackMob.loggedInCookie);
-    }
-    
-    
+
     /**
      * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
      * 
@@ -87,14 +63,8 @@
         //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
         publicKey : null,
         
-        //Internal variables to hold some simple information about the currently logged in user.  The cookie is used in non-OAuth 2.0 login mode.
-        loggedInCookie : null,
-        loggedInUser : null,
-        
         /**
          * The Storage object lives within the StackMob object and provides an abstraction layer for client storage.  It's intended for internal use within the JS SDK.  The JS SDK is currently using HTML5's Local Storage feature to persist key/value items.
-         * 
-         * Though the JS SDK uses some cookies at the moment, it will be phased out in the near future as the JS SDK moves fully to OAuth 2.0.
          */
         Storage : {
             
@@ -133,13 +103,11 @@
         },
         
         /** 
-         * We'll return true or false depending on if the user has a valid login cookie (non-OAuth 2.0 implementation) or valid OAuth 2.0 credentials.
-         * 
          * This is a "dumb" method in that this simply checks for the presence of login credentials, not if they're valid.  The server checks the validity of the credentials on each API request, however.  It's here for convenience.
          * 
          */
         isLoggedIn : function() {
-            return (getSessionCookieValue() != null && !this.isLoggedOut())
+            return (!this.isLoggedOut())
             || this.hasValidOAuth();
         },
         
@@ -152,24 +120,7 @@
          * Checks to see if a user is logged out (doesn't have login credentials)
          */
         isLoggedOut : function() {
-            
-            //If we're in OAuth 2.0 mode, then they're logged out if they don't have valid OAuth 2.0 credentials.
-            if (this.isOAuth2Mode())
             return !this.hasValidOAuth();
-            
-            //If we're in non OAuth 2.0 mode, being logged in is indicated by the presence of a logged in cookie.
-            var cookieValue = getSessionCookieValue();
-            
-            //If we don't have a cookie, then we must be logged out.
-            if (!cookieValue)
-            return true;
-            
-            //If we have a cookie value that's JSON, that means it's unencrypted and hence is logged out.  (There may be a cookie even if they're logged out.)
-            try {
-                return JSON.parse(cookieValue);
-            } catch (err) {
-                return false;
-            }
         },
         
         //An internally used method to get the scheme to use for API requests.
@@ -366,10 +317,7 @@
 
             
             this.clientSubdomain = this.getProperty(options, "clientSubdomain");
-            this.loggedInCookie = 'session_' + this.appName;
-            this.loggedInUserKey = this.loggedInCookie + '_user';
             
-
             this.publicKey = options['publicKey'];
             this.apiURL = options['apiURL'];
             
