@@ -553,7 +553,7 @@
                 }
                 
                 //let users overwrite this if they know what they're doing
-                if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken')) {
+                if (StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method)) {
                     params['contentType'] = 'application/x-www-form-urlencoded';
                 } else if (_.include([ 'PUT', 'POST' ],
                 StackMob.METHOD_MAP[method]))
@@ -619,7 +619,7 @@
                 }
                 
                 //Set the request body
-                if (StackMob.isOAuth2Mode() && (method === 'accessToken' || method === 'facebookAccessToken') ) {
+                if (StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method)) {
                     params['data'] = toParams(params['data']);
                 } else if (params['type'] == 'POST' || params['type'] == 'PUT') {
                     if (method == 'resetPassword' || method == 'forgotPassword') {
@@ -740,6 +740,9 @@
                 return StackMob['ajaxOptions']['jquery'](model,
                 params, method);
             }
+        },
+        isAccessTokenMethod: function(method) {
+        	return _.include(['accessToken', 'facebookAccessToken', 'refreshToken'], method);
         }
     });
     //end of StackMob
