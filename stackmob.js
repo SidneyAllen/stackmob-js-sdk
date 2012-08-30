@@ -859,6 +859,13 @@
                 })
                 this.fetch(options);
             },
+            save : function(key, value) {
+              var successFunc = key ? key['success'] : {};
+              var errorFunc = key ? key['error'] : {};
+              if (typeof value === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
+                Backbone.Model.prototype.save.call(this, null, key);
+              } else Backbone.Model.prototype.save.call(this, key, value);
+            },
             fetchExpanded : function(depth, options) {
                 if (depth < 0 || depth > 3)
                 StackMob
