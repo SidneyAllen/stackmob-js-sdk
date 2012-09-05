@@ -226,7 +226,7 @@
       return creds[StackMob.REFRESH_TOKEN_KEY];
     },
     hasExpiredOAuth : function() {
-      return true || this.isOAuth2Mode() && (this.getOAuthExpireTime() == null) || (this.getOAuthExpireTime() <= (new Date()).getTime())
+      return this.isOAuth2Mode() && (this.getOAuthExpireTime() == null) || (this.getOAuthExpireTime() <= (new Date()).getTime())
     },
     //Retrieve the OAuth 2.0 credentials from client storage.
     getOAuthCredentials : function() {
