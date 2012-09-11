@@ -507,7 +507,7 @@
               ids = encodeURIComponent(options[StackMob.ARRAY_VALUES]);
             }
 
-            params['url'] += '/' + ids
+            params['url'] += '/' + ids;
           }
         }
 
