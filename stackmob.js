@@ -54,7 +54,7 @@
 
     API_SERVER : 'api.stackmob.com',
 
-    DEFAULT_RETRY_WAIT : 30000,
+    DEFAULT_RETRY_WAIT : 10000,
     REFRESH_TOKEN_KEY : 'oauth2.refreshToken',
     
     POST: 'POST',
@@ -779,12 +779,12 @@
       if(statusCode == 503) {
         var wait = response.getResponseHeader('retry-after');
         try {
-          wait = parseInt(responseHeaderValue);
+          wait = parseInt(responseHeaderValue) * 1000;
         } catch(e) {
+          wait = StackMob.DEFAULT_RETRY_WAIT;
         }
-        _.delay(function() {
-          ajaxFunc(params);
-        }, _.isNumber(wait) && !_.isNaN(wait) ? wait : StackMob.DEFAULT_RETRY_WAIT);
+        
+        _.delay(function() { ajaxFunc(params); }, wait);
       } else {
         if(_.isFunction(params['oncomplete']))
           params['oncomplete'](result);
