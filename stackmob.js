@@ -56,6 +56,12 @@
 
     DEFAULT_RETRY_WAIT : 30000,
     REFRESH_TOKEN_KEY : 'oauth2.refreshToken',
+    
+    POST: 'POST',
+    PUT: 'PUT',
+    DELETE: 'DELETE',
+    
+    CONTENT_TYPE_JSON: 'application/json',
 
     //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
     apiVersion : 0,
@@ -253,6 +259,10 @@
       "read" : "GET",
       "update" : "PUT",
       "delete" : "DELETE",
+      
+      "post" : "POST",
+      "get" : "GET",
+      "put" : "PUT",
 
       "addRelationship" : "POST",
       "appendAndSave" : "PUT",
@@ -373,16 +383,35 @@
       createStackMobCollection();
       createStackMobUserModel();
     },
-    cc : function(method, params, options) {
-      this.customcode(method, params, options);
-    },
-    customcode : function(method, params, options) {
-      options = options || {};
+    
+    cc : function(method, params, verb, options) {
+      this.customcode(method, params, verb, options);
+    }, 
+    
+    customcode : function(method, params, verb, options) {
+      
+      function isValidVerb(v) {
+        return v && !_.isUndefined(StackMob.METHOD_MAP[verb.toLowerCase()]);
+      }
+      
+      
+      if(_.isObject(verb)) {
+        options = verb || {};
+        var verb = options['httpVerb'];
+        verb = isValidVerb(verb) ? verb : 'GET'
+        options['httpVerb'] = verb;
+      } else {
+        options = options || {};
+        if(_.isString(verb) && isValidVerb(verb))
+          options['httpVerb'] = verb.toUpperCase();
+      }
       options['data'] = options['data'] || {};
+      if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
       options['url'] = this.debug ? this.getDevAPIBase() : this.getProdAPIBase();
       this.sync.call(StackMob, method, null, options);
     },
+
     processLogin : function(result) {
       if(StackMob.isOAuth2Mode()) {
         var oauth2Creds = result;
@@ -510,8 +539,10 @@
         //let users overwrite this if they know what they're doing
         if(StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method)) {
           params['contentType'] = 'application/x-www-form-urlencoded';
-        } else if(_.include(['PUT', 'POST'], StackMob.METHOD_MAP[method]))
-          params['contentType'] = params['contentType'] || 'application/json';
+        } else if(_.include(['PUT', 'POST'], StackMob.METHOD_MAP[method])) {
+          params['contentType'] = params['contentType'] || StackMob.CONTENT_TYPE_JSON;
+        }
+          
 
         if(!isNaN(options[StackMob.CASCADE_DELETE])) {
           params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
