@@ -25,13 +25,6 @@ This is the home of the StackMob JS SDK.  The state of the repo does not necessa
 
 Interested in contributing to the JS SDK?  This is an open source project!  Submit enhancements or any potential fixes as a pull request.  We are building for the community - and we're happy to take your feedback.
 
-# Change Log
-
-#### v0.5.5
-
-* **FEATURE** Added support for OAuth 2 Facebook Login
-* **FEATURE** Added remote ignore fields option for save() method
-* **BUG FIX** Accumulating 'select' fields when performing a series of queries
 
 # Copyright
 
