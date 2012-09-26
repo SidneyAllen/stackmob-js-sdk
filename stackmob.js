@@ -496,7 +496,7 @@
               var user = null;
               
               try {
-                user = result['stackmob'][StackMob['userSchema']][StackMob['loginField']];
+                user = result['stackmob']['user'][StackMob['loginField']];
                 var creds = StackMob.prepareCredsForSaving(accessToken, macKey, expires, user);
               
               //...then let's save the OAuth credentials to local storage.
