@@ -10,6 +10,7 @@
 
 **FIX**
 
+* Fixed oauth login credentials when not using `user` schema. Thank you Alvaro Manera!
 * Refactored jQuery, Zepto, Sencha AJAX handling
 * Fixed IE support Crypto library
 * Crypto library included in JS file directly
@@ -26,4 +27,4 @@
 **FIX** 
 
 * Accumulating 'select' fields when performing a series of queries
-* Fixed oauth login credentials when not using `user` schema. Thank you Alvaro Manera!
+
