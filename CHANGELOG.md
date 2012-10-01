@@ -6,10 +6,11 @@
 
 * Retry API call if server responds with 503 response
 * Keep user logged in (OAuth 2.0 Refresh Token)
+* PUT, POST, DELETE Custom Code support
 
 **FIX**
 
-* Refactored jQuery, Zepto, Sencha handling
+* Refactored jQuery, Zepto, Sencha AJAX handling
 * Fixed IE support Crypto library
 * Crypto library included in JS file directly
 * Removed errant `logger` lines
