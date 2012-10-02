@@ -77,7 +77,8 @@ function createMultipleUser(howMany) {
                 'money' : initMoney + i, 
                 'colors' : ['red', 'green', 'blue', 'some_color' + i],
                 'numbers' : [1, 2, 3, i],
-                'flag' : 'mUser'
+                'flag' : 'mUser',
+                'vegetarian' : true
             });  
                  
             user.create({
@@ -228,7 +229,7 @@ describe("Simple select functionality (standalone) on a model", function() {
         myQuery.select('money');
         user.query(myQuery, {
             success: function(model) {
-                queriedUser = model; //console.debug(model);
+                queriedUser = model;
             }
         });
 
@@ -253,7 +254,7 @@ describe("Simple select functionality (standalone) on a model", function() {
         myQuery.select('money').select('age');
         user.query(myQuery, {
             success: function(model) {
-                queriedUser = model; //console.debug(model);
+                queriedUser = model;
             }
         });
 

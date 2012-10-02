@@ -6,8 +6,9 @@
  * NOTICE: make sure the method name you call is returning the verb as a Map("verb" -> "the_verb_as_a_String")
  */
 
-describe("Custom Code Method Verb", function(){
-	it("should have GET as the verb", function(){
+describe("Custom Code Method Verb", function() {
+
+	it("should have GET as the verb", function() {
 		var goodToContinue = false;
 		var result = '';
 		
@@ -26,6 +27,7 @@ describe("Custom Code Method Verb", function(){
 		runs(function() {
 			expect(result).toMatch('GET');
 		});
+		
 	});
 	
 	it("should have POST as the verb", function(){

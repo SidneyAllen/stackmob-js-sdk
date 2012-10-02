@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>Jasmine Spec Runner</title>
+
+  <!-- Jasmine Test Dependencies -->
+  <link rel="shortcut icon" type="image/png" href="lib/jasmine-1.2.0/jasmine_favicon.png">
+  <link rel="stylesheet" type="text/css" href="lib/jasmine-1.2.0/jasmine.css">
+  <script type="text/javascript" src="lib/jasmine-1.2.0/jasmine.js"></script>
+  <script type="text/javascript" src="lib/jasmine-1.2.0/jasmine-html.js"></script>
+
+  <!-- JS Framework -->
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/zepto/1.0rc1/zepto.min.js"></script>
+
+  <!-- StackMob Dependencies -->
+  <script type="text/javascript" src="http://static.stackmob.com/js/json2-min.js"></script>
+  <script type="text/javascript" src="http://static.stackmob.com/js/underscore-1.4.1-min.js"></script>
+  <script type="text/javascript" src="http://static.stackmob.com/js/backbone-0.9.2-min.js"></script>
+  <script type="text/javascript" src="../stackmob.js"></script>
+  
+  <!-- Initialize StackMob JS Library -->
+  <script type="text/javascript">
+  StackMob.init({
+    appName: "YourAppName",
+    clientSubdomain: "YourClientSubDomain",
+    publicKey: "your public key",
+    apiVersion: 0
+  });
+  </script>
+  
+  <!-- Jasmine Specs -->
+  <script type="text/javascript" src="spec/SpecHelper.js"></script>
+  <script type="text/javascript" src="spec/UserSpec.js"></script>
+  <script type="text/javascript" src="spec/LoginSpec.js"></script>
+  <script type="text/javascript" src="spec/DataTypesSpec.js"></script>
+  <script type="text/javascript" src="spec/GeoPointSpec.js"></script>
+  <script type="text/javascript" src="spec/CrudSpec.js"></script>
+  <script type="text/javascript" src="spec/CustomCodeSpec.js"></script>
+
+  <script type="text/javascript">
+    (function() {
+      var jasmineEnv = jasmine.getEnv();
+      jasmineEnv.updateInterval = 1000;
+
+      var htmlReporter = new jasmine.HtmlReporter();
+
+      jasmineEnv.addReporter(htmlReporter);
+
+      jasmineEnv.specFilter = function(spec) {
+        return htmlReporter.specFilter(spec);
+      };
+
+      var currentWindowOnload = window.onload;
+
+      window.onload = function() {
+        if (currentWindowOnload) {
+          currentWindowOnload();
+        }
+        execJasmine();
+      };
+
+      function execJasmine() {
+        jasmineEnv.execute();
+      }
+
+    })();
+  </script>
+
+</head>
+
+<body>
+</body>
+</html>

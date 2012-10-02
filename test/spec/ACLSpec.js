@@ -73,9 +73,7 @@ var makeACLTest = function( opt ){
 
         // Create
         //TODO: also check sm_owner
-        runs(function() {
-            console.log("Creating... as " + StackMob.getLoggedInUser());
-            
+        runs(function() {            
             if ( opt.schema == "perm_logged_in_relationship" )
             	obj.set("collaborators", ["acl_relationship"]);
             
@@ -108,7 +106,6 @@ var makeACLTest = function( opt ){
                 runs(function(){
                     if ( opt.loginType.username != null ){
                         user = new StackMob.User( opt.loginType );
-                        console.log("Logged in as " + opt.loginType.username);
                         var loginFlag;
                         runs(function(){                
                             user.login( false, {
@@ -133,7 +130,6 @@ var makeACLTest = function( opt ){
             if ( opt.original_expectation != null )
                 opt.expectation = opt.original_expectation
             response = null;
-            console.log("Reading... as " + StackMob.getLoggedInUser());
  
             obj.fetch({
                 success: function(){ response = HTTP_RESPONSE.SUCCESS },
@@ -150,7 +146,6 @@ var makeACLTest = function( opt ){
         runs(function(){
             expect(response).toEqual(opt.expectation);
             response = null;
-            console.log("Updating... as " + StackMob.getLoggedInUser());
             
             obj.save({ name: "test2" }, {
                 success: function(){ response = HTTP_RESPONSE.SUCCESS },
@@ -167,7 +162,6 @@ var makeACLTest = function( opt ){
         runs(function(){
             expect(response).toEqual(opt.expectation);
             response = null;
-            console.log("Deleting... as " + StackMob.getLoggedInUser());
             
             obj.destroy({
                 success: function(){ response = HTTP_RESPONSE.SUCCESS },
@@ -183,8 +177,6 @@ var makeACLTest = function( opt ){
             if (opt.expectation == HTTP_RESPONSE._404)
                 opt.expectation = "This object does not exist";
             expect(response).toEqual(opt.expectation);
-
-            
 
         });
         
@@ -222,7 +214,6 @@ var makeACLTest = function( opt ){
 
                 runs(function(){
                     response = null;
-                    console.log("Deleting.... as " + StackMob.getLoggedInUser());
                     obj.destroy({
                         success: function(){ response = HTTP_RESPONSE.SUCCESS },
                         error: function(m,r){ response = r.error }
@@ -247,7 +238,6 @@ var makeACLTest = function( opt ){
 
                 runs(function(){
                     response = null;
-                    console.log("Deleting.... as " + StackMob.getLoggedInUser());
                     obj.destroy({
                         success: function(){ response = HTTP_RESPONSE.SUCCESS },
                         error: function(m,r){ response = r.error }

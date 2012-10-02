@@ -4,6 +4,7 @@
 
 var TestItem = StackMob.Model.extend({ schemaName: 'testitem' });
 var thisTestItem = null;
+var waitTime = 5000;
 	
 describe("CRUD Methods", function() {
 	
@@ -23,7 +24,7 @@ describe("CRUD Methods", function() {
 		
 		waitsFor(function() {
 			return createdUser;
-		}, "created user should be returned", 20000);
+		}, "created user should be returned", waitTime);
 		
 		runs(function() {
 			expect(createdUser['username']).toEqual('testuser');
@@ -42,7 +43,7 @@ describe("CRUD Methods", function() {
 			
 		waitsFor(function() {
 			return updatedUser;				
-		}, "updated user should be returned", 20000);
+		}, "updated user should be returned", waitTime);
 		
 		runs(function() {
 			expect(updatedUser['age']).toEqual(18);
@@ -62,7 +63,7 @@ describe("CRUD Methods", function() {
 		
 		waitsFor(function() {
 			return readUser;
-		}, "user should be fetched", 20000);
+		}, "user should be fetched", waitTime);
 		
 		runs(function() {
 			expect(readUser['username']).toEqual('testuser');
@@ -82,7 +83,7 @@ describe("CRUD Methods", function() {
 		
 		waitsFor(function() {
 			return deletedUser;
-		}, "deleted username should be returned", 20000);
+		}, "deleted username should be returned", waitTime);
 		
 		runs(function() {
 			expect(deletedUser['username']).toEqual(user.get('username'));
@@ -101,7 +102,7 @@ describe("CRUD Methods", function() {
 		
 		waitsFor(function() {
 			return failureMessage;
-		}, 'StackMob should respond', 20000);
+		}, 'StackMob should respond', waitTime);
 		
 		runs(function() {
 			expect(failureMessage['error']).toEqual('object instance does not exist');
@@ -135,7 +136,7 @@ describe("CRUD Methods for Custom Schemas", function() {
 		
 		waitsFor(function() {
 			return result;
-		}, "StackMob should respond", 20000);
+		}, "StackMob should respond", waitTime);
 		
 		runs(function() {
 			expect(result['name']).toEqual('test');
@@ -154,7 +155,7 @@ describe("CRUD Methods for Custom Schemas", function() {
 			
 		waitsFor(function() {
 			return result;				
-		}, "StackMob should respond", 20000);
+		}, "StackMob should respond", waitTime);
 		
 		runs(function() {
 			expect(result['num']).toEqual(5);
@@ -173,7 +174,7 @@ describe("CRUD Methods for Custom Schemas", function() {
 		
 		waitsFor(function() {
 			return result;
-		}, "user should be fetched", 20000);
+		}, "user should be fetched", waitTime);
 		
 		runs(function() {
 			expect(result['testitem_id']).toEqual(thisTestItem.get('testitem_id'));
@@ -192,7 +193,7 @@ describe("CRUD Methods for Custom Schemas", function() {
 		
 		waitsFor(function() {
 			return result;
-		}, "deleted username should be returned", 20000);
+		}, "deleted username should be returned", waitTime);
 		
 		runs(function() {
 			expect(result['testitem_id']).toEqual(thisTestItem.get('testitem_id'));
@@ -241,7 +242,7 @@ describe("CRUD for Relationships", function() {
 		
 		waitsFor(function() {
 			return res;
-		}, "StackMob should respond", 20000);
+		}, "StackMob should respond", waitTime);
 		
 		runs(function() {
 			expect(res['succeeded'].length).toEqual(count);
@@ -261,7 +262,7 @@ describe("CRUD for Relationships", function() {
 		
 		waitsFor(function() {
 			return res;
-		}, "StackMob should respond", 20000);
+		}, "StackMob should respond", waitTime);
 		
 		runs(function() {
 			expect(res['succeeded'].length).toEqual(count);
@@ -282,7 +283,7 @@ describe("CRUD for Relationships", function() {
 		
 		waitsFor(function() {
 			return res;
-		}, "StackMob should respond", 20000);
+		}, "StackMob should respond", waitTime);
 		
 		runs(function() {
 			expect(_.all(res['messages'], function(message) { return message['messages_id']; })).toEqual(true);
@@ -293,62 +294,56 @@ describe("CRUD for Relationships", function() {
 	
 	it("should soft delete a message", function() {
 		var userMessages = [];
+		var goodToContinue = false;
 		var softDeleteMessageID = null;
+		var res;
+		var user = new StackMob.User({ username: usr });
 		
-		//setup the user messages to track
+		// Set up the user messages to track
 		runs(function() {
-			var user = new StackMob.User({ username: usr });
 			user.fetch({
 				success: function(model) {
 					userMessages = model.toJSON()['messages'];
 					softDeleteMessageID = userMessages[0];
 				}
 			});
-			
-			waitsFor(function() {
-				return softDeleteMessageID;
-			}, "StackMob should respond", 20000);	
 		});
+
+		waitsFor(function() {
+			return softDeleteMessageID != null;
+		}, "user fetch to succeed", waitTime);
 		
 		runs(function() {
-			var user = new StackMob.User({ username: usr });
-			var res = false;
-			
 			user.deleteAndSave('messages', softDeleteMessageID, false, {
 				success: function(result) {
-  					res = true;
-  				}
-			});
-		
-			waitsFor(function() {
-				return res === true;
-			}, "StackMob should respond", 20000);
-			
-			runs(function() {
-				expect(res).toBeTruthy();
+  				goodToContinue = true;
+  			}
 			});
 		});
+
+		waitsFor(function() {
+				return goodToContinue == true;
+		}, "deleteAndSave to succeed", waitTime);
 		
 		runs(function() {
-			var user = new StackMob.User({ username : usr});
-		
-			var res = null;
-			
+			goodToContinue = false;	
 			user.fetch({
 				success: function(model) {
+					goodToContinue = true;
 					res = model.toJSON();
 				}
 			});
+		});	
+
+		waitsFor(function() {
+			return goodToContinue;
+		}, "user fetch to succeed", waitTime);
 			
-			waitsFor(function() {
-				return res;
-			}, "StackMob should respond", 20000);
-			
-			runs(function() {
-				expect(_.include(res['messages'], softDeleteMessageID)).not.toBeTruthy();
-				expect(res['messages'].length).toEqual(count * 2 - 1);
-			});	
+		runs(function() {
+			expect(_.include(res['messages'], softDeleteMessageID)).not.toBeTruthy();
+			expect(res['messages'].length).toEqual(count * 2 - 1);
 		});		
+
 	});
 	
 	
@@ -356,9 +351,11 @@ describe("CRUD for Relationships", function() {
 	it("should cascade delete all messages", function() {
 		var userMessages = [];
 		var softDeleteMessageID = null;
+		var goodToContinue = false;
+		var res;
+		var user = new StackMob.User({ username: usr });
 		
 		runs(function() {
-			var user = new StackMob.User({ username: usr });
 			user.fetch({
 				success: function(model) {
 					userMessages = model.toJSON()['messages'];
@@ -366,49 +363,41 @@ describe("CRUD for Relationships", function() {
 				}
 			});
 			
-			waitsFor(function() {
-				return softDeleteMessageID;
-			}, "StackMob should response", 20000);	
 		});
+
+		waitsFor(function() {
+			return softDeleteMessageID;
+		}, "user fetch to succeed", waitTime);	
 		
 		runs(function() {
-			var user = new StackMob.User({ username: usr });
-			var res = false;
-			
 			user.deleteAndSave('messages', userMessages, true, {
 				success: function(result) {
-  					res = true;
-  				}
-			});
-		
-			waitsFor(function() {
-				return res === true;
-			}, "finish deleting all messages for user " + usr, 20000);
-			
-			runs(function() {
-				expect(res).toBeTruthy();
-			});	
+  				goodToContinue = true;
+  			}
+			});		
 		});
+
+		waitsFor(function() {
+			return goodToContinue;
+		}, "deleteAndSave to succeed for " + usr, waitTime);
 		
-		runs(function() {
-			var user = new StackMob.User({ username : usr});
-		
-			var res = null;
-			
+		runs(function() {		
+			goodToContinue = false;
 			user.fetch({
 				success: function(model) {
+					goodToContinue = true;
 					res = model.toJSON();
 				}
 			});
-			
-			waitsFor(function() {
-				return res;
-			}, "StackMob should respond", 20000);
-			
-			runs(function() {
-				expect(res['messages'].length).toEqual(0);
-			});	
 		});
+
+		waitsFor(function() {
+			return goodToContinue;
+		}, "user fetch to succeed", waitTime);
+			
+		runs(function() {
+			expect(res['messages'].length).toEqual(0);
+		});	
 		
 	});
 	

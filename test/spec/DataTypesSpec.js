@@ -8,6 +8,27 @@ describe("Stored data types", function() {
 
 	createMultipleUser(1);
 			
+	it("should store boolean data type for vegetarian", function() {
+			
+		var vegetarian;
+		var user = new StackMob.User({
+			username: myUser
+		});
+		user.fetch({
+			success: function(model) {
+				vegetarian = model.get('vegetarian');
+			}
+		});
+		
+		waitsFor(function() {
+			return typeof(vegetarian) !== 'undefined';
+		}, "to finish querying", 20000);
+		
+		runs(function() {
+			expect(_.isBoolean(vegetarian)).toEqual(true);
+		});
+	});
+
 	it("should store int data type for age", function() {
 			
 		var age = 0;
@@ -63,12 +84,13 @@ describe("Stored data types", function() {
 			username: myUser
 		});
 		
-		user.save({username:newName}, {
+		user.save({username: newName}, {
 			success: function(model) {
 				//should never reach here
 			},
 			error: function(model, failure) {
 				failureObject = failure;
+				
 				userToFetch.fetch({
 					success: function(model) {
 						var fetchedUsrName = model['attributes']['username'];
@@ -132,7 +154,7 @@ describe("Stored data types", function() {
 			username: myUser
 		});
 		
-		user.save({age:newAge}, {
+		user.save({age: newAge}, {
 			success: function(model) {
 				//should never reach here
 			},
@@ -298,7 +320,7 @@ describe("Stored data types", function() {
 	it("should not accept different data types (array[boolean], double/float, boolean) for vegetarian (boolean)", function() {
 		var goodToContinue = false;
 		var result = false;
-		var waitTime = 8000;
+		var waitTime = 5000;
 		
 		// try type array
 		var newVegetarian = [true, false, true];
@@ -315,8 +337,8 @@ describe("Stored data types", function() {
 				error: function(model, failure) {
 					failureObject = failure;
 					user.fetch({
-						success: function(model) {
-							result = _.isBoolean(model['attributes']['vegetarian']);
+						success: function(m) {
+							result = _.isBoolean( m.get('vegetarian') );
 							goodToContinue = true;
 						}
 					});
@@ -338,19 +360,18 @@ describe("Stored data types", function() {
 			return goodToContinue === false;
 		}, "to continue to double / float type", waitTime);
 		result = false;
-		
 		// try type double / float
-		runs(function(){
+		runs(function() {
 			newVegetarian = 10.32;
-			user.save({vegetarian:newVegetarian}, {
+			user.save({vegetarian: newVegetarian}, {
 				success: function(model) {
 					//should never reach here
 				},
 				error: function(model, failure) {
 					failureObject = failure;
-					user.fetch({
-						success: function(model) {
-							result = _.isBoolean(model['attributes']['vegetarian']);
+					model.fetch({
+						success: function(m) {
+							result = _.isBoolean(m.get('vegetarian'));
 							goodToContinue = true;
 						}
 					});
@@ -360,7 +381,7 @@ describe("Stored data types", function() {
 		
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
-		}, "to finish querying double / float", waitTime);
+		}, "querying double / float to finish", waitTime);
 		
 		runs(function() {
 			expect(result).toEqual(true);
@@ -419,8 +440,7 @@ describe("Stored data types", function() {
 		});
 		user.create({
 			success: function(model) {
-				//should never reach here
-				console.debug("Wtf? How did it get here?");
+				// should never reach here
 			},
 			error: function(model, failure) {
 				failureObject = failure;
@@ -429,7 +449,7 @@ describe("Stored data types", function() {
 				});
 				usr.fetch({
 					success: function(model) {
-						console.debug("should never reach here...");
+						// should never reach here
 					},
 					error: function(model, failure) {
 						failureObjectFetch = failure;

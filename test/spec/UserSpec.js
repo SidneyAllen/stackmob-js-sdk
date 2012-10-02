@@ -511,8 +511,6 @@ describe("User", function() {
 	
 		users.query(q, {
 			success : function(collection) {
-				console.log(collection);
-				console.log("len=" + collection.models.length + "/" + howMany);
 				for (var i = 0; i < collection.models.length; ++i) {
 					for (var j = 0; j < locationArray.length; ++j) {
 						if (collection.models[i]['attributes']['location'] === locationArray[j]) {

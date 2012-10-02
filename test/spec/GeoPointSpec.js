@@ -40,36 +40,55 @@ describe("Geo points query", function() {
 	// var kms = miles * 1.609344;
 	var kms = miles * 1.609344;
 	var radian = 0.4;
-	
+
 	it("is near " + radian + " radians", function() {
 		var q = new StackMob.Collection.Query();
 		q.mustBeNear('location', new StackMob.GeoPoint(37.77493, -122.419416), radian);
-		var count = 0;
+		var count, expectedCount;
 		
 		var attrs = new Attractions();
 		attrs.query(q, {
 			success: function(collection) {
+
+				// Set expectation
+				expectedCount = _.countBy( 
+					collection.map( function(o) {
+						return o.get("location")['distance'];
+					}), function(num){
+						return num <= radian ? 'isNear' : 'isNotNear';
+					}
+				);
+
 				count = collection.length;
 			}
 		});
 		
 		waitsFor(function() {
-			return count != 0;
-		}, "the collection member", attrs.length * 1000);
+			return typeof(expectedCount) !== 'undefined';
+		}, "the collection fetch", attrs.length * 1000);
 		
 		runs(function() {
-			expect(count).toEqual(8);
+			expect(count).toEqual( expectedCount.isNear );
 		});
 	});
 	
 	it("is near " + miles + " miles", function() {
 		var q = new StackMob.Collection.Query();
 		q.mustBeNearMi('location', new StackMob.GeoPoint(37.77493, -122.419416), miles);
-		var count = 0;
+		var count = 0, expectedCount;
 		
 		var attrs = new Attractions();
 		attrs.query(q, {
 			success: function(collection) {
+				// Set expectation
+				expectedCount = _.countBy( 
+					collection.map( function(o) {
+						return o.get("location")['distance'];
+					}), function(num){
+						return num * StackMob.EARTH_RADIANS_MI <= miles ? 'isNear' : 'isNotNear';
+					}
+				);
+
 				count = collection.length;
 			}
 		});
@@ -79,18 +98,27 @@ describe("Geo points query", function() {
 		}, "the collection member", attrs.length * 1000);
 		
 		runs(function() {
-			expect(count).toEqual(2);
+			expect(count).toEqual( expectedCount.isNear );
 		});
 	});
 	
 	it("is near " + kms + " kilometers", function() {
 		var q = new StackMob.Collection.Query();
 		q.mustBeNearKm('location', new StackMob.GeoPoint(37.77493, -122.419416), kms);
-		var count = 0;
+		var count = 0, expectedCount;
 		
 		var attrs = new Attractions();
 		attrs.query(q, {
 			success: function(collection) {
+				// Set expectation
+				expectedCount = _.countBy( 
+					collection.map( function(o) {
+						return o.get("location")['distance'];
+					}), function(num){
+						return num * StackMob.EARTH_RADIANS_KM <= kms ? 'isNear' : 'isNotNear';
+					}
+				);
+
 				count = collection.length;
 			}
 		});
@@ -100,18 +128,20 @@ describe("Geo points query", function() {
 		}, "the collection member", attrs.length * 1000);
 		
 		runs(function() {
-			expect(count).toEqual(2);
+			expect(count).toEqual( expectedCount.isNear );
 		});
 	});
 
 	it("is within " + radian + " radian(s)", function() {
 		var q = new StackMob.Collection.Query();
 		q.isWithin('location', new StackMob.GeoPoint(37.77493, -122.419416), radian);
-		var count = 0;
+		var count = 0, expectedCount;
 
 		var attrs = new Attractions();
 		attrs.query(q, {
 			success: function(collection) {
+				a = collection;
+
 				count = collection.length;
 			}
 		});
@@ -121,7 +151,7 @@ describe("Geo points query", function() {
 		}, "the collection member", attrs.length * 1000);
 		
 		runs(function() {
-			expect(count).toEqual(8);
+			expect(count).toEqual(9);
 		});
 	});
 	

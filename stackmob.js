@@ -739,7 +739,7 @@
       /**
        * If there's an internal success callback function, execute it.
        */
-      if(result && params) {
+      if(params) {
         if(_.isFunction(params['stackmob_on' + method]))
           params['stackmob_on' + method](result);
         if(_.isFunction(params['oncomplete']))
@@ -902,6 +902,12 @@
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
         options[StackMob.CASCADE_DELETE] = cascadeDelete;
+        
+        var model = this;
+        options["stackmob_ondeleteAndSave"] = function(){
+            var existingValues = model.get(fieldName);
+            model.set(fieldName, _.difference(existingValues, values) );
+        };
         StackMob.sync.call(this, 'deleteAndSave', this, options);
       },
       setBinaryFile : function(fieldName, filename, filetype, base64EncodedData) {
@@ -1277,16 +1283,9 @@
   _.extend(StackMob, {
     ajaxOptions : {
       'sencha' : function(model, params, method) {
-
         var hash = {};
-        hash['url'] = params['url'];
-        hash['headers'] = params['headers'];
-        hash['params'] = params['data'];
-        hash['success'] = params['success'];
-        hash['failure'] = params['error'];
-        hash['disableCaching'] = false;
-        hash['method'] = params['type'];
 
+        // Set up success callback
         var success = params['success'];
         var defaultSuccess = function(response, options) {
 
@@ -1299,37 +1298,50 @@
         };
         params['success'] = defaultSuccess;
 
+        // Set up error callback
         var error = params['error'];
+        
+        // Build Sencha options
+        hash['url'] = params['url'];
+        hash['headers'] = params['headers'];
+        hash['params'] = params['data'];
+        hash['success'] = params['success'];
+        hash['disableCaching'] = false;
+        hash['method'] = params['type'];
 
         var defaultError = function(response, options) {
           var responseText = response.responseText || response.text;
-          StackMob.onerror(response, responseText, $.Ajax.request, model, hash, err);
+          StackMob.onerror(response, responseText, $.Ajax.request, model, hash, error);
         }
         params['error'] = defaultError;
+        hash['failure'] = params['error'];
 
         return $.Ajax.request(hash);
       },
       'zepto' : function(model, params, method) {
-        var success = params['success'];
 
+        // Set up success callback
+        var success = params['success'];
         var defaultSuccess = function(response, result, xhr) {
           var result = response ? JSON.parse(response) : null;
-
           StackMob.onsuccess(model, method, params, result, success);
         };
         params['success'] = defaultSuccess;
 
+        // Set up error callback
         var error = params['error'];
-
-        var defaultError = function(xhr, errorType, error) {
+        var defaultError = function(xhr, errorType, err) {
+          console.log("default error");
           var responseText = xhr.responseText || xhr.text;
-          StackMob.onerror(xhr, responseText, $.ajax, model, params, err);
+          StackMob.onerror(xhr, responseText, $.ajax, model, params, error);
         }
         params['error'] = defaultError;
 
+        // Build jQuery options
         var hash = {};
         hash['url'] = params['url'];
         hash['headers'] = params['headers'];
+        hash['contentType'] = params['headers']['contentType'];
         hash['type'] = params['type'];
         hash['data'] = params['data'];
         hash['success'] = defaultSuccess;
@@ -1347,14 +1359,16 @@
             }
           }
         };
-        var err = params['error'];
 
+        // Set up error callback
+        var error = params['error'];
         params['error'] = function(jqXHR, textStatus, errorThrown) {
           var responseText = jqXHR.responseText || jqXHR.text;
-          StackMob.onerror(jqXHR, responseText, $.ajax, model, params, err);
+          StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error);
         }
-        var success = params['success'];
 
+        // Set up success callback
+        var success = params['success'];
         var defaultSuccess = function(model, status, xhr) {
           var result;
 
