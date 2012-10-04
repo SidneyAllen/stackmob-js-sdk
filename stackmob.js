@@ -55,6 +55,7 @@
     API_SERVER : 'api.stackmob.com',
 
     DEFAULT_RETRY_WAIT : 10000,
+    RETRY_ATTEMPTS : 3,
     REFRESH_TOKEN_KEY : 'oauth2.refreshToken',
     
     POST: 'POST',
@@ -369,6 +370,21 @@
     return 'MAC id="' + id + '",ts="' + ts + '",nonce="' + nonce + '",mac="' + mac + '"';
   }
 
+  function getAuthHeader(method, params){
+    var host = StackMob.getBaseURL();
+
+    var path = params['url'].replace(new RegExp(host, 'g'), '/');
+    var sighost = host.replace(new RegExp('^http://|^https://', 'g'), '').replace(new RegExp('/'), '');
+
+    var accessToken = StackMob.Storage.retrieve('oauth2.accessToken');
+    var macKey = StackMob.Storage.retrieve('oauth2.macKey');
+    var expires = StackMob.Storage.retrieve('oauth2.expires');
+
+    if(StackMob.isOAuth2Mode() && accessToken && macKey) {
+      var authHeader = generateMAC(StackMob.METHOD_MAP[method] || 'GET', accessToken, macKey, sighost, path);
+      return authHeader;
+    }
+  }
 
   _.extend(StackMob, {
 
@@ -449,12 +465,12 @@
     sync : function(method, model, options) {
       options = options || {};
 
-      if(!StackMob.isAccessTokenMethod(method) && StackMob.shouldSendRefreshToken() && options['stackmob_retry'] !== true) {
+      if(!StackMob.isAccessTokenMethod(method) && StackMob.shouldSendRefreshToken() && options['stackmob_attempted_refresh'] !== true) {
 
         var originalMethod = method;
         var originalOptions = options;
 
-        originalOptions['stackmob_retry'] = true;
+        originalOptions['stackmob_attempted_refresh'] = true;
 
         var originalModel = model;
         var originalThis = this;
@@ -641,28 +657,16 @@
       }
 
       function _prepareAuth(theModel, method, params) {
-        var isCreatingUser = theModel && theModel.schemaName && (theModel.schemaName == StackMob['userSchema']) && method === 'create';
-        //if you're creating a user or logging in
-        if(isCreatingUser || StackMob.isAccessTokenMethod(method)) {
+        if(StackMob.isAccessTokenMethod(method)) {
           return;
           //then don't add an Authorization Header
         }
 
-        var host = StackMob.getBaseURL();
-
-        var path = params['url'].replace(new RegExp(host, 'g'), '/');
-        var sighost = host.replace(new RegExp('^http://|^https://', 'g'), '').replace(new RegExp('/'), '');
-
-        var accessToken = StackMob.Storage.retrieve('oauth2.accessToken');
-        var macKey = StackMob.Storage.retrieve('oauth2.macKey');
-        var expires = StackMob.Storage.retrieve('oauth2.expires');
-
-        if(StackMob.isOAuth2Mode() && accessToken && macKey) {
-          var authHeaders = generateMAC(StackMob.METHOD_MAP[method] || 'GET', accessToken, macKey, sighost, path);
-
-          if(authHeaders)
-            params['headers']['Authorization'] = authHeaders;
+        var authHeader = getAuthHeader(method, params);
+        if(authHeader) {
+          params['headers']['Authorization'] = authHeader;
         }
+
       }
 
       function _isExtraMethodVerb(method) {
@@ -698,7 +702,7 @@
       if(StackMob.hasRefreshToken()) {
 
         //set request call details
-        refreshOptions['url'] = '/user';
+        refreshOptions['url'] = "/" + StackMob['userSchema'];
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
         refreshOptions['data'] = {
           refresh_token : StackMob.getOAuthCredentials()[StackMob.REFRESH_TOKEN_KEY],
@@ -784,7 +788,21 @@
           wait = StackMob.DEFAULT_RETRY_WAIT;
         }
         
-        _.delay(function() { ajaxFunc(params); }, wait);
+        // If this is the first retry, set remaining attempts
+        // Otherwise decrement the retry counter
+        if(typeof params['stackmob_retry'] === 'number') {
+          params['stackmob_retry'] = params['stackmob_retry'] - 1;
+          if(params['stackmob_retry'] <= 0){ return; }
+        } else {
+          params['stackmob_retry'] = StackMob.RETRY_ATTEMPTS ;
+        } 
+
+        // Set delay for the next retry attempt
+        _.delay(function() { 
+          var authHeader = getAuthHeader(model, params);
+          params['headers']['Authorization'] = authHeader;          
+          ajaxFunc(params);
+        }, wait);
       } else {
         if(_.isFunction(params['oncomplete']))
           params['oncomplete'](result);
@@ -898,6 +916,7 @@
         StackMob.sync.call(this, 'appendAndSave', this, options);
       },
       deleteAndSave : function(fieldName, values, cascadeDelete, options) {
+        // TODO: validate?
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
@@ -1133,9 +1152,17 @@
 
     StackMob.GeoPoint = function(lat, lon) {
       if(_.isNumber(lat)) {
+        // Validate
+        if ( lat < -90 || lat > 90 ) { StackMob.throwError("Latitude value must be between -90 and 90 inclusive.") };
+        if ( lon < -180 || lon > 180 ) { StackMob.throwError("Longitude value must be between -180 and 180 inclusive.") };
+
         this.lat = lat;
         this.lon = lon;
       } else {
+        // Validate
+        if ( lat['lat'] < -90 || lat['lat'] > 90 ) { StackMob.throwError("Latitude value must be between -90 and 90 inclusive.") };
+        if ( lat['lon'] < -180 || lat['lon'] > 180 ) { StackMob.throwError("Longitude value must be between -180 and 180 inclusive.") };
+
         this.lat = lat['lat'];
         this.lon = lat['lon'];
       }

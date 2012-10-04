@@ -4,9 +4,10 @@
 
 **FEATURE**
 
-* Retry API call if server responds with 503 response
+* Retry API call if server responds with 503 response (Default 3 retry attempts)
 * Keep user logged in (OAuth 2.0 Refresh Token)
 * PUT, POST, DELETE Custom Code support
+* GeoPoint validation on creation
 
 **FIX**
 
