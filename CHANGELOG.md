@@ -1,6 +1,6 @@
 ## StackMob JavaScript SDK Change Log
 
-### v0.6.0
+### v0.6.0 - Oct 5, 2012
 
 **FEATURE**
 
@@ -8,6 +8,7 @@
 * Keep user logged in (OAuth 2.0 Refresh Token)
 * PUT, POST, DELETE Custom Code support
 * GeoPoint validation on creation
+* Added Jasmine Test Suites for jQuery, Zepto, and Sencha
 
 **FIX**
 
