@@ -14,8 +14,8 @@ Read CHANGELOG.md for release notes.
 
 There are plenty of resources to help you get familiar with the JS SDK ranging from docs to actual working examples.
 
-* <a href="http://www.stackmob.com/devcenter/docs/Javascript-SDK-API" target="_blank">Javascript API Docs</a>
-* <a href="http://www.stackmob.com/devcenter/docs/JS-SDK-Tutorial" target="_blank">Javascript SDK Tutorial</a>
+* <a href="https://developer.stackmob.com/sdks/js/api" target="_blank">Javascript API Docs</a>
+* <a href="https://developer.stackmob.com/tutorials/js" target="_blank">Javascript SDK Tutorials</a>
 * <a href="https://github.com/stackmob/stackmob-javascript-examples" target="_blank">StackMob Javascript Examples (GitHub Repository)</a>
 
 # GitHub Repo
