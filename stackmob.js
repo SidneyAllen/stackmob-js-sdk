@@ -54,7 +54,7 @@
 
     API_SERVER : 'api.stackmob.com',
 
-    DEFAULT_RETRY_WAIT : 10000,
+    RETRY_WAIT : 10000,
     RETRY_ATTEMPTS : 3,
     REFRESH_TOKEN_KEY : 'oauth2.refreshToken',
     
@@ -785,7 +785,7 @@
         try {
           wait = parseInt(responseHeaderValue) * 1000;
         } catch(e) {
-          wait = StackMob.DEFAULT_RETRY_WAIT;
+          wait = StackMob.RETRY_WAIT;
         }
         
         // If this is the first retry, set remaining attempts
@@ -916,7 +916,6 @@
         StackMob.sync.call(this, 'appendAndSave', this, options);
       },
       deleteAndSave : function(fieldName, values, cascadeDelete, options) {
-        // TODO: validate?
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
