@@ -92,7 +92,7 @@
         if(localStorage)
           return localStorage.getItem(this.STORAGE_PREFIX + key);
         else
-          null;
+          return null;
       },
       //Remove a value from local storage given the `key`.
       remove : function(key) {
@@ -791,7 +791,7 @@
         // If this is the first retry, set remaining attempts
         // Otherwise decrement the retry counter
         if(typeof params['stackmob_retry'] === 'number') {
-          params['stackmob_retry'] = params['stackmob_retry'] - 1;
+          params['stackmob_retry'] -= 1;
           if(params['stackmob_retry'] <= 0){ return; }
         } else {
           params['stackmob_retry'] = StackMob.RETRY_ATTEMPTS ;
