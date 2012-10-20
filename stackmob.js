@@ -1,4 +1,5 @@
 /*
+ StackMob JS SDK Version 0.6.1-beta
  Copyright 2012 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +69,7 @@
     apiVersion : 0,
 
     //The current version of the JS SDK.
-    sdkVersion : "0.6.0",
+    sdkVersion : "0.6.1-beta",
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -440,7 +441,7 @@
         var user = null;
 
         try {
-          user = result['stackmob'][StackMob['userSchema']][StackMob['loginField']];
+          user = result['stackmob']['user'][StackMob['loginField']];
           var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, user);
 
           //...then let's save the OAuth credentials to local storage.
