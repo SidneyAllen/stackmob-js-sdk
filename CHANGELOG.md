@@ -1,5 +1,11 @@
 ## StackMob JavaScript SDK Change Log
 
+### v0.6.1 - Nov 29, 2012
+
+**FIX**
+
+* Bug with custom user schema
+
 ### v0.6.0 - Oct 5, 2012
 
 **FEATURE**
