@@ -19,6 +19,18 @@
   var root = this;
 
   /**
+   * Helper method to allow altering a success callback method.
+   **/
+  var replaceSuccessMethod = function(options, newMethod){
+    var originalSuccess = options['success'];
+    var success = function(result) {
+      originalSuccess( newMethod(result) );
+    };
+    options['success'] = success;
+    return options;
+  };
+
+  /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
    *
    * It is the only variable introduced globally.
@@ -103,18 +115,6 @@
     },
 
     /**
-     * Helper method to allow altering a success callback method.
-     **/
-    replaceSuccessMethod : function(options, newMethod){
-      var originalSuccess = options['success'];
-      var success = function(result) {
-        originalSuccess( newMethod(result) );
-      };
-      options['success'] = success;
-      return options;
-    },
-
-    /**
      * Returns the current logged in user's login id: username (or your custom field if specified in StackMob.init), email, or whatever is defined as the primary key.
      * Optionally accepts asynchronous callback methods in the options object.
      */
@@ -122,7 +122,7 @@
       var storedUser = ((!this.isOAuth2Mode() && this.Storage.retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
       //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
       if ( options && options['success'] ){
-        options = StackMob.replaceSuccessMethod(options, function(result){
+        options = replaceSuccessMethod(options, function(result){
           return result;
         });
         this.hasValidOAuth(options);
@@ -139,7 +139,7 @@
      */
     isLoggedIn : function(options) {
       if ( options && options['success'] ){
-        options = StackMob.replaceSuccessMethod(options, function(result){
+        options = replaceSuccessMethod(options, function(result){
           return typeof result !== "undefined"
         });
         this.hasValidOAuth(options);
@@ -155,7 +155,7 @@
      */
     isUserLoggedIn : function(username, options) {
       if ( options && options['success'] ){
-        options = StackMob.replaceSuccessMethod(options, function(result){
+        options = replaceSuccessMethod(options, function(result){
           return result == username;
         });
         this.hasValidOAuth(options);
@@ -329,7 +329,7 @@
       "read" : "GET",
       "update" : "PUT",
       "delete" : "DELETE",
-      
+
       "post" : "POST",
       "get" : "GET",
       "put" : "PUT",
@@ -405,6 +405,7 @@
     initEnd : function(options) {
     }
   };
+
 }).call(this);
 
 /**
@@ -625,7 +626,6 @@
         } else if(_.include(['PUT', 'POST'], StackMob.METHOD_MAP[method])) {
           params['contentType'] = params['contentType'] || StackMob.CONTENT_TYPE_JSON;
         }
-          
 
         if(!isNaN(options[StackMob.CASCADE_DELETE])) {
           params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
@@ -863,7 +863,7 @@
         } catch(e) {
           wait = StackMob.RETRY_WAIT;
         }
-        
+
         // If this is the first retry, set remaining attempts
         // Otherwise decrement the retry counter
         if(typeof params['stackmob_retry'] === 'number') {
@@ -871,12 +871,12 @@
           if(params['stackmob_retry'] <= 0){ return; }
         } else {
           params['stackmob_retry'] = StackMob.RETRY_ATTEMPTS ;
-        } 
+        }
 
         // Set delay for the next retry attempt
-        _.delay(function() { 
+        _.delay(function() {
           var authHeader = getAuthHeader(model, params);
-          params['headers']['Authorization'] = authHeader;          
+          params['headers']['Authorization'] = authHeader;
           ajaxFunc(params);
         }, wait);
       } else {
@@ -1401,7 +1401,7 @@
 
         // Set up error callback
         var error = params['error'];
-        
+
         // Build Sencha options
         hash['url'] = params['url'];
         hash['headers'] = params['headers'];
@@ -1419,6 +1419,7 @@
 
         return $.Ajax.request(hash);
       },
+
       'zepto' : function(model, params, method) {
 
         // Set up success callback
@@ -1449,6 +1450,7 @@
 
         return $.ajax(hash);
       },
+
       'jquery' : function(model, params, method) {
         params['beforeSend'] = function(jqXHR, settings) {
           jqXHR.setRequestHeader("Accept", settings['accepts']);
