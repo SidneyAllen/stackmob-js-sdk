@@ -102,35 +102,44 @@
       }
     },
 
-    replaceSuccess : function(options, func){
+    /**
+     * Helper method to allow altering a success callback method.
+     **/
+    replaceSuccessMethod : function(options, newMethod){
       var originalSuccess = options['success'];
       var success = function(result) {
-        originalSuccess( func(result) );
+        originalSuccess( newMethod(result) );
       };
       options['success'] = success;
       return options;
     },
-    //This returns the current logged in user's login id: username, email (whatever is defined as the primary key).
+
+    /**
+     * Returns the current logged in user's login id: username (or your custom field if specified in StackMob.init), email, or whatever is defined as the primary key.
+     * Optionally accepts asynchronous callback methods in the options object.
+     */
     getLoggedInUser : function(options) {
       var storedUser = ((!this.isOAuth2Mode() && this.Storage.retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
       //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
       if ( options && options['success'] ){
-        options = StackMob.replaceSuccess(options, function(result){
+        options = StackMob.replaceSuccessMethod(options, function(result){
           return result;
         });
         this.hasValidOAuth(options);
       } else {
         return (this.isLoggedIn(options) && storedUser) ? storedUser : null;
       }
-
     },
+
     /**
-     * This is a "dumb" method in that this simply checks for the presence of login credentials, not if they're valid.  The server checks the validity of the credentials on each API request, however.  It's here for convenience.
+     * Without specifying the 'options' argument, this is a "dumb" method in that simply checks for the presence of login credentials, not if they're valid.
+     * The server checks the validity of the credentials on each API request, however.  It's here for convenience.
      *
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
      */
     isLoggedIn : function(options) {
       if ( options && options['success'] ){
-        options = StackMob.replaceSuccess(options, function(result){
+        options = StackMob.replaceSuccessMethod(options, function(result){
           return typeof result !== "undefined"
         });
         this.hasValidOAuth(options);
@@ -138,10 +147,15 @@
         return (!this.isLoggedOut()) || this.hasValidOAuth(options);
       }
     },
-    //A convenience method to see if the given `username` is that of the logged in user.
+
+    /**
+     * Without specifying the 'options' argument, this is a "dumb" method in that simply checks if the given `username` is that of the logged in user without asking the server.
+     *
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
+     */
     isUserLoggedIn : function(username, options) {
       if ( options && options['success'] ){
-        options = StackMob.replaceSuccess(options, function(result){
+        options = StackMob.replaceSuccessMethod(options, function(result){
           return result == username;
         });
         this.hasValidOAuth(options);
@@ -149,12 +163,16 @@
         return username == this.getLoggedInUser(options);
       }
     },
+
     /**
-     * Checks to see if a user is logged out (doesn't have login credentials)
+     * Without specifying the 'options' argument, this is a "dumb" method in that checks to see if a user is logged out (doesn't have login credentials) without hitting the server.
+     *
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
      */
     isLoggedOut : function(options) {
       return !this.hasValidOAuth(options);
     },
+
     //An internally used method to get the scheme to use for API requests.
     getScheme : function() {
       return this.secure === true ? 'https' : 'http';
@@ -255,9 +273,9 @@
         return this.Storage.retrieve('oauth2.user');
       } else if ( options && options['success'] ) {
         //If expired and async
-        originalSuccess = options.success;
-        options.success = function(input){
-          originalSuccess( input.username );
+        var originalSuccess = options['success'];
+        options['success'] = function(input){
+          originalSuccess( input[StackMob['loginField']] );
         }
         StackMob.refreshSession.call(StackMob, options);
       } else {
@@ -1045,7 +1063,7 @@
         stackMobQuery = stackMobQuery || new StackMob.Collection.Query();
         options = options || {};
         options.stackmob_count = true;
-        var success = options.success;
+        var success = options['success'];
 
         var successFunc = function(xhr) {
 
