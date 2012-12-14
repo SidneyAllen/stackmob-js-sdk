@@ -125,6 +125,10 @@
         options = replaceSuccessMethod(options, function(result){
           return result;
         });
+        //TODO: Fix
+        if ( !options['error']) {
+          options['error'] = options['success'];
+        }
         this.hasValidOAuth(options);
       } else {
         return (this.isLoggedIn(options) && storedUser) ? storedUser : null;
@@ -138,10 +142,16 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
      */
     isLoggedIn : function(options) {
-      if ( options && options['success'] ){
-        options = replaceSuccessMethod(options, function(result){
-          return typeof result !== "undefined"
-        });
+      if ( options && (options['yes'] || options['no']) ){
+        originalOptions = options;
+        options = {};
+        options['success'] = function(result) {
+          if (typeof result !== "undefined") originalOptions['yes'](result);
+          else originalOptions['no']();
+        }
+        if ( !options['error']) {
+          options['error'] = originalOptions['no'];
+        }
         this.hasValidOAuth(options);
       } else {
         return (!this.isLoggedOut()) || this.hasValidOAuth(options);
@@ -154,10 +164,16 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
      */
     isUserLoggedIn : function(username, options) {
-      if ( options && options['success'] ){
-        options = replaceSuccessMethod(options, function(result){
-          return result == username;
-        });
+      if ( options && (options['yes'] || options['no']) ){
+        originalOptions = options;
+        options = {};
+        options['success'] = function(result) {
+          if (result == username) originalOptions['yes'](username);
+          else originalOptions['no']();
+        }
+        if ( !options['error']) {
+          options['error'] = originalOptions['no'];
+        }
         this.hasValidOAuth(options);
       } else {
         return username == this.getLoggedInUser(options);
@@ -170,7 +186,20 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
      */
     isLoggedOut : function(options) {
-      return !this.hasValidOAuth(options);
+      if ( options && (options['yes'] || options['no']) ){
+        originalOptions = options;
+        options = {};
+        options['success'] = function(result) {
+          if (typeof result == "undefined") originalOptions['yes'](result);
+          else originalOptions['no']();
+        }
+        if ( !options['error']) {
+          options['error'] = originalOptions['yes'];
+        }
+        this.hasValidOAuth(options);
+      } else {
+        return !this.hasValidOAuth(options);
+      }
     },
 
     //An internally used method to get the scheme to use for API requests.
@@ -253,8 +282,12 @@
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
     hasValidOAuth : function(options) {
       //If we aren't running in OAuth 2.0 mode, then kick out early.
-      if(!this.isOAuth2Mode())
+      if(!this.isOAuth2Mode()){
+        //TODO: this only handles syncronous call
+        if (options['error'])
+          options['error']();
         return false;
+      }
 
       //Check to see if we have all the necessary OAuth 2.0 credentials locally AND if the credentials have expired.
       var creds = this.getOAuthCredentials();
@@ -262,13 +295,16 @@
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
+        //TODO: this only handles syncronous call
+        if (options['error'])
+          options['error']();
         return false;
       }
 
       if ( !StackMob.hasExpiredOAuth() ) {
         //If not expired
         if ( options && options['success'] ){
-          options.success( this.Storage.retrieve('oauth2.user') );
+          options['success']( this.Storage.retrieve('oauth2.user') );
         }
         return this.Storage.retrieve('oauth2.user');
       } else if ( options && options['success'] ) {
@@ -504,7 +540,7 @@
         var accessToken = oauth2Creds['access_token'];
         var refreshToken = oauth2Creds['refresh_token'];
         var macKey = oauth2Creds['mac_key'];
-        var expires = oauth2Creds['expires_in'];
+        var expires = 10; //oauth2Creds['expires_in'];
 
         var user = null;
 
