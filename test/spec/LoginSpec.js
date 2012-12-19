@@ -144,6 +144,30 @@ describe("asyncronous authentication methods", function(){
 
 	});
 
+  it("should get refresh token from isLoggedIn", function(){
+  	var loggedIn = false;
+  	waitsFor(function(){
+  		return !StackMob.isLoggedIn();
+  	}, "wait for session to expire locally");
+
+  	runs(function(){
+			StackMob.isLoggedIn({
+	      yes: function(result){
+	      	console.log(result);
+	        loggedIn = true;
+	      },
+	      no: function(){
+	        loggedIn = false;
+	      }
+	    });
+  	});
+
+		waitsFor(function(){
+    	return loggedIn;
+    }, "user should be logged in");
+
+  });
+
   it("should get refresh token from isUserLoggedIn", function(){
   	var loggedIn = false;
   	waitsFor(function(){
@@ -153,10 +177,56 @@ describe("asyncronous authentication methods", function(){
   	runs(function(){
   		StackMob.isUserLoggedIn(usr, {
 	      yes: function(result){
+	      	console.log(result);
 	        loggedIn = true;
 	      },
-	      no: function(result){
+	      no: function(){
 	        loggedIn = false;
+	      }
+	    });
+  	});
+
+		waitsFor(function(){
+    	return loggedIn;
+    }, "user should be logged in");
+
+  });
+
+  it("should get refresh token from getLoggedInUser", function(){
+  	var loggedIn = false;
+  	waitsFor(function(){
+  		return !StackMob.isLoggedIn();
+  	}, "wait for session to expire locally");
+
+  	runs(function(){
+			StackMob.getLoggedInUser({
+	      success: function(result){
+	      	console.log(result);
+	        loggedIn = true;
+	      }
+	    });
+  	});
+
+		waitsFor(function(){
+    	return loggedIn;
+    }, "user should be logged in");
+
+  });
+
+  it("should get refresh token from isLoggedOut", function(){
+  	var loggedIn = false;
+  	waitsFor(function(){
+  		return !StackMob.isLoggedIn();
+  	}, "wait for session to expire locally");
+
+  	runs(function(){
+			StackMob.isLoggedOut({
+	      yes: function(){
+	        loggedIn = false;
+	      },
+	      no: function(result){
+	      	console.log(result);
+	        loggedIn = true;
 	      }
 	    });
   	});

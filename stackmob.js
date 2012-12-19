@@ -190,8 +190,8 @@
         originalOptions = options;
         options = {};
         options['success'] = function(result) {
-          if (typeof result == "undefined") originalOptions['yes'](result);
-          else originalOptions['no']();
+          if (typeof result == "undefined") originalOptions['yes']();
+          else originalOptions['no'](result);
         }
         if ( !options['error']) {
           options['error'] = originalOptions['yes'];
