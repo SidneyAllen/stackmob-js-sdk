@@ -540,7 +540,7 @@
         var accessToken = oauth2Creds['access_token'];
         var refreshToken = oauth2Creds['refresh_token'];
         var macKey = oauth2Creds['mac_key'];
-        var expires = 10; //oauth2Creds['expires_in'];
+        var expires = oauth2Creds['expires_in'];
 
         var user = null;
 
@@ -1521,13 +1521,16 @@
             result = model;
           }
 
+          if ( StackMob._session_expiry && result && result['expires_in'])
+            result['expires_in'] = StackMob._session_expiry
           StackMob.onsuccess(model, method, params, result, success);
 
         };
         params['success'] = defaultSuccess;
 
         return $.ajax(params);
-      }
+      },
+
     }
   });
 }).call(this);
