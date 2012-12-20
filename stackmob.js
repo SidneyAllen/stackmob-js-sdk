@@ -30,6 +30,15 @@
     return options;
   };
 
+  var buildCallbacks = function(options, newSuccess, defaultError){
+    options['success'] = newSuccess;
+    // Set default error method if one is not provided
+    if ( !options['error'] ) {
+      options['error'] = defaultError;
+    }
+    return options;
+  }
+
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
    *
@@ -125,8 +134,8 @@
         options = replaceSuccessMethod(options, function(result){
           return result;
         });
-        //TODO: Fix
-        if ( !options['error']) {
+        // Set default error method if one is not provided
+        if ( !options['error'] ) {
           options['error'] = options['success'];
         }
         this.hasValidOAuth(options);
@@ -143,15 +152,10 @@
      */
     isLoggedIn : function(options) {
       if ( options && (options['yes'] || options['no']) ){
-        originalOptions = options;
-        options = {};
-        options['success'] = function(result) {
-          if (typeof result !== "undefined") originalOptions['yes'](result);
-          else originalOptions['no']();
-        }
-        if ( !options['error']) {
-          options['error'] = originalOptions['no'];
-        }
+        options = buildCallbacks(options, function(result) {
+          if (typeof result !== "undefined") options['yes'](result);
+          else options['no']();
+        }, options['no']);
         this.hasValidOAuth(options);
       } else {
         return (!this.isLoggedOut()) || this.hasValidOAuth(options);
@@ -167,13 +171,10 @@
       if ( options && (options['yes'] || options['no']) ){
         originalOptions = options;
         options = {};
-        options['success'] = function(result) {
+        options = buildCallbacks(options, function(result) {
           if (result == username) originalOptions['yes'](username);
           else originalOptions['no']();
-        }
-        if ( !options['error']) {
-          options['error'] = originalOptions['no'];
-        }
+        }, options['no']);
         this.hasValidOAuth(options);
       } else {
         return username == this.getLoggedInUser(options);
@@ -193,7 +194,8 @@
           if (typeof result == "undefined") originalOptions['yes']();
           else originalOptions['no'](result);
         }
-        if ( !options['error']) {
+        // Set default error method if one is not provided
+        if ( !options['error'] ) {
           options['error'] = originalOptions['yes'];
         }
         this.hasValidOAuth(options);
@@ -1032,7 +1034,7 @@
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
         options[StackMob.CASCADE_DELETE] = cascadeDelete;
-        
+
         var model = this;
         options["stackmob_ondeleteAndSave"] = function(){
             var existingValues = model.get(fieldName);
@@ -1149,7 +1151,21 @@
         return StackMob.loginField;
       },
       isLoggedIn : function(options) {
-        return StackMob.isUserLoggedIn(this.get(StackMob['loginField']), options);
+        if ( options && (options['yes'] || options['no']) ){
+          originalOptions = options;
+          options = {};
+          options['success'] = function(result) {
+            if (typeof result !== "undefined") originalOptions['yes'](result);
+            else originalOptions['no']();
+          }
+          // Set default error method if one is not provided
+          if ( !options['error'] ) {
+            options['error'] = originalOptions['no'];
+          }
+          this.hasValidOAuth(options);
+        } else {
+          return StackMob.isUserLoggedIn(this.get(StackMob['loginField']), options);
+        }
       },
       login : function(keepLoggedIn, options) {
         options = options || {};
