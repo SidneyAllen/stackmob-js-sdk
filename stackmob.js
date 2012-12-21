@@ -285,7 +285,6 @@
     hasValidOAuth : function(options) {
       //If we aren't running in OAuth 2.0 mode, then kick out early.
       if(!this.isOAuth2Mode()){
-        //TODO: this only handles syncronous call
         if (options['error'])
           options['error']();
         return false;
@@ -297,7 +296,6 @@
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
-        //TODO: this only handles syncronous call
         if (options['error'])
           options['error']();
         return false;
