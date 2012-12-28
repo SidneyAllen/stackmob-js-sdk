@@ -1390,6 +1390,10 @@
         // Set up error callback
         var error = params['error'];
         params['error'] = function(jqXHR, textStatus, errorThrown) {
+          if (jqXHR.status == 0){
+            this.success(jqXHR, textStatus, errorThrown);
+            return;
+          }
           var responseText = jqXHR.responseText || jqXHR.text;
           StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error);
         }
