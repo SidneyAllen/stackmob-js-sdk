@@ -1390,7 +1390,9 @@
         // Set up error callback
         var error = params['error'];
         params['error'] = function(jqXHR, textStatus, errorThrown) {
-          if (jqXHR.status == 0){
+          // Workaround for Android broswers not recognizing HTTP status code 206.
+          // Call the success method on HTTP Status 0 (the bug) and when a range was specified.
+          if (jqXHR.status == 0 && params['query'] && (typeof params['query']['range'] === 'object')){
             this.success(jqXHR, textStatus, errorThrown);
             return;
           }
