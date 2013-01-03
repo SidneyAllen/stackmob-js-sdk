@@ -151,7 +151,7 @@
      * Without specifying the 'options' argument, this is a "dumb" method in that simply checks for the presence of login credentials, not if they're valid.
      * The server checks the validity of the credentials on each API request, however.  It's here for convenience.
      *
-     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedIn : function(options) {
       if ( options && (options['yes'] || options['no']) ){
@@ -172,7 +172,7 @@
     /**
      * Without specifying the 'options' argument, this is a "dumb" method in that simply checks if the given `username` is that of the logged in user without asking the server.
      *
-     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isUserLoggedIn : function(username, options) {
       if ( options && (options['yes'] || options['no']) ){
@@ -193,7 +193,7 @@
     /**
      * Without specifying the 'options' argument, this is a "dumb" method in that checks to see if a user is logged out (doesn't have login credentials) without hitting the server.
      *
-     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will check the server for validity of credentials.
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedOut : function(options) {
       if ( options && (options['yes'] || options['no']) ){
@@ -1554,6 +1554,7 @@
             result = model;
           }
 
+          // Only used for testing purposes. Do not implement against this.
           if ( StackMob._session_expiry && result && result['expires_in'])
             result['expires_in'] = StackMob._session_expiry;
           StackMob.onsuccess(model, method, params, result, success);
