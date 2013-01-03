@@ -30,14 +30,24 @@
     return options;
   };
 
-  var buildCallbacks = function(options, newSuccess, defaultError){
-    options['success'] = newSuccess;
-    // Set default error method if one is not provided
-    if ( !options['error'] ) {
-      options['error'] = defaultError;
+  var generateCallbacks = function(options, methods){
+    // Wrap yes/no methods with a success method
+    options['success'] = function(result){
+      if ( methods['evaluate'](result) ){
+        if (typeof methods['yes'] === "function") methods['yes'](result);
+      } else {
+        if (typeof methods['no'] === "function") methods['no'](result);
+      }
     }
+
+    // Set default error method if one is not provided
+    if ( !options['error'] && (typeof methods['error'] === "function") ) {
+      options['error'] = methods['error'];
+    }
+
     return options;
   }
+
 
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
@@ -130,7 +140,7 @@
     getLoggedInUser : function(options) {
       var storedUser = ((!this.isOAuth2Mode() && this.Storage.retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
       //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
-      if ( options && options['success'] ){
+      if ( options && options['oncomplete'] ){
         options = replaceSuccessMethod(options, function(result){
           return result;
         });
@@ -152,10 +162,14 @@
      */
     isLoggedIn : function(options) {
       if ( options && (options['yes'] || options['no']) ){
-        options = buildCallbacks(options, function(result) {
-          if (typeof result !== "undefined") options['yes'](result);
-          else options['no']();
-        }, options['no']);
+        options = generateCallbacks(options, {
+          'evaluate': function(result) {
+            return typeof result !== "undefined";
+          },
+          'yes': options['yes'],
+          'no': options['no'],
+          'error': options['no']
+        });
         this.hasValidOAuth(options);
       } else {
         return (!this.isLoggedOut()) || this.hasValidOAuth(options);
@@ -169,12 +183,14 @@
      */
     isUserLoggedIn : function(username, options) {
       if ( options && (options['yes'] || options['no']) ){
-        originalOptions = options;
-        options = {};
-        options = buildCallbacks(options, function(result) {
-          if (result == username) originalOptions['yes'](username);
-          else originalOptions['no']();
-        }, options['no']);
+        options = generateCallbacks(options, {
+          'evaluate': function(result) {
+            return result == username;
+          },
+          'yes': options['yes'],
+          'no': options['no'],
+          'error': options['no']
+        });
         this.hasValidOAuth(options);
       } else {
         return username == this.getLoggedInUser(options);
@@ -188,16 +204,14 @@
      */
     isLoggedOut : function(options) {
       if ( options && (options['yes'] || options['no']) ){
-        originalOptions = options;
-        options = {};
-        options['success'] = function(result) {
-          if (typeof result == "undefined") originalOptions['yes']();
-          else originalOptions['no'](result);
-        }
-        // Set default error method if one is not provided
-        if ( !options['error'] ) {
-          options['error'] = originalOptions['yes'];
-        }
+        options = generateCallbacks(options, {
+          'evaluate': function(result) {
+            return typeof result == "undefined";
+          },
+          'yes': options['yes'],
+          'no': options['no'],
+          'error': options['yes']
+        });
         this.hasValidOAuth(options);
       } else {
         return !this.hasValidOAuth(options);
