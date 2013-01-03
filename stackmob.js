@@ -33,7 +33,7 @@
   var generateCallbacks = function(options, methods){
     // Wrap yes/no methods with a success method
     options['success'] = function(result){
-      if ( methods['evaluate'](result) ){
+      if ( methods['isValidResult'](result) ){
         if (typeof methods['yes'] === "function") methods['yes'](result);
       } else {
         if (typeof methods['no'] === "function") methods['no'](result);
@@ -163,7 +163,7 @@
     isLoggedIn : function(options) {
       if ( options && (options['yes'] || options['no']) ){
         options = generateCallbacks(options, {
-          'evaluate': function(result) {
+          'isValidResult': function(result) {
             return typeof result !== "undefined";
           },
           'yes': options['yes'],
@@ -184,7 +184,7 @@
     isUserLoggedIn : function(username, options) {
       if ( options && (options['yes'] || options['no']) ){
         options = generateCallbacks(options, {
-          'evaluate': function(result) {
+          'isValidResult': function(result) {
             return result == username;
           },
           'yes': options['yes'],
@@ -205,7 +205,7 @@
     isLoggedOut : function(options) {
       if ( options && (options['yes'] || options['no']) ){
         options = generateCallbacks(options, {
-          'evaluate': function(result) {
+          'isValidResult': function(result) {
             return typeof result == "undefined";
           },
           'yes': options['yes'],
