@@ -141,13 +141,6 @@
       var storedUser = ((!this.isOAuth2Mode() && this.Storage.retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
       //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
       if ( options && options['oncomplete'] ){
-        options = replaceSuccessMethod(options, function(result){
-          return result;
-        });
-        // Set default error method if one is not provided
-        if ( !options['error'] ) {
-          options['error'] = options['success'];
-        }
         this.hasValidOAuth(options);
       } else {
         return (this.isLoggedIn(options) && storedUser) ? storedUser : null;
@@ -297,10 +290,14 @@
     },
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
     hasValidOAuth : function(options) {
+      if (!options)
+        return false;
+
       //If we aren't running in OAuth 2.0 mode, then kick out early.
       if(!this.isOAuth2Mode()){
         if (options['error'])
           options['error']();
+        if (options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
@@ -310,26 +307,36 @@
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
-        if (options['error'])
-          options['error']();
+        if (options['error']) options['error']();
+        if (options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
       if ( !StackMob.hasExpiredOAuth() ) {
         //If not expired
-        if ( options && options['success'] ){
+        if (options['success'] ){
           options['success']( this.Storage.retrieve('oauth2.user') );
         }
+        if (options['oncomplete']) options['oncomplete']( this.Storage.retrieve('oauth2.user') );
         return this.Storage.retrieve('oauth2.user');
-      } else if ( options && options['success'] ) {
+      } else if ( options ) {
         //If expired and async
-        var originalSuccess = options['success'];
-        options['success'] = function(input){
-          originalSuccess( input[StackMob['loginField']] );
+        if ( options['success'] ){
+          var originalSuccess = options['success'];
+          options['success'] = function(input){
+            originalSuccess( input[StackMob['loginField']] );
+          }
+        }
+        if ( options['oncomplete'] ){
+          var originalComplete = options['oncomplete'];
+          options['oncomplete'] = function( input ){
+            originalComplete( input[StackMob['loginField']] );
+          };
         }
         StackMob.refreshSession.call(StackMob, options);
       } else {
         //If expired and sync
+        if (options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
@@ -1164,16 +1171,14 @@
       },
       isLoggedIn : function(options) {
         if ( options && (options['yes'] || options['no']) ){
-          originalOptions = options;
-          options = {};
-          options['success'] = function(result) {
-            if (typeof result !== "undefined") originalOptions['yes'](result);
-            else originalOptions['no']();
-          }
-          // Set default error method if one is not provided
-          if ( !options['error'] ) {
-            options['error'] = originalOptions['no'];
-          }
+          options = generateCallbacks(options, {
+            'isValidResult': function(result) {
+              return typeof result !== "undefined";
+            },
+            'yes': options['yes'],
+            'no': options['no'],
+            'error': options['no']
+          });
           this.hasValidOAuth(options);
         } else {
           return StackMob.isUserLoggedIn(this.get(StackMob['loginField']), options);
@@ -1550,7 +1555,7 @@
           }
 
           if ( StackMob._session_expiry && result && result['expires_in'])
-            result['expires_in'] = StackMob._session_expiry
+            result['expires_in'] = StackMob._session_expiry;
           StackMob.onsuccess(model, method, params, result, success);
 
         };

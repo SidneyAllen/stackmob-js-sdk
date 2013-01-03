@@ -176,8 +176,8 @@ describe("asyncronous authentication methods", function(){
 
   	runs(function(){
   		StackMob.isUserLoggedIn(usr, {
-	      yes: function(result){
-	      	console.log(result);
+	      yes: function(username){
+	      	console.log(username);
 	        loggedIn = true;
 	      },
 	      no: function(){
@@ -200,8 +200,8 @@ describe("asyncronous authentication methods", function(){
 
   	runs(function(){
 			StackMob.getLoggedInUser({
-	      success: function(result){
-	      	console.log(result);
+	      oncomplete: function(username){
+	      	console.log(username);
 	        loggedIn = true;
 	      }
 	    });
