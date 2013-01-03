@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.6.1
+ StackMob JS SDK Version 0.7.0-beta
  Copyright 2012 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@
     apiVersion : 0,
 
     //The current version of the JS SDK.
-    sdkVersion : "0.6.1",
+    sdkVersion : "0.7.0-beta",
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -1390,6 +1390,12 @@
         // Set up error callback
         var error = params['error'];
         params['error'] = function(jqXHR, textStatus, errorThrown) {
+          // Workaround for Android broswers not recognizing HTTP status code 206.
+          // Call the success method on HTTP Status 0 (the bug) and when a range was specified.
+          if (jqXHR.status == 0 && params['query'] && (typeof params['query']['range'] === 'object')){
+            this.success(jqXHR, textStatus, errorThrown);
+            return;
+          }
           var responseText = jqXHR.responseText || jqXHR.text;
           StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error);
         }
