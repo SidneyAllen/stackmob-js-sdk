@@ -1,4 +1,3 @@
-
 /*
  * This suite will try to create a user, login with that user, and logout
  * @param usr username
@@ -28,7 +27,7 @@ describe("Login and logout ", function() {
 	});
 
 
-	it("should login '" + usr + "'", function() {
+	it("should log in '" + usr + "'", function() {
 		var loggedIn = false;
 
 		var user = new StackMob.User({
@@ -43,15 +42,18 @@ describe("Login and logout ", function() {
 		});
 
 		waitsFor(function() {
-			return loggedIn === true;
+			return loggedIn == true;
 		}, "user logged in should be " + usr);
 
 		runs(function() {
-			expect(loggedIn).toBeTruthy();
+			expect(user.isLoggedIn()).toBeTruthy();
+			expect(StackMob.isLoggedOut()).toBeFalsy();
+			expect(StackMob.isLoggedIn()).toBeTruthy();
+			expect(StackMob.getLoggedInUser()).toNotBe(null);
 		});
 	});
 
-	it("should logout " + usr, function() {
+	it("should log out " + usr, function() {
 		var user = new StackMob.User({
 			username : usr
 		});
@@ -65,11 +67,14 @@ describe("Login and logout ", function() {
 		});
 
 		waitsFor(function() {
-			return loggedOut === true;
+			return loggedOut == true;
 		}, "user logged out should be " + usr);
 
 		runs(function() {
-			expect(loggedOut).toBeTruthy();
+			expect(user.isLoggedIn()).toBeFalsy();
+			expect(StackMob.isLoggedOut()).toBeTruthy();
+			expect(StackMob.isLoggedIn()).toBeFalsy();
+			expect(StackMob.getLoggedInUser()).toBeNull();
 		});
 	});
 
@@ -77,9 +82,13 @@ describe("Login and logout ", function() {
 });
 
 describe("asyncronous authentication methods", function(){
-	// Set a short session expiry time for testing
-	StackMob._session_expiry = 3;
 	var usr = 'asynctestuser';
+
+	it("should override session expiry for testing", function(){
+		runs(function(){
+			setSessionExpiry(3);
+		});
+	});
 
 	it("should create " + usr, function() {
 		var user = new StackMob.User({
@@ -98,6 +107,13 @@ describe("asyncronous authentication methods", function(){
 		waitsFor(function() {
 			return createdUser;
 		}, "StackMob to create user '" + usr + "'");
+
+		runs(function() {
+			expect(user.isLoggedIn()).toBeFalsy();
+			expect(StackMob.isLoggedOut()).toBeTruthy();
+			expect(StackMob.isLoggedIn()).toBeFalsy();
+			expect(StackMob.getLoggedInUser()).toBeNull();
+		});
 
 	});
 
@@ -120,11 +136,14 @@ describe("asyncronous authentication methods", function(){
 		}, "user logged in should be " + usr);
 
 		runs(function() {
-			expect(loggedIn).toBeTruthy();
+			expect(user.isLoggedIn()).toBeTruthy();
+			expect(StackMob.isLoggedOut()).toBeFalsy();
+			expect(StackMob.isLoggedIn()).toBeTruthy();
+			expect(StackMob.getLoggedInUser()).toBe(usr);
 		});
 	});
 
-	it("should be logged in", function(){
+	it("should be async logged in", function(){
 		var loggedIn = false;
 
 		runs(function(){
@@ -153,7 +172,6 @@ describe("asyncronous authentication methods", function(){
   	runs(function(){
 			StackMob.isLoggedIn({
 	      yes: function(result){
-	      	console.log(result);
 	        loggedIn = true;
 	      },
 	      no: function(){
@@ -177,7 +195,6 @@ describe("asyncronous authentication methods", function(){
   	runs(function(){
   		StackMob.isUserLoggedIn(usr, {
 	      yes: function(username){
-	      	console.log(username);
 	        loggedIn = true;
 	      },
 	      no: function(){
@@ -194,14 +211,15 @@ describe("asyncronous authentication methods", function(){
 
   it("should get refresh token from getLoggedInUser", function(){
   	var loggedIn = false;
+  	var loggedInUser = null;
   	waitsFor(function(){
   		return !StackMob.isLoggedIn();
   	}, "wait for session to expire locally");
 
   	runs(function(){
 			StackMob.getLoggedInUser({
-	      oncomplete: function(username){
-	      	console.log(username);
+	      success: function(username){
+	      	loggedInUser = username;
 	        loggedIn = true;
 	      }
 	    });
@@ -210,6 +228,13 @@ describe("asyncronous authentication methods", function(){
 		waitsFor(function(){
     	return loggedIn;
     }, "user should be logged in");
+
+    runs(function() {
+			expect(StackMob.isLoggedOut()).toBeFalsy();
+			expect(StackMob.isLoggedIn()).toBeTruthy();
+			expect(StackMob.getLoggedInUser()).toBe(usr);
+			expect(loggedInUser).toBe(usr);
+		});
 
   });
 
@@ -225,7 +250,6 @@ describe("asyncronous authentication methods", function(){
 	        loggedIn = false;
 	      },
 	      no: function(result){
-	      	console.log(result);
 	        loggedIn = true;
 	      }
 	    });
@@ -236,6 +260,12 @@ describe("asyncronous authentication methods", function(){
     }, "user should be logged in");
 
   });
+
+  it("should reset session expiry", function(){
+		runs(function(){
+			setSessionExpiry(3600);
+		});
+	});
 
   deleteUser(usr);
 

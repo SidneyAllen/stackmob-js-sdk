@@ -290,14 +290,11 @@
     },
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
     hasValidOAuth : function(options) {
-      if (!options)
-        return false;
-
       //If we aren't running in OAuth 2.0 mode, then kick out early.
       if(!this.isOAuth2Mode()){
-        if (options['error'])
+        if (options && options['error'])
           options['error']();
-        if (options['oncomplete']) options['oncomplete']( null );
+        if (options && options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
@@ -307,36 +304,28 @@
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
-        if (options['error']) options['error']();
-        if (options['oncomplete']) options['oncomplete']( null );
+        if (options && options['error']) options['error']();
+        if (options && options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
       if ( !StackMob.hasExpiredOAuth() ) {
         //If not expired
-        if (options['success'] ){
+        if (options && options['success'] ){
           options['success']( this.Storage.retrieve('oauth2.user') );
         }
-        if (options['oncomplete']) options['oncomplete']( this.Storage.retrieve('oauth2.user') );
+        if (options && options['oncomplete']) options['oncomplete']( this.Storage.retrieve('oauth2.user') );
         return this.Storage.retrieve('oauth2.user');
-      } else if ( options ) {
+      } else if ( options && options['success']) {
         //If expired and async
-        if ( options['success'] ){
-          var originalSuccess = options['success'];
-          options['success'] = function(input){
-            originalSuccess( input[StackMob['loginField']] );
-          }
-        }
-        if ( options['oncomplete'] ){
-          var originalComplete = options['oncomplete'];
-          options['oncomplete'] = function( input ){
-            originalComplete( input[StackMob['loginField']] );
-          };
+        var originalSuccess = options['success'];
+        options['success'] = function(input){
+          originalSuccess( input[StackMob['loginField']] );
         }
         StackMob.refreshSession.call(StackMob, options);
       } else {
         //If expired and sync
-        if (options['oncomplete']) options['oncomplete']( null );
+        if (options && options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
@@ -1554,16 +1543,13 @@
             result = model;
           }
 
-          // Only used for testing purposes. Do not implement against this.
-          if ( StackMob._session_expiry && result && result['expires_in'])
-            result['expires_in'] = StackMob._session_expiry;
           StackMob.onsuccess(model, method, params, result, success);
 
         };
         params['success'] = defaultSuccess;
 
         return $.ajax(params);
-      },
+      }
 
     }
   });
