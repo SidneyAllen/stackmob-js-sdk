@@ -140,7 +140,7 @@
     getLoggedInUser : function(options) {
       var storedUser = ((!this.isOAuth2Mode() && this.Storage.retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
       //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
-      if ( options && options['oncomplete'] ){
+      if ( options && options['success'] ){
         this.hasValidOAuth(options);
       } else {
         return (this.isLoggedIn(options) && storedUser) ? storedUser : null;
@@ -294,7 +294,6 @@
       if(!this.isOAuth2Mode()){
         if (options && options['error'])
           options['error']();
-        if (options && options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
@@ -305,7 +304,6 @@
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
         if (options && options['error']) options['error']();
-        if (options && options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
@@ -314,7 +312,6 @@
         if (options && options['success'] ){
           options['success']( this.Storage.retrieve('oauth2.user') );
         }
-        if (options && options['oncomplete']) options['oncomplete']( this.Storage.retrieve('oauth2.user') );
         return this.Storage.retrieve('oauth2.user');
       } else if ( options && options['success']) {
         //If expired and async
@@ -325,7 +322,6 @@
         StackMob.refreshSession.call(StackMob, options);
       } else {
         //If expired and sync
-        if (options && options['oncomplete']) options['oncomplete']( null );
         return false;
       }
 
