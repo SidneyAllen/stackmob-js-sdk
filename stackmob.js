@@ -323,7 +323,6 @@
       this.secure = options['secure'] === true;
       this.fullURL = (options['fullURL'] === true) || !( typeof PhoneGap === 'undefined') || this.fullURL;
       this.ajax = options['ajax'] || this.ajax;
-      this.debug = this.apiVersion === 0;
 
       this.urlRoot = options['urlRoot'] || this.getBaseURL();
 
@@ -425,7 +424,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = this.debug ? this.getDevAPIBase() : this.getProdAPIBase();
+      options['url'] = StackMob['apiURL'] || (StackMob['apiVersion'] === 0 ? StackMob.getDevAPIBase() : StackMob.getProdAPIBase());
       this.sync.call(StackMob, method, null, options);
     },
 
