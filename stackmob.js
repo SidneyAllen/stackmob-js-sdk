@@ -382,7 +382,7 @@
     var expires = StackMob.Storage.retrieve('oauth2.expires');
 
     if(StackMob.isOAuth2Mode() && accessToken && macKey) {
-      var authHeader = generateMAC(StackMob.METHOD_MAP[method] || 'GET', accessToken, macKey, sighost, path);
+      var authHeader = generateMAC(params['type'], accessToken, macKey, sighost, path);
       return authHeader;
     }
   }
