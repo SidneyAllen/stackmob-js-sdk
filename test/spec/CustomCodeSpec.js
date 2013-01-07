@@ -7,89 +7,36 @@
  */
 
 describe("Custom Code Method Verb", function() {
+  
+  var makeCustomCodeCall = function(verb) {
+    it("should have " + verb + " as the verb", function() {
+      var goodToContinue = false;
+      var result = '';
+      
+      StackMob.customcode('hello_world', {}, verb, {
+        success: function(jsonResult) {
+          result = jsonResult.verb;
+          goodToContinue = true;
+        },
+        error: function(failure) {}
+      });
+      
+      waitsFor(function() {
+        return goodToContinue === true;
+      }, "to finish querying", 20000);
+      
+      runs(function() {
+        expect(result).toMatch(verb);
+      });
+      
+    });
+    
+  };
 
-	it("should have GET as the verb", function() {
-		var goodToContinue = false;
-		var result = '';
-		
-		StackMob.customcode('no_param', {}, {
-			success: function(jsonResult) {
-				result = jsonResult.verb;
-				goodToContinue = true;
-			},
-			error: function(failure) {}
-		});
-		
-		waitsFor(function() {
-			return goodToContinue === true;
-		}, "to finish querying", 20000);
-		
-		runs(function() {
-			expect(result).toMatch('GET');
-		});
-		
-	});
 	
-	it("should have POST as the verb", function(){
-		var goodToContinue = false;
-		var result = '';
-		
-		StackMob.customcode('no_param', {}, 'POST', {
-			success: function(jsonResult) {
-				result = jsonResult.verb;
-				goodToContinue = true;
-			},
-			error: function(failure) {}
-		});
-		
-		waitsFor(function() {
-			return goodToContinue === true;
-		}, "to finish querying", 20000);
-		
-		runs(function() {
-			expect(result).toMatch('POST');
-		});
-	});
 	
-	it("should have PUT as the verb", function(){
-		var goodToContinue = false;
-		var result = '';
-		
-		StackMob.customcode('no_param', {}, 'PUT', {
-			success: function(jsonResult) {
-				result = jsonResult.verb;
-				goodToContinue = true;
-			},
-			error: function(failure) {}
-		});
-		
-		waitsFor(function() {
-			return goodToContinue === true;
-		}, "to finish querying", 20000);
-		
-		runs(function() {
-			expect(result).toMatch('PUT');
-		});
-	});
-	
-	it("should have DELETE as the verb", function(){
-		var goodToContinue = false;
-		var result = '';
-		
-		StackMob.customcode('no_param', {}, 'DELETE', {
-			success: function(jsonResult) {
-				result = jsonResult.verb;
-				goodToContinue = true;
-			},
-			error: function(failure) {}
-		});
-		
-		waitsFor(function() {
-			return goodToContinue === true;
-		}, "to finish querying", 20000);
-		
-		runs(function() {
-			expect(result).toMatch('DELETE');
-		});
-	});
+	makeCustomCodeCall('GET');
+	makeCustomCodeCall('POST');
+	makeCustomCodeCall('PUT');
+	makeCustomCodeCall('DELETE');
 });

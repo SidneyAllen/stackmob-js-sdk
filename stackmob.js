@@ -354,10 +354,10 @@
     return ts + nl + nonce + nl + method + nl + uri + nl + host + nl + port + nl + nl;
   }
 
-  function generateMAC(method, id, key, hostWithPort, url) {
+  function generateMAC(method, id, key, hostWithPort, url, host) {
     var splitHost = hostWithPort.split(':');
     var hostNoPort = splitHost.length > 1 ? splitHost[0] : hostWithPort;
-    var port = splitHost.length > 1 ? splitHost[1] : 80;
+    var port = splitHost.length > 1 ? splitHost[1] : ((host.substring(0,5) == 'https') ? 443 : 80);
 
     var ts = Math.round(new Date().getTime() / 1000);
     var nonce = "n" + Math.round(Math.random() * 10000);
@@ -381,7 +381,7 @@
     var expires = StackMob.Storage.retrieve('oauth2.expires');
 
     if(StackMob.isOAuth2Mode() && accessToken && macKey) {
-      var authHeader = generateMAC(StackMob.METHOD_MAP[method] || 'GET', accessToken, macKey, sighost, path);
+      var authHeader = generateMAC(params['type'], accessToken, macKey, sighost, path, host);
       return authHeader;
     }
   }
