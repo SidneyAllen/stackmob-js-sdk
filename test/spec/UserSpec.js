@@ -540,9 +540,10 @@ describe("add messages to user and query with setExpand level 1", function() {
 	var howMany = 10;
 
 	var msgIDs = [];
-	
+  createSimpleUser(usr);
+  	
 	it("should add " + howMany + " messages to user " + usr, function() {
-		createSimpleUser(usr);
+		
 		var res = false;
 		var user = new StackMob.User({username:usr});
 		var msgs = [];

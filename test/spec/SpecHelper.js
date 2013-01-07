@@ -39,22 +39,79 @@ function isInteger (n) {
   return n===+n && n===(n|0);
 }
 
-
 /** CREATE AND DELETE USER START **/
 function createSimpleUser(usr) {
-	var user = new StackMob.User({
-		username : usr,
-		password : usr
-	});
-	
-	var json = {};
-
-	user.create({
-		success : function(model) {
-			json = model.toJSON();
-		}
-	});
+	it("should create " + usr, function() {
+    var user = new StackMob.User({
+      username : usr,
+      password : usr
+    });
+    
+    var createdUser = null;
+    
+    user.create({
+      success: function(model) {
+        createdUser = model.toJSON();
+      }
+    });
+    
+    waitsFor(function() {
+      return createdUser;
+    }, 'StackMob should respond', 20000);
+    
+  });
 }
+
+function loginUser(usr) {
+  it("should login '" + usr + "'", function() { 
+    var loggedIn = false;
+    
+    var user = new StackMob.User({
+      username : usr,
+      password : usr
+    });
+
+    user.login(false, {
+      success : function(model) {
+        loggedIn = true; 
+      }
+    });
+    
+    waitsFor(function() {
+      return loggedIn === true;
+    }, "user logged in should be " + usr, 20000);
+    
+    runs(function() {
+      expect(loggedIn).toBeTruthy();
+    });
+  });
+}
+
+function logoutUser(usr) {
+  it("should logout " + usr, function() {
+    var user = new StackMob.User({
+      username : usr
+    });
+    
+    var loggedOut = false;
+
+    user.logout({
+      success : function(model) {
+        loggedOut = true;
+      }
+    });
+    
+    waitsFor(function() {
+      return loggedOut === true;
+    }, "user logged out should be " + usr, 20000);
+    
+    runs(function() {
+      expect(loggedOut).toBeTruthy();
+    });
+  });
+}
+
+
 
 /**
  * This function is to create user with some special fields
