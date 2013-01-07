@@ -433,7 +433,6 @@
       this.secure = options['secure'] === true;
       this.fullURL = (options['fullURL'] === true) || !( typeof PhoneGap === 'undefined') || this.fullURL;
       this.ajax = options['ajax'] || this.ajax;
-      this.debug = this.apiVersion === 0;
 
       this.urlRoot = options['urlRoot'] || this.getBaseURL();
 
@@ -466,10 +465,10 @@
     return ts + nl + nonce + nl + method + nl + uri + nl + host + nl + port + nl + nl;
   }
 
-  function generateMAC(method, id, key, hostWithPort, url) {
+  function generateMAC(method, id, key, hostWithPort, url, host) {
     var splitHost = hostWithPort.split(':');
     var hostNoPort = splitHost.length > 1 ? splitHost[0] : hostWithPort;
-    var port = splitHost.length > 1 ? splitHost[1] : 80;
+    var port = splitHost.length > 1 ? splitHost[1] : ((host.substring(0,5) == 'https') ? 443 : 80);
 
     var ts = Math.round(new Date().getTime() / 1000);
     var nonce = "n" + Math.round(Math.random() * 10000);
@@ -493,7 +492,7 @@
     var expires = StackMob.Storage.retrieve('oauth2.expires');
 
     if(StackMob.isOAuth2Mode() && accessToken && macKey) {
-      var authHeader = generateMAC(StackMob.METHOD_MAP[method] || 'GET', accessToken, macKey, sighost, path);
+      var authHeader = generateMAC(params['type'], accessToken, macKey, sighost, path, host);
       return authHeader;
     }
   }
@@ -535,7 +534,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = this.debug ? this.getDevAPIBase() : this.getProdAPIBase();
+      options['url'] = StackMob['apiURL'] || (StackMob['apiVersion'] === 0 ? StackMob.getDevAPIBase() : StackMob.getProdAPIBase());
       this.sync.call(StackMob, method, null, options);
     },
 
@@ -1519,6 +1518,12 @@
         // Set up error callback
         var error = params['error'];
         params['error'] = function(jqXHR, textStatus, errorThrown) {
+          // Workaround for Android broswers not recognizing HTTP status code 206.
+          // Call the success method on HTTP Status 0 (the bug) and when a range was specified.
+          if (jqXHR.status == 0 && params['query'] && (typeof params['query']['range'] === 'object')){
+            this.success(jqXHR, textStatus, errorThrown);
+            return;
+          }
           var responseText = jqXHR.responseText || jqXHR.text;
           StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error);
         }

@@ -5,6 +5,8 @@
 
 describe("Login and logout ", function() {
 	var usr = 'testuser';
+	
+	createSimpleUser(usr);
 
 	it("should create " + usr, function() {
 		var user = new StackMob.User({
