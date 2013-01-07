@@ -21,7 +21,7 @@ describe("Custom Code OAuth Signing Tests", function() {
   }
   
   var makeIncorrectOAuthCustomCodeCall = function(verb) {
-    it("should NOT recognize a logged in user in custom code " + verb + " requests", function() {
+    it("should NOT recognize a logged out user in custom code " + verb + " requests", function() {
       var response = null;
       
       StackMob.customcode('hello_world', {}, verb, {
