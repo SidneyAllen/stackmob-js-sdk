@@ -5,80 +5,12 @@
 
 describe("Login and logout ", function() {
 	var usr = 'testuser';
-	
+
 	createSimpleUser(usr);
 
-	it("should create " + usr, function() {
-		var user = new StackMob.User({
-			username : usr,
-			password : usr
-		});
+	loginUser(usr);
 
-		var createdUser = null;
-
-		user.create({
-			success: function(model) {
-				createdUser = model.toJSON();
-			}
-		});
-
-		waitsFor(function() {
-			return createdUser;
-		}, "StackMob to create user '" + usr + "'");
-
-	});
-
-
-	it("should log in '" + usr + "'", function() {
-		var loggedIn = false;
-
-		var user = new StackMob.User({
-			username : usr,
-			password : usr
-		});
-
-		user.login(false, {
-			success : function(model) {
-				loggedIn = true;
-			}
-		});
-
-		waitsFor(function() {
-			return loggedIn == true;
-		}, "user logged in should be " + usr);
-
-		runs(function() {
-			expect(user.isLoggedIn()).toBeTruthy();
-			expect(StackMob.isLoggedOut()).toBeFalsy();
-			expect(StackMob.isLoggedIn()).toBeTruthy();
-			expect(StackMob.getLoggedInUser()).toNotBe(null);
-		});
-	});
-
-	it("should log out " + usr, function() {
-		var user = new StackMob.User({
-			username : usr
-		});
-
-		var loggedOut = false;
-
-		user.logout({
-			success : function(model) {
-				loggedOut = true;
-			}
-		});
-
-		waitsFor(function() {
-			return loggedOut == true;
-		}, "user logged out should be " + usr);
-
-		runs(function() {
-			expect(user.isLoggedIn()).toBeFalsy();
-			expect(StackMob.isLoggedOut()).toBeTruthy();
-			expect(StackMob.isLoggedIn()).toBeFalsy();
-			expect(StackMob.getLoggedInUser()).toBeNull();
-		});
-	});
+	logoutUser(usr);
 
 	deleteUser(usr);
 });
