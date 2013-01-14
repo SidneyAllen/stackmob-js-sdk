@@ -389,10 +389,8 @@
       "resetPassword" : "POST",
 
       "facebookAccessToken" : "POST",
-      "createUserWithFacebook" : "GET",
-      "linkUserWithFacebook" : "GET",
-
-      "cc" : "GET"
+      "createUserWithFacebook" : "POST",
+      "linkUserWithFacebook" : "POST",
     },
 
     /**
