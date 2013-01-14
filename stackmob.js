@@ -261,7 +261,7 @@
       "read" : "GET",
       "update" : "PUT",
       "delete" : "DELETE",
-      
+
       "post" : "POST",
       "get" : "GET",
       "put" : "PUT",
@@ -279,10 +279,8 @@
       "resetPassword" : "POST",
 
       "facebookAccessToken" : "POST",
-      "createUserWithFacebook" : "GET",
-      "linkUserWithFacebook" : "GET",
-
-      "cc" : "GET"
+      "createUserWithFacebook" : "POST",
+      "linkUserWithFacebook" : "POST",
     },
 
     /**

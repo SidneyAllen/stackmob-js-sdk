@@ -1,5 +1,16 @@
 ## StackMob JavaScript SDK Change Log
 
+### v0.7.0
+
+**FEATURE**
+
+* Asynchronous authentication check methods that will renew OAuth2 Refresh Tokens if necessary
+* Workaround for Android 2.2+ browsers return HTTP status 0 instead of 206
+
+**FIX**
+* API URL override for Custom Code methods
+* Updated Facebook methods to POST instead of GET
+
 ### v0.6.1 - Nov 29, 2012
 
 **FIX**
