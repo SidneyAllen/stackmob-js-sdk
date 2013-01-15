@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.7.0-beta
+ StackMob JS SDK Version 0.7.0
  Copyright 2012 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +17,8 @@
 
 (function() {
   var root = this;
+
+  
 
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
@@ -58,18 +60,18 @@
     RETRY_WAIT : 10000,
     RETRY_ATTEMPTS : 3,
     REFRESH_TOKEN_KEY : 'oauth2.refreshToken',
-    
+
     POST: 'POST',
     PUT: 'PUT',
     DELETE: 'DELETE',
-    
+
     CONTENT_TYPE_JSON: 'application/json',
 
     //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
     apiVersion : 0,
 
     //The current version of the JS SDK.
-    sdkVersion : "0.7.0-beta",
+    sdkVersion : "0.7.0",
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -102,30 +104,113 @@
       }
     },
 
-    //This returns the current logged in user's login id: username, email (whatever is defined as the primary key).
-    getLoggedInUser : function() {
+    /**
+     * Helper method to allow altering callback methods
+     **/
+    _generateCallbacks : function(options, methods){
+      // Wrap yes/no methods with a success method
+      options['success'] = function(result){
+        if ( methods['isValidResult'](result) ){
+          if (typeof methods['yes'] === "function") methods['yes'](result);
+        } else {
+          if (typeof methods['no'] === "function") methods['no'](result);
+        }
+      }
 
+      // Set default error method if one is not provided
+      if ( !options['error'] && (typeof methods['error'] === "function") ) {
+        options['error'] = methods['error'];
+      }
+
+      return options;
+    },
+
+    /**
+     * Helper method that checks for callback methods in an options object
+     **/
+    _containsCallbacks : function(options, callbacks){
+      return ( typeof options == "object" ) &&
+              _.some(callbacks, function(callback){ return typeof options[callback] == "function"; })
+    },
+
+    /**
+     * Returns the current logged in user's login id: username (or your custom field if specified in StackMob.init), email, or whatever is defined as the primary key.
+     * Optionally accepts asynchronous callback methods in the options object.
+     */
+    getLoggedInUser : function(options) {
       var storedUser = ((!this.isOAuth2Mode() && this.Storage.retrieve(this.loggedInUserKey)) || this.Storage.retrieve('oauth2.user'));
       //The logged in user's ID is saved in local storage until removed, so we need to check to make sure that the user has valid login credentials before returning the login ID.
-      return (this.isLoggedIn() && storedUser) ? storedUser : null;
+      if ( options && options['success'] ){
+        this.hasValidOAuth(options);
+      } else {
+        return (this.isLoggedIn(options) && storedUser) ? storedUser : null;
+      }
     },
+
     /**
-     * This is a "dumb" method in that this simply checks for the presence of login credentials, not if they're valid.  The server checks the validity of the credentials on each API request, however.  It's here for convenience.
+     * Without specifying the 'options' argument, this is a "dumb" method in that simply checks for the presence of login credentials, not if they're valid.
+     * The server checks the validity of the credentials on each API request, however.  It's here for convenience.
      *
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
-    isLoggedIn : function() {
-      return (!this.isLoggedOut()) || this.hasValidOAuth();
+    isLoggedIn : function(options) {
+      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+        options = this._generateCallbacks(options, {
+          'isValidResult': function(result) {
+            return typeof result !== "undefined";
+          },
+          'yes': options['yes'],
+          'no': options['no'],
+          'error': options['no']
+        });
+        this.hasValidOAuth(options);
+      } else {
+        return (!this.isLoggedOut()) || this.hasValidOAuth(options);
+      }
     },
-    //A convenience method to see if the given `username` is that of the logged in user.
-    isUserLoggedIn : function(username) {
-      return username == this.getLoggedInUser();
-    },
+
     /**
-     * Checks to see if a user is logged out (doesn't have login credentials)
+     * Without specifying the 'options' argument, this is a "dumb" method in that simply checks if the given `username` is that of the logged in user without asking the server.
+     *
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
-    isLoggedOut : function() {
-      return !this.hasValidOAuth();
+    isUserLoggedIn : function(username, options) {
+      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+        options = this._generateCallbacks(options, {
+          'isValidResult': function(result) {
+            return result == username;
+          },
+          'yes': options['yes'],
+          'no': options['no'],
+          'error': options['no']
+        });
+        this.hasValidOAuth(options);
+      } else {
+        return username == this.getLoggedInUser(options);
+      }
     },
+
+    /**
+     * Without specifying the 'options' argument, this is a "dumb" method in that checks to see if a user is logged out (doesn't have login credentials) without hitting the server.
+     *
+     * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
+     */
+    isLoggedOut : function(options) {
+      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+        options = this._generateCallbacks(options, {
+          'isValidResult': function(result) {
+            return typeof result == "undefined";
+          },
+          'yes': options['yes'],
+          'no': options['no'],
+          'error': options['yes']
+        });
+        this.hasValidOAuth(options);
+      } else {
+        return !this.hasValidOAuth(options);
+      }
+    },
+
     //An internally used method to get the scheme to use for API requests.
     getScheme : function() {
       return this.secure === true ? 'https' : 'http';
@@ -204,17 +289,42 @@
       this.Storage.persist('oauth2.user', creds['oauth2.user']);
     },
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
-    hasValidOAuth : function() {
+    hasValidOAuth : function(options) {
       //If we aren't running in OAuth 2.0 mode, then kick out early.
-      if(!this.isOAuth2Mode())
+      if(!this.isOAuth2Mode()){
+        if (options && options['error'])
+          options['error']();
         return false;
+      }
 
       //Check to see if we have all the necessary OAuth 2.0 credentials locally AND if the credentials have expired.
       var creds = this.getOAuthCredentials();
       var expires = creds['oauth2.expires'] || 0;
-      return _.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) && //if no accesstoken, mackey, or expires..
-      (new Date()).getTime() <= expires;
-      //if the current time is past the expired time.
+
+      //If no accesstoken, mackey, or expires..
+      if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
+        if (options && options['error']) options['error']();
+        return false;
+      }
+
+      if ( !StackMob.hasExpiredOAuth() ) {
+        //If not expired
+        if (options && options['success'] ){
+          options['success']( this.Storage.retrieve('oauth2.user') );
+        }
+        return this.Storage.retrieve('oauth2.user');
+      } else if ( options && options['success']) {
+        //If expired and async
+        var originalSuccess = options['success'];
+        options['success'] = function(input){
+          originalSuccess( input[StackMob['loginField']] );
+        }
+        StackMob.refreshSession.call(StackMob, options);
+      } else {
+        //If expired and sync
+        return false;
+      }
+
     },
     shouldSendRefreshToken : function() {
       return this.hasExpiredOAuth() && this.hasRefreshToken() && this.shouldKeepLoggedIn();
@@ -334,6 +444,7 @@
     initEnd : function(options) {
     }
   };
+
 }).call(this);
 
 /**
@@ -397,18 +508,17 @@
       createStackMobCollection();
       createStackMobUserModel();
     },
-    
+
     cc : function(method, params, verb, options) {
       this.customcode(method, params, verb, options);
-    }, 
-    
+    },
+
     customcode : function(method, params, verb, options) {
-      
+
       function isValidVerb(v) {
         return v && !_.isUndefined(StackMob.METHOD_MAP[verb.toLowerCase()]);
       }
-      
-      
+
       if(_.isObject(verb)) {
         options = verb || {};
         var verb = options['httpVerb'];
@@ -449,7 +559,6 @@
             console.error('Problem saving OAuth 2.0 credentials and user');
         }
       }
-
     },
     getCallId : function(method, model) {
       var id = {
@@ -556,7 +665,6 @@
         } else if(_.include(['PUT', 'POST'], StackMob.METHOD_MAP[method])) {
           params['contentType'] = params['contentType'] || StackMob.CONTENT_TYPE_JSON;
         }
-          
 
         if(!isNaN(options[StackMob.CASCADE_DELETE])) {
           params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
@@ -711,12 +819,21 @@
 
         //Set oncomplete callback
         var originalOncomplete = options['oncomplete'];
-        refreshOptions['oncomplete'] = function() {
-          originalOncomplete();
-        };
+        if ( originalOncomplete ) {
+          refreshOptions['oncomplete'] = function() {
+            originalOncomplete();
+          };
+        }
+
+        if ( options && options['success'] ){
+          refreshOptions['success'] = options['success'];
+        }
+
         refreshOptions['stackmob_onrefreshToken'] = StackMob.processLogin;
         //Set onerror callback
         refreshOptions['error'] = function() {
+          if ( options && options['error'] )
+            options['error']();
           //invalidate the refresh token
           StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
         };
@@ -785,7 +902,7 @@
         } catch(e) {
           wait = StackMob.RETRY_WAIT;
         }
-        
+
         // If this is the first retry, set remaining attempts
         // Otherwise decrement the retry counter
         if(typeof params['stackmob_retry'] === 'number') {
@@ -793,12 +910,12 @@
           if(params['stackmob_retry'] <= 0){ return; }
         } else {
           params['stackmob_retry'] = StackMob.RETRY_ATTEMPTS ;
-        } 
+        }
 
         // Set delay for the next retry attempt
-        _.delay(function() { 
+        _.delay(function() {
           var authHeader = getAuthHeader(model, params);
-          params['headers']['Authorization'] = authHeader;          
+          params['headers']['Authorization'] = authHeader;
           ajaxFunc(params);
         }, wait);
       } else {
@@ -918,7 +1035,7 @@
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
         options[StackMob.CASCADE_DELETE] = cascadeDelete;
-        
+
         var model = this;
         options["stackmob_ondeleteAndSave"] = function(){
             var existingValues = model.get(fieldName);
@@ -985,7 +1102,7 @@
         stackMobQuery = stackMobQuery || new StackMob.Collection.Query();
         options = options || {};
         options.stackmob_count = true;
-        var success = options.success;
+        var success = options['success'];
 
         var successFunc = function(xhr) {
 
@@ -1034,8 +1151,20 @@
       getPrimaryKeyField : function() {
         return StackMob.loginField;
       },
-      isLoggedIn : function() {
-        return StackMob.isUserLoggedIn(this.get(StackMob['loginField']));
+      isLoggedIn : function(options) {
+        if ( StackMob._containsCallbacks(options, ['yes', 'no']) ){
+          options = StackMob._generateCallbacks(options, {
+            'isValidResult': function(result) {
+              return typeof result !== "undefined";
+            },
+            'yes': options['yes'],
+            'no': options['no'],
+            'error': options['no']
+          });
+          StackMob.hasValidOAuth(options);
+        } else {
+          return StackMob.isUserLoggedIn(this.get(StackMob['loginField']), options);
+        }
       },
       login : function(keepLoggedIn, options) {
         options = options || {};
@@ -1163,7 +1292,6 @@
         this.lat = lat['lat'];
         this.lon = lat['lon'];
       }
-
     }
 
     StackMob.GeoPoint.prototype.toJSON = function() {
@@ -1324,7 +1452,7 @@
 
         // Set up error callback
         var error = params['error'];
-        
+
         // Build Sencha options
         hash['url'] = params['url'];
         hash['headers'] = params['headers'];
@@ -1342,6 +1470,7 @@
 
         return $.Ajax.request(hash);
       },
+
       'zepto' : function(model, params, method) {
 
         // Set up success callback
@@ -1355,7 +1484,6 @@
         // Set up error callback
         var error = params['error'];
         var defaultError = function(xhr, errorType, err) {
-          console.log("default error");
           var responseText = xhr.responseText || xhr.text;
           StackMob.onerror(xhr, responseText, $.ajax, model, params, error);
         }
@@ -1373,6 +1501,7 @@
 
         return $.ajax(hash);
       },
+
       'jquery' : function(model, params, method) {
         params['beforeSend'] = function(jqXHR, settings) {
           jqXHR.setRequestHeader("Accept", settings['accepts']);
@@ -1420,6 +1549,7 @@
 
         return $.ajax(params);
       }
+
     }
   });
 }).call(this);

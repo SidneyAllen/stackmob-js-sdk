@@ -9,7 +9,6 @@
 
 **FIX**
 * API URL override for Custom Code methods
-* Updated Facebook methods to POST instead of GET
 
 ### v0.6.1 - Nov 29, 2012
 
