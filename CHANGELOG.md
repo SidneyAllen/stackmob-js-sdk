@@ -1,6 +1,6 @@
 ## StackMob JavaScript SDK Change Log
 
-### v0.7.0
+### v0.7.0 - Jan 15, 2013
 
 **FEATURE**
 
