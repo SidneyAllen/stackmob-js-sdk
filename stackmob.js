@@ -18,34 +18,7 @@
 (function() {
   var root = this;
 
-  /**
-   * Helper method to allow altering callback methods
-   **/
-  var generateCallbacks = function(options, methods){
-    // Wrap yes/no methods with a success method
-    options['success'] = function(result){
-      if ( methods['isValidResult'](result) ){
-        if (typeof methods['yes'] === "function") methods['yes'](result);
-      } else {
-        if (typeof methods['no'] === "function") methods['no'](result);
-      }
-    }
-
-    // Set default error method if one is not provided
-    if ( !options['error'] && (typeof methods['error'] === "function") ) {
-      options['error'] = methods['error'];
-    }
-
-    return options;
-  }
-
-  /**
-   * Helper method that checks for callback methods in an options object
-   **/
-  var containsCallbacks = function(options, callbacks){
-    return ( typeof options == "object" ) &&
-            _.some(callbacks, function(callback){ return typeof options[callback] == "function"; })
-  }
+  
 
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
@@ -132,6 +105,35 @@
     },
 
     /**
+     * Helper method to allow altering callback methods
+     **/
+    _generateCallbacks : function(options, methods){
+      // Wrap yes/no methods with a success method
+      options['success'] = function(result){
+        if ( methods['isValidResult'](result) ){
+          if (typeof methods['yes'] === "function") methods['yes'](result);
+        } else {
+          if (typeof methods['no'] === "function") methods['no'](result);
+        }
+      }
+
+      // Set default error method if one is not provided
+      if ( !options['error'] && (typeof methods['error'] === "function") ) {
+        options['error'] = methods['error'];
+      }
+
+      return options;
+    },
+
+    /**
+     * Helper method that checks for callback methods in an options object
+     **/
+    _containsCallbacks : function(options, callbacks){
+      return ( typeof options == "object" ) &&
+              _.some(callbacks, function(callback){ return typeof options[callback] == "function"; })
+    },
+
+    /**
      * Returns the current logged in user's login id: username (or your custom field if specified in StackMob.init), email, or whatever is defined as the primary key.
      * Optionally accepts asynchronous callback methods in the options object.
      */
@@ -152,8 +154,8 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedIn : function(options) {
-      if ( containsCallbacks(options, ['yes', 'no']) ){
-        options = generateCallbacks(options, {
+      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+        options = this._generateCallbacks(options, {
           'isValidResult': function(result) {
             return typeof result !== "undefined";
           },
@@ -173,8 +175,8 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isUserLoggedIn : function(username, options) {
-      if ( containsCallbacks(options, ['yes', 'no']) ){
-        options = generateCallbacks(options, {
+      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+        options = this._generateCallbacks(options, {
           'isValidResult': function(result) {
             return result == username;
           },
@@ -194,8 +196,8 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedOut : function(options) {
-      if ( containsCallbacks(options, ['yes', 'no']) ){
-        options = generateCallbacks(options, {
+      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+        options = this._generateCallbacks(options, {
           'isValidResult': function(result) {
             return typeof result == "undefined";
           },
@@ -1150,8 +1152,8 @@
         return StackMob.loginField;
       },
       isLoggedIn : function(options) {
-        if ( containsCallbacks(options, ['yes', 'no']) ){
-          options = generateCallbacks(options, {
+        if ( StackMob._containsCallbacks(options, ['yes', 'no']) ){
+          options = StackMob._generateCallbacks(options, {
             'isValidResult': function(result) {
               return typeof result !== "undefined";
             },
@@ -1159,7 +1161,7 @@
             'no': options['no'],
             'error': options['no']
           });
-          this.hasValidOAuth(options);
+          StackMob.hasValidOAuth(options);
         } else {
           return StackMob.isUserLoggedIn(this.get(StackMob['loginField']), options);
         }

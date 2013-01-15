@@ -120,6 +120,34 @@ describe("asyncronous authentication methods", function(){
 
   });
 
+  it("should get refresh token from user.isLoggedIn", function(){
+  	var loggedIn = false;
+  	var user = new StackMob.User({
+			username : usr,
+			password : usr
+		});
+
+  	waitsFor(function(){
+  		return !StackMob.isLoggedIn();
+  	}, "wait for session to expire locally");
+
+  	runs(function(){
+			user.isLoggedIn({
+	      yes: function(result){
+	        loggedIn = true;
+	      },
+	      no: function(){
+	        loggedIn = false;
+	      }
+	    });
+  	});
+
+		waitsFor(function(){
+    	return loggedIn;
+    }, "user should be logged in");
+
+  });
+
   it("should get refresh token from isUserLoggedIn", function(){
   	var loggedIn = false;
   	waitsFor(function(){
