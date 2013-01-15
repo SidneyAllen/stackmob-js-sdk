@@ -4,10 +4,11 @@
 
 **FEATURE**
 
-* Asynchronous authentication check methods that will renew OAuth2 Refresh Tokens if necessary
-* Workaround for Android 2.2+ browsers return HTTP status 0 instead of 206
+* Asynchronous authentication check methods (`isLoggedIn`) that will renew OAuth2 Refresh Tokens if necessary
 
 **FIX**
+
+* Workaround for Android 2.2+ browsers return HTTP status 0 instead of 206 - affected pagination (`range`) calls
 * Fix `apiURL` so that the API URL applies for Custom Code methods. It previously did not.
 * Bug with OAuth signing of non-GET custom code calls
 * Update Facebook calls from GET to POST
