@@ -19,17 +19,8 @@
   var root = this;
 
   /**
-   * Helper method to allow altering a success callback method.
+   * Helper method to allow altering callback methods
    **/
-  var replaceSuccessMethod = function(options, newMethod){
-    var originalSuccess = options['success'];
-    var success = function(result) {
-      originalSuccess( newMethod(result) );
-    };
-    options['success'] = success;
-    return options;
-  };
-
   var generateCallbacks = function(options, methods){
     // Wrap yes/no methods with a success method
     options['success'] = function(result){
@@ -48,6 +39,13 @@
     return options;
   }
 
+  /**
+   * Helper method that checks for callback methods in an options object
+   **/
+  var containsCallbacks = function(options, callbacks){
+    return ( typeof options == "object" ) &&
+            _.some(callbacks, function(callback){ return typeof options[callback] == "function"; })
+  }
 
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
@@ -154,7 +152,7 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedIn : function(options) {
-      if ( options && (options['yes'] || options['no']) ){
+      if ( containsCallbacks(options, ['yes', 'no']) ){
         options = generateCallbacks(options, {
           'isValidResult': function(result) {
             return typeof result !== "undefined";
@@ -175,7 +173,7 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isUserLoggedIn : function(username, options) {
-      if ( options && (options['yes'] || options['no']) ){
+      if ( containsCallbacks(options, ['yes', 'no']) ){
         options = generateCallbacks(options, {
           'isValidResult': function(result) {
             return result == username;
@@ -196,7 +194,7 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedOut : function(options) {
-      if ( options && (options['yes'] || options['no']) ){
+      if ( containsCallbacks(options, ['yes', 'no']) ){
         options = generateCallbacks(options, {
           'isValidResult': function(result) {
             return typeof result == "undefined";
@@ -1152,7 +1150,7 @@
         return StackMob.loginField;
       },
       isLoggedIn : function(options) {
-        if ( options && (options['yes'] || options['no']) ){
+        if ( containsCallbacks(options, ['yes', 'no']) ){
           options = generateCallbacks(options, {
             'isValidResult': function(result) {
               return typeof result !== "undefined";
