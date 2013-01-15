@@ -390,7 +390,7 @@
 
       "facebookAccessToken" : "POST",
       "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST",
+      "linkUserWithFacebook" : "POST"
     },
 
     /**
