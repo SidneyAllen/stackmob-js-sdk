@@ -9,6 +9,8 @@
 
 **FIX**
 * API URL override for Custom Code methods
+* Bug with OAuth signing of non-GET custom code calls
+* Update Facebook calls from GET to POST
 
 ### v0.6.1 - Nov 29, 2012
 
