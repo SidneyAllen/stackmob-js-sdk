@@ -129,8 +129,8 @@
      * Helper method that checks for callback methods in an options object
      **/
     _containsCallbacks : function(options, callbacks){
-      return ( typeof options == "object" ) &&
-              _.some(callbacks, function(callback){ return typeof options[callback] == "function"; })
+      return ( typeof options === "object" ) &&
+              _.some(callbacks, function(callback){ return typeof options[callback] === "function"; })
     },
 
     /**
@@ -839,6 +839,10 @@
         };
 
         (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
+      } else {
+        if (options && options['error']) {
+          options['error']();
+        }
       }
     },
     makeAPICall : function(model, params, method) {
