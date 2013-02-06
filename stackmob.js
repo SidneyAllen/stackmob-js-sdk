@@ -655,6 +655,8 @@
         if(StackMob['publicKey'] && !StackMob['privateKey']) {
           params['headers']['X-StackMob-API-Key'] = StackMob['publicKey'];
           params['headers']['X-StackMob-Proxy-Plain'] = 'stackmob-api';
+          // CORS Support
+          params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "";
         } else {
           params['headers']['X-StackMob-Proxy'] = 'stackmob-api';
         }
