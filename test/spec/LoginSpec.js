@@ -275,6 +275,10 @@ describe("asyncronous authentication methods", function(){
     waitsFor(function(){
       return !(typeof loggedIn === "undefined");
     }, "user '" + usr + "' should not be logged in");
+
+    runs(function(){
+      expect(loggedIn).toBe(false);
+    });
   });
 
   it("should reset session expiry", function(){
