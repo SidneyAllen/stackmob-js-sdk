@@ -215,32 +215,17 @@
     getScheme : function() {
       return this.secure === true ? 'https' : 'http';
     },
-    //An internally used method to get the development API URL.
-    getDevAPIBase : function() {
-
-      if(!( typeof PhoneGap === 'undefined'))
-        return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
-
-      //If you've requested a full URL path, then we'll use a full path.  Otherwise we'll use a relative path.
-      //A full path is particularly useful for PhoneGap implementations where the app isn't running on a StackMob server.
-      //Note that the JS SDK currently doesn't support the full path for custom domains yet.
-      return this.fullURL === true ? this.getScheme() + '://dev.' + this.appName + '.' + this.clientSubdomain + '.stackmobapp.com/' : '/';
-    },
-    //An internally used method to get the production API URL.
-    getProdAPIBase : function() {
-
-      if(!( typeof PhoneGap === 'undefined'))
-        return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
-
-      return this.fullURL === true ? this.getScheme() + '://' + this.appName + '.' + this.clientSubdomain + '.stackmobapp.com/' : '/';
-    },
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
     getBaseURL : function() {
-
-      /*
-       * `apiURL` serves as a way to override the API URL regardless of any other setting.
-       */
-      return StackMob['apiURL'] || (StackMob['fullURL'] ? (StackMob['apiVersion'] === 0 ? StackMob.getDevAPIBase() : StackMob.getProdAPIBase()) : (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/');
+      if( StackMob['useProxy'] || window.location.hostname.indexOf(this.appName + '.' + this.clientSubdomain + '.stackmobapp.com') > 0 ){
+        /*
+         * If useProxy init var is true OR is hosted HTML5 (stackmobapp.com)
+         * then use relative path for API proxy
+         */
+        return StackMob.apiURL || (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
+      } else { // Use absolute path and operate through CORS
+        return StackMob.apiURL || (this.getScheme() + '://' + StackMob['API_SERVER'] + '/');
+      }
     },
     //The JS SDK calls this to throw an error.
     throwError : function(msg) {
@@ -532,7 +517,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = StackMob['apiURL'] || (StackMob['apiVersion'] === 0 ? StackMob.getDevAPIBase() : StackMob.getProdAPIBase());
+      options['url'] = StackMob['apiURL'];
       this.sync.call(StackMob, method, null, options);
     },
 
