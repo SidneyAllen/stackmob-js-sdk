@@ -1,5 +1,15 @@
 ## StackMob JavaScript SDK Change Log
 
+### v0.8.0
+
+**FEATURE**
+
+* CORS Support - Manage your [CORS domain settings in the StackMob Dashboard(https://dashboard.stackmob.com/module/api/settings)
+
+**FIX**
+
+* Authentication callback bug fixes
+
 ### v0.7.0 - Jan 15, 2013
 
 **FEATURE**

@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.7.0
+ StackMob JS SDK Version 0.8.0
  Copyright 2012 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@
     apiVersion : 0,
 
     //The current version of the JS SDK.
-    sdkVersion : "0.7.0",
+    sdkVersion : "0.8.0",
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -303,7 +303,7 @@
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
-        if (options && options['error']) options['error']();
+        if (options && options['success']) options['success'](undefined);
         return false;
       }
 
