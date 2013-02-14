@@ -518,7 +518,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = StackMob['apiURL'];
+      options['url'] = this.getBaseURL();
       this.sync.call(StackMob, method, null, options);
     },
 
