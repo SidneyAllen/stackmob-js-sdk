@@ -217,13 +217,11 @@
     },
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
     getBaseURL : function() {
-      if( StackMob['useProxy'] || window.location.hostname.indexOf(this.appName + '.' + this.clientSubdomain + '.stackmobapp.com') > 0 ){
-        /*
-         * If useProxy init var is true OR is hosted HTML5 (stackmobapp.com)
-         * then use relative path for API proxy
-         */
+      if( StackMob['useRelativePathForAjax'] ){
+        // Build "relative path" (also used for OAuth signing)
         return StackMob.apiURL || (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
-      } else { // Use absolute path and operate through CORS
+      } else {
+        // Use absolute path and operate through CORS
         return StackMob.apiURL || (this.getScheme() + '://' + StackMob['API_SERVER'] + '/');
       }
     },
@@ -410,6 +408,9 @@
 
       this.publicKey = options['publicKey'];
       this.apiURL = options['apiURL'];
+
+      var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
+      this.useRelativePathForAjax = options['useRelativePathForAjax'] || isSMHosted;
 
       this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
 
