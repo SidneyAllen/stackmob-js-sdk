@@ -1,14 +1,32 @@
 ## StackMob JavaScript SDK Change Log
 
-### v0.8.0
+### v0.8.0 - Feb 14, 2013
 
 **FEATURE**
 
-* CORS Support - Manage your [CORS domain settings in the StackMob Dashboard(https://dashboard.stackmob.com/module/api/settings)
+* CORS Support - [Manage your CORS domain settings in the StackMob Dashboard](https://dashboard.stackmob.com/module/api/settings)
 
 **FIX**
 
 * Authentication callback bug fixes
+
+**UPGRADE NOTES**
+
+Prior to v0.8.0, the default API URL was '/' meaning all API calls were proxied through a relative URL of whatever domain it is being run from (to adhere to the [same origin policy](https://developer.mozilla.org/en-US/docs/JavaScript/Same_origin_policy_for_JavaScript)). 
+With CORS support, the default API URL for JS SDK 0.8.0+ is `http://api.stackmob.com`.
+
+Upgrade Steps:
+
+* If your app is deployed to stackmobapp.com ([StackMob HTML5 Hosting](https://marketplace.stackmob.com/module/html5)), no action is necessary. The SDK will auto-detect this and revert 
+to a relative API URL and use API proxying (not CORS). This is done to reduce reliance on CORS compatibility.
+* If your app is deployed on a 
+[Custom Domain](https://marketplace.stackmob.com/module/customdomains) on [StackMob HTML5 Hosting](https://marketplace.stackmob.com/module/html5), you must either 
+set the init variable [useRelativePathForAjax](http://developer.stackmob.com/sdks/js/api#a-init) to true to enable relative API proxying, or 
+[add the custom domain to your CORS whitelist](https://dashboard.stackmob.com/module/cors/settings) to use CORS.  Setting `useRelativePathForAjax: true` is recommended.
+* To use the JS SDK on a non-[StackMob HTML5 hosted](https://marketplace.stackmob.com/module/html5) domain, [add that domain to your CORS whitelist](https://dashboard.stackmob.com/module/cors/settings).
+
+[Browser compatibility for CORS can be found here](http://caniuse.com/#feat=cors).  If compatibility is a concern,
+StackMob’s HTML5 Hosting and Custom Domain services both offer API proxying and work without using CORS.
 
 ### v0.7.0 - Jan 15, 2013
 
