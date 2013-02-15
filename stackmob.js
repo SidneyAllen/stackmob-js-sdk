@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.7.0
+ StackMob JS SDK Version 0.8.0
  Copyright 2012 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@
     apiVersion : 0,
 
     //The current version of the JS SDK.
-    sdkVersion : "0.7.0",
+    sdkVersion : "0.8.0",
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -129,8 +129,8 @@
      * Helper method that checks for callback methods in an options object
      **/
     _containsCallbacks : function(options, callbacks){
-      return ( typeof options == "object" ) &&
-              _.some(callbacks, function(callback){ return typeof options[callback] == "function"; })
+      return ( typeof options === "object" ) &&
+              _.some(callbacks, function(callback){ return typeof options[callback] === "function"; })
     },
 
     /**
@@ -215,32 +215,15 @@
     getScheme : function() {
       return this.secure === true ? 'https' : 'http';
     },
-    //An internally used method to get the development API URL.
-    getDevAPIBase : function() {
-
-      if(!( typeof PhoneGap === 'undefined'))
-        return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
-
-      //If you've requested a full URL path, then we'll use a full path.  Otherwise we'll use a relative path.
-      //A full path is particularly useful for PhoneGap implementations where the app isn't running on a StackMob server.
-      //Note that the JS SDK currently doesn't support the full path for custom domains yet.
-      return this.fullURL === true ? this.getScheme() + '://dev.' + this.appName + '.' + this.clientSubdomain + '.stackmobapp.com/' : '/';
-    },
-    //An internally used method to get the production API URL.
-    getProdAPIBase : function() {
-
-      if(!( typeof PhoneGap === 'undefined'))
-        return this.getScheme() + '://' + StackMob['API_SERVER'] + '/';
-
-      return this.fullURL === true ? this.getScheme() + '://' + this.appName + '.' + this.clientSubdomain + '.stackmobapp.com/' : '/';
-    },
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
     getBaseURL : function() {
-
-      /*
-       * `apiURL` serves as a way to override the API URL regardless of any other setting.
-       */
-      return StackMob['apiURL'] || (StackMob['fullURL'] ? (StackMob['apiVersion'] === 0 ? StackMob.getDevAPIBase() : StackMob.getProdAPIBase()) : (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/');
+      if( StackMob['useRelativePathForAjax'] ){
+        // Build "relative path" (also used for OAuth signing)
+        return StackMob.apiURL || (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
+      } else {
+        // Use absolute path and operate through CORS
+        return StackMob.apiURL || (this.getScheme() + '://' + StackMob['API_SERVER'] + '/');
+      }
     },
     //The JS SDK calls this to throw an error.
     throwError : function(msg) {
@@ -303,7 +286,7 @@
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
-        if (options && options['error']) options['error']();
+        if (options && options['success']) options['success'](undefined);
         return false;
       }
 
@@ -426,6 +409,9 @@
       this.publicKey = options['publicKey'];
       this.apiURL = options['apiURL'];
 
+      var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
+      this.useRelativePathForAjax = options['useRelativePathForAjax'] || isSMHosted;
+
       this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
 
       this.secure = options['secure'] === true;
@@ -532,7 +518,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = StackMob['apiURL'] || (StackMob['apiVersion'] === 0 ? StackMob.getDevAPIBase() : StackMob.getProdAPIBase());
+      options['url'] = this.getBaseURL();
       this.sync.call(StackMob, method, null, options);
     },
 
@@ -655,6 +641,8 @@
         if(StackMob['publicKey'] && !StackMob['privateKey']) {
           params['headers']['X-StackMob-API-Key'] = StackMob['publicKey'];
           params['headers']['X-StackMob-Proxy-Plain'] = 'stackmob-api';
+          // CORS Support
+          params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "";
         } else {
           params['headers']['X-StackMob-Proxy'] = 'stackmob-api';
         }
@@ -839,6 +827,10 @@
         };
 
         (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
+      } else {
+        if (options && options['error']) {
+          options['error']();
+        }
       }
     },
     makeAPICall : function(model, params, method) {
