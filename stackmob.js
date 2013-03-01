@@ -373,7 +373,9 @@
 
       "facebookAccessToken" : "POST",
       "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST"
+      "linkUserWithFacebook" : "POST",
+
+      "gigyaAccessToken" : "POST"
     },
 
     /**
@@ -918,7 +920,7 @@
       }
     },
     isAccessTokenMethod : function(method) {
-      return _.include(['accessToken', 'facebookAccessToken', 'refreshToken'], method);
+      return _.include(['accessToken', 'facebookAccessToken', 'refreshToken', 'gigyaAccessToken'], method);
     }
   });
   //end of StackMob
@@ -1189,6 +1191,20 @@
         };
 
         (this.sync || Backbone.sync).call(this, "logout", this, options);
+      },
+      loginWithGigyaToken : function(gigyaUID, gigyaTimestamp, gigyaSignature, keepLoggedIn, options) {
+        options = options || {};
+        options['data'] = options['data'] || {};
+        _.extend(options['data'], {
+          "gigya_uid" : gigyaUID,
+          "gigya_ts" : gigyaTimestamp,
+          "gigya_sig" : gigyaSignature,
+          "token_type" : 'mac'
+        });
+
+        options['stackmob_ongigyaAccessToken'] = StackMob.processLogin;
+
+        (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
       },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
