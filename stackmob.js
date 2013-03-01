@@ -1192,8 +1192,12 @@
 
         (this.sync || Backbone.sync).call(this, "logout", this, options);
       },
-      loginWithGigyaToken : function(gigyaUID, gigyaTimestamp, gigyaSignature, keepLoggedIn, options) {
+      loginWithGigya : function(gigyaUID, gigyaTimestamp, gigyaSignature, keepLoggedIn, options) {
         options = options || {};
+        var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+
+        StackMob.keepLoggedIn(remember);
+
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
           "gigya_uid" : gigyaUID,
@@ -1208,6 +1212,10 @@
       },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
+        var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+
+        StackMob.keepLoggedIn(remember);
+        
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
           "fb_at" : facebookAccessToken,
