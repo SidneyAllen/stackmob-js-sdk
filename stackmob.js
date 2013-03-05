@@ -656,9 +656,8 @@
           params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
         }
 
-        //If this is an advanced query, check headers
+        // If this is an advanced query, check headers
         if(options['query']) {
-          //TODO throw error if no query object given
           var queryObj = params['query'] || throwError("No StackMobQuery object provided to the query call.");
 
           if(queryObj['selectFields']) {
@@ -1317,8 +1316,123 @@
     StackMob.Collection.Query.prototype = new StackMob.Model.Query;
     StackMob.Collection.Query.prototype.constructor = StackMob.Collection.Query;
 
+    function andString(count){
+      return "[and" + count + "].";
+    }
+
+    function orString(count){
+      return "[or" + count + "].";
+    }
+
     //Give the StackMobQuery its methods
     _.extend(StackMob.Collection.Query.prototype, {
+      /**
+       * Usage: A.or(B)
+       * 
+       * If A is a normal and query:
+       *   Clone A into newQuery
+       *   Clear newQuery's params
+       *   Assign OR Group# (1)
+       *   Prefix A params with and[#+1]
+       *   Prefix B params with and[#+1]
+       *   Prefix all params with or[#]
+       *   Set all of the above as newQuery.params
+       *   Return newQuery
+       *
+       * If A is already an OR query:
+       *   Clone A into newQuery
+       *   Prefix B with and[#+1]
+       *   Prefix B with or[A.orId]
+       *   Add B's params to newQuery
+       *   Return newQuery
+       */
+      or : function(b){
+        if (typeof this.orId == "undefined"){
+          // A is an 'and' query          
+          var a = this;
+          var newQuery = _.clone(this);
+          newQuery['params'] = {};  // Reset params that will be populated below
+          newQuery['orId'] = 1;     // Only allowed one OR, otherwise orCount++;
+          newQuery['andCount'] = 1; // And counts are per or-clause
+          
+          var andCounter, keys, parsedAndString;
+
+          // Determine [and#] prefix for A
+          keys = _.keys(a.params);
+          parsedAndString = "";
+          console.log("length: " + keys.length);
+          if (keys.length > 1) { 
+            andCounter = newQuery['andCount']++;
+            parsedAndString = andString(andCounter)
+          }
+
+          // Copy A's params to newQuery
+          for (key in a['params']){
+            var newKey = orString(newQuery['orId']) + parsedAndString + key;
+            newQuery['params'][newKey] = a['params'][key];
+          }
+
+          // Determine [and#] prefix for B
+          keys = _.keys(b.params);
+          parsedAndString = "";
+          if (keys.length > 1) { 
+            andCounter = newQuery['andCount']++;
+            parsedAndString = andString(andCounter)
+          }
+
+          // Copy B's params to newQuery
+          for (key in b['params']){
+            var newKey = orString(newQuery['orId']) + parsedAndString + key;
+            newQuery['params'][newKey] = b['params'][key];
+          }
+
+          return newQuery;
+
+        } else {
+          // A is an 'or' query
+          var a = this;
+          var newQuery = _.clone(this);
+          
+          // Determine [and#] prefix for B
+          keys = _.keys(b.params);
+          parsedAndString = "";
+          if (keys.length > 1) { 
+            andCounter = newQuery['andCount']++;
+            parsedAndString = andString(andCounter)
+          }
+
+          // Copy B's params to newQuery
+          for (key in b['params']){
+            var newKey = orString(newQuery['orId']) + parsedAndString + key;
+            newQuery['params'][newKey] = b['params'][key];
+          }
+
+          return newQuery;
+        }
+        
+      },
+      /**
+       * Combine all params of a and b into one object
+       * 
+       * @param  {[type]} b [description]
+       * @return {[type]}   [description]
+       */
+      and : function(b){
+        // a.or(b)
+        // return newQuery
+        var a = this;
+        var newQuery = _.clone(this);
+
+        for (key in b.params){
+          a['params'][key] = b['params'][key];
+        }
+
+        for (key in b['params']){
+          newQuery['params'][key] = b['params'][key];
+        }
+
+        return newQuery;
+      },
       addParam : function(key, value) {
         this.params[key] = value;
         return this;
