@@ -1326,29 +1326,42 @@
 
     //Give the StackMobQuery its methods
     _.extend(StackMob.Collection.Query.prototype, {
+      
       /**
-       * Usage: A.or(B)
-       * 
-       * If A is a normal and query:
-       *   Clone A into newQuery
-       *   Clear newQuery's params
-       *   Assign OR Group# (1)
-       *   Prefix A params with and[#+1]
-       *   Prefix B params with and[#+1]
-       *   Prefix all params with or[#]
-       *   Set all of the above as newQuery.params
-       *   Return newQuery
+       * Combine a Query with an OR operator between it and
+       * the current Query object.
        *
-       * If A is already an OR query:
-       *   Clone A into newQuery
-       *   Prefix B with and[#+1]
-       *   Prefix B with or[A.orId]
-       *   Add B's params to newQuery
-       *   Return newQuery
+       * Example: 
+       *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
+       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
+       *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
+       *   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
+       *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
+       *
+       *   isAged.and( notJohn.or(notMary).or(isLA) );
+       * 
+       * @param  {StackMob.Collection.Query} b - A query object to OR with this object
+       * @return {StackMob.Collection.Query} A new query equivalent to A OR B, where A is the object this method is called on and B is the parameter.
+       *
        */
       or : function(b){
+        /*
+         * Naming convention: A.or(B)
+         */
+        
         if (typeof this.orId == "undefined"){
-          // A is an 'and' query          
+          /* 
+           * If A is a normal AND query:
+           * Clone A into newQuery
+           * Clear newQuery's params
+           * Assign OR Group# (1)
+           * Prefix A params with and[#+1]
+           * Prefix B params with and[#+1]
+           * Prefix all params with or[#]
+           * Set all of the above as newQuery.params
+           * Return newQuery
+           */
+           
           var a = this;
           var newQuery = _.clone(this);
           newQuery['params'] = {};  // Reset params that will be populated below
@@ -1360,7 +1373,6 @@
           // Determine [and#] prefix for A
           keys = _.keys(a.params);
           parsedAndString = "";
-          console.log("length: " + keys.length);
           if (keys.length > 1) { 
             andCounter = newQuery['andCount']++;
             parsedAndString = andString(andCounter)
@@ -1389,7 +1401,15 @@
           return newQuery;
 
         } else {
-          // A is an 'or' query
+          /* 
+           * If A is already an OR query:
+           * Clone A into newQuery
+           * Prefix B with and[#+1]
+           * Prefix B with or[A.orId]
+           * Add B's params to newQuery
+           * Return newQuery
+           */
+          
           var a = this;
           var newQuery = _.clone(this);
           
@@ -1412,14 +1432,28 @@
         
       },
       /**
-       * Combine all params of a and b into one object
+       * Combine a Query with an AND operator between it and
+       * the current Query object.
        * 
-       * @param  {[type]} b [description]
-       * @return {[type]}   [description]
+       * Example: 
+       *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
+       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
+       *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
+       *   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
+       *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
+       *
+       *   isAged.and( notJohn.or(notMary).or(isLA) );
+       * 
+       * @param  {StackMob.Collection.Query} b - A query object to OR with this object
+       * @return {StackMob.Collection.Query} A new query equivalent to A AND B, where A is the object this method is called on and B is the parameter.
        */
       and : function(b){
-        // a.or(b)
-        // return newQuery
+        /*
+         * Naming convention: A.or(B)
+         *
+         * Combine all params of a and b into one object
+         */
+        
         var a = this;
         var newQuery = _.clone(this);
 
