@@ -7,9 +7,9 @@ describe("Stored data types", function() {
 	var myUser = 'test0'; //this is the user that's created by createMultipleUser()	
 
 	createMultipleUser(1);
-			
+
 	it("should store boolean data type for vegetarian", function() {
-			
+
 		var vegetarian;
 		var user = new StackMob.User({
 			username: myUser
@@ -19,18 +19,18 @@ describe("Stored data types", function() {
 				vegetarian = model.get('vegetarian');
 			}
 		});
-		
+
 		waitsFor(function() {
 			return typeof(vegetarian) !== 'undefined';
 		}, "to finish querying", 20000);
-		
+
 		runs(function() {
 			expect(_.isBoolean(vegetarian)).toEqual(true);
 		});
 	});
 
 	it("should store int data type for age", function() {
-			
+
 		var age = 0;
 		var user = new StackMob.User({
 			username: myUser
@@ -40,17 +40,17 @@ describe("Stored data types", function() {
 				age = model.get('age');
 			}
 		});
-		
+
 		waitsFor(function() {
 			return age !== 0;
 		}, "to finish querying", 20000);
-		
+
 		runs(function() {
 			expect(_.isNumber(age)).toEqual(true);
 			expect(isInteger(age)).toEqual(true);
 		});
 	});
-	
+
 	it("should store double data type for money", function() {
 		var money = 0.00;
 		var user = new StackMob.User({
@@ -61,17 +61,17 @@ describe("Stored data types", function() {
 				money = model.get('money');
 			}
 		});
-		
+
 		waitsFor(function() {
 			return money !== 0.00;
 		}, "to finish querying", 20000);
-		
+
 		runs(function() {
 			expect(_.isNumber(money)).toEqual(true);
 			expect(isFloat(money)).toEqual(true);
 		});
 	});
-	
+
 	it("should not be able to update primary key by using same data type", function() {
 		// use the same data type to update our primary key
 		var newName = "should_say_instance_does_not_exist";
@@ -83,14 +83,14 @@ describe("Stored data types", function() {
 		var userToFetch = new StackMob.User({
 			username: myUser
 		});
-		
+
 		user.save({username: newName}, {
 			success: function(model) {
 				//should never reach here
 			},
 			error: function(model, failure) {
 				failureObject = failure;
-				
+
 				userToFetch.fetch({
 					success: function(model) {
 						var fetchedUsrName = model['attributes']['username'];
@@ -100,17 +100,17 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && result;
 		}, "to finish querying", 10000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INSTANCE_DOES_NOT_EXIST)).toNotEqual(-1);
 		});
 	});
-	
+
 	it("should not be able to update primary key by using different data type", function() {
 		// time to use a different data type to update our primary key
 		var newName = 13.53552;
@@ -135,17 +135,17 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && result;
 		}, "to finish querying", 10000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.PRIMARY_KEY_UPDATE)).toNotEqual(-1);
 		});
 	});
-	
+
 	it("should not accept double data type for age (by using put)", function() {
 		var newAge = 18.71;
 		var failureObject = null;
@@ -153,7 +153,7 @@ describe("Stored data types", function() {
 		var user = new StackMob.User({
 			username: myUser
 		});
-		
+
 		user.save({age: newAge}, {
 			success: function(model) {
 				//should never reach here
@@ -169,17 +169,17 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && result;
 		}, "to finish querying", 20000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INVALID_TYPE)).toNotEqual(-1);
 		});
 	});
-	
+
 	it("should not accept array[integer] for colors (array[string])", function() {
 		var newColors = [1, 3, 5, 7];
 		var failureObject = null;
@@ -188,7 +188,7 @@ describe("Stored data types", function() {
 		var user = new StackMob.User({
 			username: myUser
 		});
-		
+
 		user.save({colors:newColors}, {
 			success: function(model) {
 				//should never reach here
@@ -214,17 +214,17 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
 		}, "to finish querying", 8000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INVALID_TYPE)).toNotEqual(-1);
 		});
 	});
-	
+
 	it("should not accept array[string] for numbers (array[integer])", function() {
 		var newNumbers = ["1", "3", "5", "7"];
 		var failureObject = null;
@@ -233,7 +233,7 @@ describe("Stored data types", function() {
 		var user = new StackMob.User({
 			username: myUser
 		});
-		
+
 		user.save({numbers:newNumbers}, {
 			success: function(model) {
 				//should never reach here
@@ -260,17 +260,17 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
 		}, "to finish querying", 10000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INVALID_TYPE)).toNotEqual(-1);
 		});
 	});
-	
+
 	it("should not accept array[mix_of_types] for numbers (array[integer])", function() {
 		var newNumbers = [1, 3.33, true, "7"];
 		var failureObject = null;
@@ -279,7 +279,7 @@ describe("Stored data types", function() {
 		var user = new StackMob.User({
 			username: myUser
 		});
-		
+
 		user.save({numbers:newNumbers}, {
 			success: function(model) {
 				//should never reach here
@@ -306,29 +306,29 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
 		}, "to finish querying", 20000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INVALID_TYPE)).toNotEqual(-1);
 		});
 	});
-	
+
 	it("should not accept different data types (array[boolean], double/float, boolean) for vegetarian (boolean)", function() {
 		var goodToContinue = false;
 		var result = false;
 		var waitTime = 5000;
-		
+
 		// try type array
 		var newVegetarian = [true, false, true];
 		var failureObject = null;
 		var user = new StackMob.User({
 			username: myUser
 		});
-		
+
 		runs(function(){
 			user.save({vegetarian: newVegetarian}, {
 				success: function(model) {
@@ -345,17 +345,17 @@ describe("Stored data types", function() {
 				}
 			});
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
 		}, "querying array type to finish", waitTime);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INVALID_TYPE)).toNotEqual(-1);
 			goodToContinue = false;
 		});
-		
+
 		waitsFor(function() {
 			return goodToContinue === false;
 		}, "to continue to double / float type", waitTime);
@@ -378,22 +378,22 @@ describe("Stored data types", function() {
 				}
 			});
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && goodToContinue;
 		}, "querying double / float to finish", waitTime);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 			expect(failureObject['error'].indexOf(StackMobErrors.INVALID_TYPE)).toNotEqual(-1);
 			goodToContinue = false;
 		});
-		
+
 		waitsFor(function() {
 			return goodToContinue === false;
 		}, "to continue to boolean type", 20000);
 		result = false;
-		
+
 		// try type of boolean
 		runs(function(){
 			var result = false;
@@ -416,19 +416,18 @@ describe("Stored data types", function() {
 				}
 			});
 		});
-		
+
 		waitsFor(function() {
 			return result === true && goodToContinue;
 		}, "to finish querying boolean type", 20000);
-		
+
 		runs(function() {
 			expect(result).toEqual(true);
 		});
 	});
-	
+
 	deleteMultipleCreatedUsers(1);
-	
-	
+
 	it("should not create a new user with different data type for 'age'", function() {
 		var name = "hehoheho";
 		var pass = name;
@@ -457,11 +456,11 @@ describe("Stored data types", function() {
 				});
 			}
 		});
-		
+
 		waitsFor(function() {
 			return failureObject !== null && failureObjectFetch !== null;
 		}, "to finish creating", 10000);
-		
+
 		runs(function() {
 			expect(failureObjectFetch['error'].indexOf(StackMobErrors.INSTANCE_DOES_NOT_EXIST)).toNotEqual(-1);
 			expect(failureObject['error'].indexOf(StackMobErrors.INCOMPATIBLE_TYPE)).toNotEqual(-1);

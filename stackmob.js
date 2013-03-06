@@ -18,8 +18,6 @@
 (function() {
   var root = this;
 
-  
-
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
    *

@@ -119,8 +119,6 @@ function logoutUser(usr) {
   });
 }
 
-
-
 /**
 * This function is to create user with some special fields
 * User will have 'age' and 'location' fields.
@@ -168,7 +166,6 @@ function createMultipleUser(howMany) {
   return howMany;
 }
 
-
 /**
 * If you use createdMultipleUsers, make sure to call this deleteMultipleCreatedUsers in the end
 *   to delete all the users created from createdMultipleUsers
@@ -205,7 +202,6 @@ function deleteMultipleCreatedUsers(howMany) {
  });
 }
 
-
 /**
 * Does not delete relationship
 * @param usr the user to delete
@@ -232,15 +228,6 @@ function deleteUser(usr) {
   });
  });
 }
-
-
-
-
-
-
-
-
-
 
 /** CREATE AND DELETE USER SECTION END **/
 
@@ -276,10 +263,6 @@ function deleteAllAttractions() {
  }
 })
 }
-
-
-
-
 
 describe("Simple select functionality (standalone) on a model", function() {
 var mySingleUser = 'test0'; //this is the user that's created by createMultipleUser()
@@ -338,7 +321,6 @@ it("should fetch user with its money and age fields only", function() {
 deleteMultipleCreatedUsers(1);
 });
 
-
 describe("Testing combination of select functionality on a collection", function() {
   var howMany = 10;
 var newAge = 21; // needs to be > 20. Look at the implementation of createMultipleUser
@@ -364,11 +346,11 @@ it("should update some users data first to be able to see the select functionali
         });
       }
     }
-    
+
     waitsFor(function() {
       return count === (howMany/2);
     }, "waits for all users update to be done", howMany * 2000);
-    
+
     runs(function() {
       expect(count).toEqual(howMany/2);
     });
