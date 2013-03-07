@@ -1326,12 +1326,12 @@
 
     //Give the StackMobQuery its methods
     _.extend(StackMob.Collection.Query.prototype, {
-      
+
       /**
        * Combine a Query with an OR operator between it and
        * the current Query object.
        *
-       * Example: 
+       * Example:
        *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
        *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
        *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
@@ -1339,7 +1339,7 @@
        *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
        *
        *   isAged.and( notJohn.or(notMary).or(isLA) );
-       * 
+       *
        * @param  {StackMob.Collection.Query} b - A query object to OR with this object
        * @return {StackMob.Collection.Query} A new query equivalent to A OR B, where A is the object this method is called on and B is the parameter.
        *
@@ -1348,9 +1348,9 @@
         /*
          * Naming convention: A.or(B)
          */
-        
+
         if (typeof this.orId == "undefined"){
-          /* 
+          /*
            * If A is a normal AND query:
            * Clone A into newQuery
            * Clear newQuery's params
@@ -1361,19 +1361,20 @@
            * Set all of the above as newQuery.params
            * Return newQuery
            */
-           
+
           var a = this;
-          var newQuery = _.clone(this);
+          var newQuery = this.clone();
+
           newQuery['params'] = {};  // Reset params that will be populated below
           newQuery['orId'] = 1;     // Only allowed one OR, otherwise orCount++;
           newQuery['andCount'] = 1; // And counts are per or-clause
-          
+
           var andCounter, keys, parsedAndString;
 
           // Determine [and#] prefix for A
           keys = _.keys(a.params);
           parsedAndString = "";
-          if (keys.length > 1) { 
+          if (keys.length > 1) {
             andCounter = newQuery['andCount']++;
             parsedAndString = andString(andCounter)
           }
@@ -1387,7 +1388,7 @@
           // Determine [and#] prefix for B
           keys = _.keys(b.params);
           parsedAndString = "";
-          if (keys.length > 1) { 
+          if (keys.length > 1) {
             andCounter = newQuery['andCount']++;
             parsedAndString = andString(andCounter)
           }
@@ -1401,7 +1402,7 @@
           return newQuery;
 
         } else {
-          /* 
+          /*
            * If A is already an OR query:
            * Clone A into newQuery
            * Prefix B with and[#+1]
@@ -1409,14 +1410,14 @@
            * Add B's params to newQuery
            * Return newQuery
            */
-          
+
           var a = this;
-          var newQuery = _.clone(this);
-          
+          var newQuery = this.clone();
+
           // Determine [and#] prefix for B
           keys = _.keys(b.params);
           parsedAndString = "";
-          if (keys.length > 1) { 
+          if (keys.length > 1) {
             andCounter = newQuery['andCount']++;
             parsedAndString = andString(andCounter)
           }
@@ -1429,13 +1430,13 @@
 
           return newQuery;
         }
-        
+
       },
       /**
        * Combine a Query with an AND operator between it and
        * the current Query object.
-       * 
-       * Example: 
+       *
+       * Example:
        *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
        *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
        *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
@@ -1443,7 +1444,7 @@
        *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
        *
        *   isAged.and( notJohn.or(notMary).or(isLA) );
-       * 
+       *
        * @param  {StackMob.Collection.Query} b - A query object to OR with this object
        * @return {StackMob.Collection.Query} A new query equivalent to A AND B, where A is the object this method is called on and B is the parameter.
        */
@@ -1453,18 +1454,23 @@
          *
          * Combine all params of a and b into one object
          */
-        
+
         var a = this;
-        var newQuery = _.clone(this);
+        var newQuery = this.clone();
 
-        for (key in b.params){
-          a['params'][key] = b['params'][key];
-        }
-
-        for (key in b['params']){
+        for (var key in b['params']){
           newQuery['params'][key] = b['params'][key];
         }
 
+        return newQuery;
+      },
+      /**
+       * Deep clone a Query Object
+       * @return {StackMob.Collection.Query} A deep cloned query object with a new child params object
+       */
+      clone : function(){
+        var newQuery = _.clone(this);
+        newQuery['params'] = _.clone(this['params']);
         return newQuery;
       },
       addParam : function(key, value) {
