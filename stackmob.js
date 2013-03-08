@@ -1357,6 +1357,14 @@
         this.params[field + '[null]'] = false;
         return this;
       },
+      isEmptyString : function(field) {
+        this.params[field + '[empty]'] = true;
+        return this;
+      },
+      isNotEmptyString : function(field, value) {
+        this.params[field + '[empty]'] = false;
+        return this;
+      },
       mustBeOneOf : function(field, value) {
         var inValue = '';
         if(_.isArray(value)) {
