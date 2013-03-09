@@ -18,8 +18,6 @@
 (function() {
   var root = this;
 
-  
-
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
    *
@@ -373,7 +371,9 @@
 
       "facebookAccessToken" : "POST",
       "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST"
+      "linkUserWithFacebook" : "POST",
+
+      "gigyaAccessToken" : "POST"
     },
 
     /**
@@ -658,9 +658,8 @@
           params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
         }
 
-        //If this is an advanced query, check headers
+        // If this is an advanced query, check headers
         if(options['query']) {
-          //TODO throw error if no query object given
           var queryObj = params['query'] || throwError("No StackMobQuery object provided to the query call.");
 
           if(queryObj['selectFields']) {
@@ -918,7 +917,7 @@
       }
     },
     isAccessTokenMethod : function(method) {
-      return _.include(['accessToken', 'facebookAccessToken', 'refreshToken'], method);
+      return _.include(['accessToken', 'facebookAccessToken', 'refreshToken', 'gigyaAccessToken'], method);
     }
   });
   //end of StackMob
@@ -1190,8 +1189,30 @@
 
         (this.sync || Backbone.sync).call(this, "logout", this, options);
       },
+      loginWithGigya : function(gigyaUID, gigyaTimestamp, gigyaSignature, keepLoggedIn, options) {
+        options = options || {};
+        var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+
+        StackMob.keepLoggedIn(remember);
+
+        options['data'] = options['data'] || {};
+        _.extend(options['data'], {
+          "gigya_uid" : gigyaUID,
+          "gigya_ts" : gigyaTimestamp,
+          "gigya_sig" : gigyaSignature,
+          "token_type" : 'mac'
+        });
+
+        options['stackmob_ongigyaAccessToken'] = StackMob.processLogin;
+
+        (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
+      },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
+        var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+
+        StackMob.keepLoggedIn(remember);
+        
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
           "fb_at" : facebookAccessToken,
@@ -1319,8 +1340,163 @@
     StackMob.Collection.Query.prototype = new StackMob.Model.Query;
     StackMob.Collection.Query.prototype.constructor = StackMob.Collection.Query;
 
+    function andString(count){
+      return "[and" + count + "].";
+    }
+
+    function orString(count){
+      return "[or" + count + "].";
+    }
+
     //Give the StackMobQuery its methods
     _.extend(StackMob.Collection.Query.prototype, {
+
+      /**
+       * Combine a Query with an OR operator between it and
+       * the current Query object.
+       *
+       * Example:
+       *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
+       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
+       *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
+       *   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
+       *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
+       *
+       *   isAged.and( notJohn.or(notMary).or(isLA) );
+       *
+       * @param  {StackMob.Collection.Query} b - A query object to OR with this object
+       * @return {StackMob.Collection.Query} A new query equivalent to A OR B, where A is the object this method is called on and B is the parameter.
+       *
+       */
+      or : function(b){
+        /*
+         * Naming convention: A.or(B)
+         */
+
+        if (typeof this.orId == "undefined"){
+          /*
+           * If A is a normal AND query:
+           * Clone A into newQuery
+           * Clear newQuery's params
+           * Assign OR Group# (1)
+           * Prefix A params with and[#+1]
+           * Prefix B params with and[#+1]
+           * Prefix all params with or[#]
+           * Set all of the above as newQuery.params
+           * Return newQuery
+           */
+
+          var a = this;
+          var newQuery = this.clone();
+
+          newQuery['params'] = {};  // Reset params that will be populated below
+          newQuery['orId'] = 1;     // Only allowed one OR, otherwise orCount++;
+          newQuery['andCount'] = 1; // And counts are per or-clause
+
+          var andCounter, keys, parsedAndString;
+
+          // Determine [and#] prefix for A
+          keys = _.keys(a.params);
+          parsedAndString = "";
+          if (keys.length > 1) {
+            andCounter = newQuery['andCount']++;
+            parsedAndString = andString(andCounter)
+          }
+
+          // Copy A's params to newQuery
+          for (key in a['params']){
+            var newKey = orString(newQuery['orId']) + parsedAndString + key;
+            newQuery['params'][newKey] = a['params'][key];
+          }
+
+          // Determine [and#] prefix for B
+          keys = _.keys(b.params);
+          parsedAndString = "";
+          if (keys.length > 1) {
+            andCounter = newQuery['andCount']++;
+            parsedAndString = andString(andCounter)
+          }
+
+          // Copy B's params to newQuery
+          for (key in b['params']){
+            var newKey = orString(newQuery['orId']) + parsedAndString + key;
+            newQuery['params'][newKey] = b['params'][key];
+          }
+
+          return newQuery;
+
+        } else {
+          /*
+           * If A is already an OR query:
+           * Clone A into newQuery
+           * Prefix B with and[#+1]
+           * Prefix B with or[A.orId]
+           * Add B's params to newQuery
+           * Return newQuery
+           */
+
+          var a = this;
+          var newQuery = this.clone();
+
+          // Determine [and#] prefix for B
+          keys = _.keys(b.params);
+          parsedAndString = "";
+          if (keys.length > 1) {
+            andCounter = newQuery['andCount']++;
+            parsedAndString = andString(andCounter)
+          }
+
+          // Copy B's params to newQuery
+          for (key in b['params']){
+            var newKey = orString(newQuery['orId']) + parsedAndString + key;
+            newQuery['params'][newKey] = b['params'][key];
+          }
+
+          return newQuery;
+        }
+
+      },
+      /**
+       * Combine a Query with an AND operator between it and
+       * the current Query object.
+       *
+       * Example:
+       *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
+       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
+       *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
+       *   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
+       *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
+       *
+       *   isAged.and( notJohn.or(notMary).or(isLA) );
+       *
+       * @param  {StackMob.Collection.Query} b - A query object to OR with this object
+       * @return {StackMob.Collection.Query} A new query equivalent to A AND B, where A is the object this method is called on and B is the parameter.
+       */
+      and : function(b){
+        /*
+         * Naming convention: A.or(B)
+         *
+         * Combine all params of a and b into one object
+         */
+
+        var a = this;
+        var newQuery = this.clone();
+
+        for (var key in b['params']){
+          newQuery['params'][key] = b['params'][key];
+        }
+
+        return newQuery;
+      },
+      /**
+       * Deep clone a Query Object
+       * @return {StackMob.Collection.Query} A deep cloned query object with a new child params object
+       */
+      clone : function(){
+        var newQuery = _.clone(this);
+        newQuery['params'] = _.clone(this['params']);
+        return newQuery;
+      },
       addParam : function(key, value) {
         this.params[key] = value;
         return this;
