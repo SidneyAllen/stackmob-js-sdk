@@ -7,12 +7,12 @@
  */
 
 describe("Custom Code Method Verb", function() {
-  
+
   var makeCustomCodeCall = function(verb) {
     it("should have " + verb + " as the verb", function() {
       var goodToContinue = false;
       var result = '';
-      
+
       StackMob.customcode('hello_world', {}, verb, {
         success: function(jsonResult) {
           result = jsonResult.verb;
@@ -20,21 +20,19 @@ describe("Custom Code Method Verb", function() {
         },
         error: function(failure) {}
       });
-      
+
       waitsFor(function() {
         return goodToContinue === true;
       }, "to finish querying", 20000);
-      
+
       runs(function() {
         expect(result).toMatch(verb);
       });
-      
+
     });
-    
+
   };
 
-	
-	
 	makeCustomCodeCall('GET');
 	makeCustomCodeCall('POST');
 	makeCustomCodeCall('PUT');

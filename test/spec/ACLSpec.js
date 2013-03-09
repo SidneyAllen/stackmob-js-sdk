@@ -245,7 +245,6 @@ var makeACLTest = function( opt ){
     });
 }
 
-
 describe("Access Control Lists", function(){
 
 	// Open
