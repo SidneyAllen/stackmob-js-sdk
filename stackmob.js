@@ -67,6 +67,13 @@
 
     CONTENT_TYPE_JSON: 'application/json',
 
+    // Use HTTPS for all requests
+    SECURE_ALWAYS: "always",
+    // Use HTTPS for only authentication methods. Deteremind by StackMob.isAccessTokenMethod
+    SECURE_MIXED: "mixed",
+    // Never use HTTPS
+    SECURE_NEVER: "never",
+
     //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
     apiVersion : 0,
 
@@ -211,18 +218,35 @@
       }
     },
 
-    //An internally used method to get the scheme to use for API requests.
-    getScheme : function() {
-      return this.secure === true ? 'https' : 'http';
-    },
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
-    getBaseURL : function() {
+    getBaseURL : function(method) {
+      if (typeof method === "undefined"){
+        console.error("Incorrect use of getBaseURL");
+      } else {
+        console.log("method=" + method);
+      }
+
+      var scheme;
+      console.log(StackMob.secure);
+      switch(StackMob.secure){
+        case StackMob.SECURE_ALWAYS:
+          scheme = 'https';
+          break;
+        case StackMob.SECURE_NEVER:
+          scheme = 'http';
+          break;
+        case StackMob.SECURE_MIXED:
+        default:
+          scheme = StackMob.isAccessTokenMethod(method) ? 'https' : 'http';
+          break;
+      }
+
       if( StackMob['useRelativePathForAjax'] ){
         // Build "relative path" (also used for OAuth signing)
-        return StackMob.apiURL || (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
+        return StackMob.apiURL ? (scheme + '://' + StackMob.apiURL ) : (scheme + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
       } else {
         // Use absolute path and operate through CORS
-        return StackMob.apiURL || (this.getScheme() + '://' + StackMob['API_SERVER'] + '/');
+        return StackMob.apiURL ? (scheme + '://' + StackMob.apiURL ) : (scheme + '://' + StackMob['API_SERVER'] + '/');
       }
     },
     //The JS SDK calls this to throw an error.
@@ -407,6 +431,8 @@
       this.clientSubdomain = this.getProperty(options, "clientSubdomain");
 
       this.publicKey = options['publicKey'];
+      // apiURL should not contain protocol.
+      // http:// or https:// will be prepended according to 'secure'
       this.apiURL = options['apiURL'];
 
       var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
@@ -414,11 +440,11 @@
 
       this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
 
-      this.secure = options['secure'] === true;
-      this.fullURL = (options['fullURL'] === true) || !( typeof PhoneGap === 'undefined') || this.fullURL;
+      this.secure = options['secure'] || this.SECURE_MIXED;
+      // this.fullURL = (options['fullURL'] === true) || !( typeof PhoneGap === 'undefined') || this.fullURL;
       this.ajax = options['ajax'] || this.ajax;
 
-      this.urlRoot = options['urlRoot'] || this.getBaseURL();
+      // this.urlRoot = options['urlRoot'] || this.getBaseURL();
 
       this.initEnd(options);
       //placeholder for any actions a developer may want to implement via _extend
@@ -466,7 +492,7 @@
   }
 
   function getAuthHeader(method, params){
-    var host = StackMob.getBaseURL();
+    var host = StackMob.getBaseURL(method);
 
     var path = params['url'].replace(new RegExp(host, 'g'), '/');
     var sighost = host.replace(new RegExp('^http://|^https://', 'g'), '').replace(new RegExp('/'), '');
@@ -518,7 +544,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = this.getBaseURL();
+      options['url'] = this.getBaseURL(method);
       this.sync.call(StackMob, method, null, options);
     },
 
@@ -583,10 +609,10 @@
         method = 'create';
       }
 
-      function _prepareBaseURL(model, params) {
+      function _prepareBaseURL(model, method, params) {
         //User didn't override the URL so use the one defined in the model
         if(!params['url'] && model) {
-          params['url'] = StackMob.getProperty(model, "url");
+          params['url'] = model.url(method);
         }
 
         var notCustomCode = method != 'cc';
@@ -778,12 +804,11 @@
 
       params['data'] = params['data'] || {};
 
-      _prepareBaseURL(model, params);
+      _prepareBaseURL(model, method, params);
       _prepareHeaders(params, options);
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
-      if(!StackMob.isAccessTokenMethod(method))
-        _prepareAuth(model, method, params);
+      _prepareAuth(model, method, params);
 
       StackMob.makeAPICall(model, params, method);
     },
@@ -929,10 +954,10 @@
      * Abstract Class representing a StackMob Model
      */
     StackMob.Model = Backbone.Model.extend({
-      urlRoot : StackMob['urlRoot'],
+      urlRoot : StackMob.getBaseURL(),
 
-      url : function() {
-        var base = StackMob['urlRoot'] || StackMob.urlError();
+      url : function(method) {
+        var base = StackMob.getBaseURL(method);
         base += this.schemaName;
         return base;
       },
