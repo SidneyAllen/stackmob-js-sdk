@@ -92,4 +92,36 @@ describe("Unit tests for queries", function() {
 
   });
 
+  it("should query for empty string", function() {
+    runs(function() {
+
+      var q = new StackMob.Collection.Query();
+      q.isEmptyString("name");
+
+      var expectation = {
+        "name[empty]": true
+      };
+
+      expect(q['params']).toEqual(expectation);
+
+    });
+
+  });
+
+it("should query for non-empty string", function() {
+    runs(function() {
+
+      var q = new StackMob.Collection.Query();
+      q.isNotEmptyString("name");
+
+      var expectation = {
+        "name[empty]": false
+      };
+
+      expect(q['params']).toEqual(expectation);
+
+    });
+
+  });
+
 });
