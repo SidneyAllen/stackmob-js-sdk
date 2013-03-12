@@ -416,7 +416,7 @@
     init : function(options) {
       options = options || {};
 
-      //Run stuff before StackMob is initialized.
+      // Run stuff before StackMob is initialized.
       this.initStart(options);
 
       this.userSchema = options['userSchema'] || this.DEFAULT_LOGIN_SCHEMA;
@@ -431,8 +431,9 @@
       this.clientSubdomain = this.getProperty(options, "clientSubdomain");
 
       this.publicKey = options['publicKey'];
-      // apiURL should not contain protocol.
-      // http:// or https:// will be prepended according to 'secure'
+
+      // apiURL should not contain protocol
+      // http:// or https:// will be prepended according to 'secure' setting
       this.apiURL = options['apiURL'];
 
       var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
@@ -441,13 +442,11 @@
       this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
 
       this.secure = options['secure'] || this.SECURE_MIXED;
-      // this.fullURL = (options['fullURL'] === true) || !( typeof PhoneGap === 'undefined') || this.fullURL;
       this.ajax = options['ajax'] || this.ajax;
 
-      // this.urlRoot = options['urlRoot'] || this.getBaseURL();
-
       this.initEnd(options);
-      //placeholder for any actions a developer may want to implement via _extend
+
+      // [Any actions a developer may want to implement via _extend should be done here]
 
       return this;
     },
