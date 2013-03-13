@@ -950,7 +950,7 @@
         this.idAttribute = this.getPrimaryKeyField();
       },
       parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] == '')))
+        if(!data || (data && (!data['text'] || data['text'] == '')) || typeof data['text'] === "object")
           return data;
 
         var attrs = JSON.parse(data['text']);
@@ -1067,7 +1067,7 @@
         return base;
       },
       parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] == '')))
+        if(!data || (data && (!data['text'] || data['text'] == '')) || typeof data['text'] === "object")
           return data;
 
         var attrs = JSON.parse(data['text']);
