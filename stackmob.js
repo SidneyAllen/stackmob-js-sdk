@@ -66,11 +66,11 @@
     CONTENT_TYPE_JSON: 'application/json',
 
     // Use HTTPS for all requests
-    SECURE_ALWAYS: "always",
+    SECURE_ALWAYS: "ALWAYS",
     // Use HTTPS for only authentication methods. Deteremind by StackMob.isAccessTokenMethod
-    SECURE_MIXED: "mixed",
+    SECURE_MIXED: "MIXED",
     // Never use HTTPS
-    SECURE_NEVER: "never",
+    SECURE_NEVER: "NEVER",
 
     //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
     apiVersion : 0,
@@ -218,14 +218,7 @@
 
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
     getBaseURL : function(method) {
-      if (typeof method === "undefined"){
-        console.error("Incorrect use of getBaseURL");
-      } else {
-        console.log("method=" + method);
-      }
-
       var scheme;
-      console.log(StackMob.secure);
       switch(StackMob.secure){
         case StackMob.SECURE_ALWAYS:
           scheme = 'https';
@@ -857,7 +850,6 @@
       }
     },
     makeAPICall : function(model, params, method) {
-
       if(StackMob['ajax']) {
         return StackMob['ajax'](model, params, method);
       } else if(StackMob.isSencha()) {
@@ -1086,7 +1078,7 @@
         this.schemaName = (new this.model()).schemaName;
       },
       url : function() {
-        var base = StackMob['urlRoot'] || StackMob.urlError();
+        var base = StackMob.getBaseURL();
         base += this.schemaName;
         return base;
       },
