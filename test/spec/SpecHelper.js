@@ -410,3 +410,28 @@ it("should fetch only " + (howMany / 2) + " users in total whose age is < 'newAg
 
 deleteMultipleCreatedUsers(howMany);
 });
+
+
+// UNIT TESTS
+function enableUnitTests(){
+  it("should enable unit tests", function(){
+    // Save original for reverting late
+    StackMob.makeAPICall_original = StackMob.makeAPICall;
+
+    // Add Unit Test Handler
+    StackMob.ajaxOptions.unitTest = function(model, params, method){
+      params['done'](model, params, method);
+    }
+
+    // Force Unit Test Callback Handler
+    StackMob.makeAPICall = function(model, params, method){
+      return StackMob['ajaxOptions']['unitTest'](model, params, method);
+    }
+  });
+}
+
+function disableUnitTests(){
+  it("should disable unit tests", function(){
+    StackMob.makeAPICall = StackMob.makeAPICall_original;
+  });
+}

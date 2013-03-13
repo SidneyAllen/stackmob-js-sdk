@@ -1247,14 +1247,7 @@
 
         (this.sync || Backbone.sync).call(this, "linkUserWithFacebook", this, options);
       },
-      unlinkUserFromFacebook : function(facebookAccessToken, options) {
-        options = options || {};
-        options['data'] = options['data'] || {};
-        _.extend(options['data'], {
-          "fb_at" : facebookAccessToken,
-          "token_type" : "mac"
-        });
-
+      unlinkUserFromFacebook : function(options) {
         (this.sync || Backbone.sync).call(this, "unlinkUserFromFacebook", this, options);
       },
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
