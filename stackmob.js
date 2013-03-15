@@ -217,19 +217,24 @@
     },
 
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
-    getBaseURL : function(method) {
+    getBaseURL : function(method, options) {
       var scheme;
-      switch(StackMob.secure){
-        case StackMob.SECURE_ALWAYS:
-          scheme = 'https';
-          break;
-        case StackMob.SECURE_NEVER:
-          scheme = 'http';
-          break;
-        case StackMob.SECURE_MIXED:
-        default:
-          scheme = StackMob.isAccessTokenMethod(method) ? 'https' : 'http';
-          break;
+
+      if ( options && options['secureRequest'] ) {
+        scheme = 'https';
+      } else {
+        switch(StackMob.secure){
+          case StackMob.SECURE_ALWAYS:
+            scheme = 'https';
+            break;
+          case StackMob.SECURE_NEVER:
+            scheme = 'http';
+            break;
+          case StackMob.SECURE_MIXED:
+          default:
+            scheme = StackMob.isAccessTokenMethod(method) ? 'https' : 'http';
+            break;
+        }
       }
 
       if( StackMob['useRelativePathForAjax'] ){
@@ -484,7 +489,7 @@
   }
 
   function getAuthHeader(method, params){
-    var host = StackMob.getBaseURL(method);
+    var host = StackMob.getBaseURL(method, params);
 
     var path = params['url'].replace(new RegExp(host, 'g'), '/');
     var sighost = host.replace(new RegExp('^http://|^https://', 'g'), '').replace(new RegExp('/'), '');
@@ -536,7 +541,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = this.getBaseURL(method);
+      options['url'] = this.getBaseURL(method, params);
       this.sync.call(StackMob, method, null, options);
     },
 
@@ -1157,6 +1162,11 @@
 
       getPrimaryKeyField : function() {
         return StackMob.loginField;
+      },
+      create : function(options) {
+        console.log("setting secure");
+        options['secureRequest'] = (options && typeof options['secureRequest'] === "undefined") ? true : options['secureRequest'];
+        StackMob.Model.prototype.create.call(this, options);
       },
       isLoggedIn : function(options) {
         if ( StackMob._containsCallbacks(options, ['yes', 'no']) ){
