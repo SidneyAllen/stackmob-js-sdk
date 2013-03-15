@@ -1189,6 +1189,9 @@
         (this.sync || Backbone.sync).call(this, "logout", this, options);
       },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
+        var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+        StackMob.keepLoggedIn(remember);
+
         options = options || {};
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
