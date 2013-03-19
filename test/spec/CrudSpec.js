@@ -31,6 +31,53 @@ describe("CRUD Methods", function() {
 		});
 	});
 
+	it("should create 5 users at once", function() {
+		var createdUsers = null;
+
+		// `action: 'batch'` will be used for `destroyAll`
+		var user1 = new StackMob.User({
+			username: 'testuser10',
+			password: 'testpassword',
+			action: 'batch'
+		});
+		var user2 = new StackMob.User({
+			username: 'testuser20',
+			password: 'testpassword',
+			action: 'batch'
+		});
+		var user3 = new StackMob.User({
+			username: 'testuser30',
+			password: 'testpassword',
+			action: 'batch'
+		});
+		var user4 = new StackMob.User({
+			username: 'testuser40',
+			password: 'testpassword',
+			action: 'batch'
+		});
+		var user5 = new StackMob.User({
+			username: 'testuser50',
+			password: 'testpassword',
+			action: 'batch'
+		});
+
+		var users = new StackMob.Users([user1, user2, user3, user4, user5]);
+
+		users.createAll({
+			success: function(model) {
+				createdUsers = model;
+			}
+		});		
+
+		waitsFor(function() {
+			return createdUsers;
+		}, "created users should be returned", waitTime);
+
+		runs(function() {
+			expect(createdUsers['succeeded'].length).toEqual(5);
+		});
+	});
+
 	it("should update a user", function() {
 		var updatedUser = null;
 
@@ -88,6 +135,30 @@ describe("CRUD Methods", function() {
 		runs(function() {
 			expect(deletedUser['username']).toEqual(user.get('username'));
 		});	
+	});
+
+	it("should delete 5 users at once", function() {
+		var users = new StackMob.Users();
+
+		var q = new StackMob.Collection.Query();
+		// use the one field in `create 5 users`
+		q.equals('action', 'batch');
+
+		var result = 1; // some dummy value
+
+		users.destroyAll(q, {
+			success: function(model) {
+				result = model;
+			}
+		});		
+
+		waitsFor(function() {
+			return result == undefined;
+		}, "model in success function should be undefined", waitTime);
+
+		runs(function() {
+			expect(result).toEqual(undefined);
+		});
 	});
 
 	it("should not be able to fetch the deleted user", function() {
@@ -211,7 +282,7 @@ describe("CRUD Methods for Custom Schemas", function() {
  */
 
 describe("CRUD for Relationships", function() {
-	var usr = '	testuser';
+	var usr = 'testuser';
 	var count = 10;
 
 	function getMessages() {

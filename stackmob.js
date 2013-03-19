@@ -504,7 +504,7 @@
     }
   }
 
-  function _prepareHeaders(params, options) {
+  function _prepareHeaders(method, params, options) {
     //Prepare Request Headers
     params['headers'] = params['headers'] || {};
 
@@ -799,7 +799,7 @@
 
       // _prepareHeaders, _prepareAjaxClientParams, _prepareAuth are used for Collections as well
       _prepareBaseURL(model, method, params);
-      _prepareHeaders(params, options);
+      _prepareHeaders(method, params, options);
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(model, method, params);
@@ -1114,7 +1114,6 @@
 
           if (params['type'] == 'POST' || params['type'] == 'PUT') {
             params['data'] = JSON.stringify(model);
-            console.debug(params['data']);
           } else {
             if(!_.isEmpty(params['data'])) {
               params['url'] += '?';
@@ -1135,9 +1134,9 @@
 
         params['data'] = params['data'] || {};
 
-        // _prepareHeaders, _prepareAjaxClientParams, _prepareAuth are used for Collections as well
+        // _prepareHeaders, _prepareAjaxClientParams, _prepareAuth are used for Model as well
         _prepareBaseURL(model, params);
-        _prepareHeaders(params, options);
+        _prepareHeaders(method, params, options);
         _prepareRequestBody(method, params, options);
         _prepareAjaxClientParams(params);
         StackMob.makeAPICall(model, params, method);
@@ -1151,6 +1150,14 @@
       },
       destroyAll : function(stackMobQuery, options) {
         options = options || {};
+        var theCollection = this;
+        var success = options['success']; // original
+        var successFunc = function(model) {
+          // model is undefined
+          theCollection.remove(theCollection.models);
+          if (typeof success == 'function') success(model);
+        };
+        options['success'] = successFunc;
         _.extend(options, { query : stackMobQuery });
         return (this.sync || Backbone.sync).call(this, 'delete', this, options);
       },
@@ -1385,19 +1392,19 @@
         this.lat = lat['lat'];
         this.lon = lat['lon'];
       }
-    }
+    };
 
     StackMob.GeoPoint.prototype.toJSON = function() {
       return {
         lat : this.lat,
         lon : this.lon
       };
-    }
+    };
 
     StackMob.Model.Query = function() {
       this.selectFields = [];
       this.params = {};
-    }
+    };
 
     _.extend(StackMob.Model.Query.prototype, {
       select : function(key) {
@@ -1408,14 +1415,14 @@
         this.params['_expand'] = depth;
         return this;
       }
-    })
+    });
 
     StackMob.Collection.Query = function() {
       this.params = {};
       this.selectFields = [];
       this.orderBy = [];
       this.range = null;
-    }
+    };
 
     StackMob.Collection.Query.prototype = new StackMob.Model.Query;
     StackMob.Collection.Query.prototype.constructor = StackMob.Collection.Query;
