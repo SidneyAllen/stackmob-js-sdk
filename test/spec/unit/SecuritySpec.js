@@ -10,7 +10,11 @@ describe("Unit tests for security modes", function() {
   var HTTP  = "http://",
       HTTPS = "https://";
 
-  it("should set Security Mode to Mixed", function() {
+  /******************************************
+   ***** SETTING SECURITY MODE TO MIXED *****
+   ******************************************/
+
+  it("--Setting Security Mode to Mixed--", function() {
     StackMob.secure = StackMob.SECURE_MIXED;
   });
 
@@ -47,6 +51,22 @@ describe("Unit tests for security modes", function() {
     });
   });
 
+  it("should use HTTPS for linkUserWithFacebook", function() {
+    runs(function() {
+      var model, params, method;
+      var user = new StackMob.User({username: "testUser", password: "testUser"});
+      user.linkUserWithFacebook("fakeAccessToken", {
+        done: function(mod,p,m){
+          model = mod;
+          params = p;
+          method = m;
+        }
+      });
+
+      expect(params['url'].indexOf(HTTPS)).toEqual(0);
+    });
+  });
+
   it("should use HTTPS for authentication methods", function() {
     runs(function() {
       var model, params, method;
@@ -63,7 +83,11 @@ describe("Unit tests for security modes", function() {
     });
   });
 
-  it("should set Security Mode to Always", function() {
+  /*******************************************
+   ***** SETTING SECURITY MODE TO ALWAYS *****
+   *******************************************/
+
+  it("--Setting Security Mode to Always--", function() {
     StackMob.secure = StackMob.SECURE_ALWAYS;
   });
 
@@ -99,7 +123,11 @@ describe("Unit tests for security modes", function() {
     });
   });
 
-  it("should set Security Mode to Never", function() {
+  /******************************************
+   ***** SETTING SECURITY MODE TO NEVER *****
+   ******************************************/
+
+  it("--Setting Security Mode to Never--", function() {
     runs(function() {
       StackMob.secure = StackMob.SECURE_NEVER;
     });
@@ -142,6 +170,39 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.create({
+        done: function(mod,p,m){
+          model = mod;
+          params = p;
+          method = m;
+        },
+        secureRequest: true
+      });
+
+      expect(params['url'].indexOf(HTTPS)).toEqual(0);
+    });
+  });
+
+  it("should use HTTP for linkUserWithFacebook", function() {
+    runs(function() {
+      var model, params, method;
+      var user = new StackMob.User({username: "testUser", password: "testUser"});
+      user.linkUserWithFacebook("fakeAccessToken", {
+        done: function(mod,p,m){
+          model = mod;
+          params = p;
+          method = m;
+        }
+      });
+
+      expect(params['url'].indexOf(HTTP)).toEqual(0);
+    });
+  });
+
+  it("should use HTTPS for linkUserWithFacebook when forced with secureRequest", function() {
+    runs(function() {
+      var model, params, method;
+      var user = new StackMob.User({username: "testUser", password: "testUser"});
+      user.linkUserWithFacebook("fakeAccessToken", {
         done: function(mod,p,m){
           model = mod;
           params = p;

@@ -516,7 +516,7 @@
           break;
         case StackMob.SECURE_MIXED:
         default:
-          scheme = (StackMob.isAccessTokenMethod(method) || params['isUserCreate'] == true) ? HTTPS : HTTP;
+          scheme = StackMob._isSecureMethod(method, params) ? HTTPS : HTTP;
           break;
       }
     }
@@ -963,14 +963,23 @@
       }
     },
     isAccessTokenMethod : function(method) {
-      var atMethods = ['accessToken',
+      var accessTokenMethods = ['accessToken',
                         'refreshToken',
-                        'loginWithTempAndSetNewPassword',
                         'facebookAccessToken',
-                        'createUserWithFacebook',
-                        'linkUserWithFacebook',
                         'gigyaAccessToken'];
-      return _.include(atMethods, method);
+      return _.include(accessTokenMethods, method);
+    },
+    _isSecureMethod : function(method, params){
+      var secureMethods = ['loginWithTempAndSetNewPassword',
+                            'createUserWithFacebook',
+                            'linkUserWithFacebook'];
+      if (StackMob.isAccessTokenMethod(method)) {
+        return true;
+      } else if (params['isUserCreate'] == true) {
+        return true;
+      } else {
+        return _.include(secureMethods, method);
+      }
     }
   });
   //end of StackMob
