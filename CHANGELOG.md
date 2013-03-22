@@ -1,5 +1,19 @@
 ## StackMob JavaScript SDK Change Log
 
+### v0.9.0
+
+**UPGRADE NOTES**
+
+* `apiURL` init parameter has been superceeded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+
+**FEATURE**
+
+* Added configurable security policies to determine which methods are performed over SSL (`secure` init parameter)
+  * Always - All requests will be made over HTTPS
+  * Never - All requests will be made over HTTP
+  * Mixed (Default) - Only authentication and user creation methods will be made over HTTPS
+* Added `secureRequest` parameter to force SSL for any method.
+
 ### v0.8.1 - March 15, 2013
 
 **FIX**
