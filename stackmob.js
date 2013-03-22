@@ -1420,7 +1420,11 @@
           // Copy B's params to newQuery
           for (key in b['params']){
             var newKey = orString(newQuery['orId']) + parsedAndString + key;
-            newQuery['params'][newKey] = b['params'][key];
+            if (typeof newQuery['params'][newKey] !== "undefined") {
+              throw new Error("Error: You are attempting to OR two or more values for the same field. You should use an mustBeOneOf method instead.");
+            } else {
+              newQuery['params'][newKey] = b['params'][key];
+            }
           }
 
           return newQuery;
@@ -1449,7 +1453,11 @@
           // Copy B's params to newQuery
           for (key in b['params']){
             var newKey = orString(newQuery['orId']) + parsedAndString + key;
-            newQuery['params'][newKey] = b['params'][key];
+            if (typeof newQuery['params'][newKey] !== "undefined") {
+              throw new Error("Error: You are attempting to OR two or more values for the same field. You should use an mustBeOneOf method instead.");
+            } else {
+              newQuery['params'][newKey] = b['params'][key];
+            }
           }
 
           return newQuery;
