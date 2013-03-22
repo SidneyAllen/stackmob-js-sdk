@@ -4,7 +4,7 @@
 
 **UPGRADE NOTES**
 
-* `apiURL` init parameter has been superceeded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+* `apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
 
 **FEATURE**
 

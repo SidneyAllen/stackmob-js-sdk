@@ -416,7 +416,7 @@
       this.publicKey = options['publicKey'];
 
       if (typeof options['apiURL'] !== "undefined")
-        throw new Error("Error: apiURL has been superceeded by apiDomain");
+        throw new Error("Error: apiURL has been superseded by apiDomain");
 
       // Init variable 'apiDomain' should not contain a URL scheme (http:// or https://)
       // This will be prepended according to 'secure' setting
