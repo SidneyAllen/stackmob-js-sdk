@@ -371,7 +371,7 @@
 
       "facebookAccessToken" : "POST",
       "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST",
+      "linkUserWithFacebook" : "GET",
       "unlinkUserFromFacebook" : "DELETE",
 
       "gigyaAccessToken" : "POST"
