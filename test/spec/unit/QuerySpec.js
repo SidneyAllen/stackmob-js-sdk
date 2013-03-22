@@ -66,4 +66,30 @@ describe("Unit tests for queries", function() {
 
   });
 
+  it("should query fail and suggest IN - new OR query", function() {
+    runs(function() {
+
+      var q = function(){
+        isAged.and( isLA.or(isLA) );
+      }
+
+      expect(q).toThrow();
+
+    });
+
+  });
+
+  it("should query fail and suggest IN - existing OR query", function() {
+    runs(function() {
+
+      var q = function(){
+        isAged.and( notJohn.or(isLA).or(isLA) );
+      }
+
+      expect(q).toThrow();
+
+    });
+
+  });
+
 });
