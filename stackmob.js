@@ -222,10 +222,10 @@
     getBaseURL : function() {
       if( StackMob['useRelativePathForAjax'] ){
         // Build "relative path" (also used for OAuth signing)
-        return StackMob.apiURL ? StackMob.apiURL : (window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
+        return StackMob.apiDomain ? StackMob.apiDomain : (window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
       } else {
         // Use absolute path and operate through CORS
-        return StackMob.apiURL ? StackMob.apiURL : (StackMob['API_SERVER'] + '/');
+        return StackMob.apiDomain ? StackMob.apiDomain : (StackMob['API_SERVER'] + '/');
       }
     },
     //The JS SDK calls this to throw an error.
@@ -415,9 +415,18 @@
 
       this.publicKey = options['publicKey'];
 
-      // apiURL should not contain protocol
-      // http:// or https:// will be prepended according to 'secure' setting
-      this.apiURL = options['apiURL'];
+      if (typeof options['apiURL'] !== "undefined")
+        throw new Error("Error: apiURL has been superceeded by apiDomain");
+
+      // Init variable 'apiDomain' should not contain a URL scheme (http:// or https://)
+      // This will be prepended according to 'secure' setting
+      if (options['apiDomain']){
+        if (options['apiDomain'].indexOf('http') == 0){
+          throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com instead of http://stackmob.com. URL Scheme is determined by the 'secure' init variable.")
+        } else {
+          this.apiDomain = options['apiDomain'];
+        }
+      }
 
       var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
       this.useRelativePathForAjax = options['useRelativePathForAjax'] || isSMHosted;
@@ -954,7 +963,14 @@
       }
     },
     isAccessTokenMethod : function(method) {
-      return _.include(['accessToken', 'facebookAccessToken', 'refreshToken', 'gigyaAccessToken'], method);
+      var atMethods = ['accessToken',
+                        'refreshToken',
+                        'loginWithTempAndSetNewPassword',
+                        'facebookAccessToken',
+                        'createUserWithFacebook',
+                        'linkUserWithFacebook',
+                        'gigyaAccessToken'];
+      return _.include(atMethods, method);
     }
   });
   //end of StackMob
