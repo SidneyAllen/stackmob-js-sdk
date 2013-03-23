@@ -3,9 +3,8 @@
  */
 
 describe("Social Unit Tests", function() {
-  enableUnitTests();
 
-  it("should ", function() {
+  it("should call unlinkUserFromFacebook", function() {
 
     runs(function() {
       var model, params, method;
@@ -19,10 +18,9 @@ describe("Social Unit Tests", function() {
         }
       });
 
-      expect(params['url']).toEqual(StackMob.getBaseURL() + 'user/unlinkUserFromFacebook');
+      expect(params['url'].indexOf('user/unlinkUserFromFacebook') > -1).toEqual(true);
     });
 
   });
 
-  disableUnitTests();
 });
