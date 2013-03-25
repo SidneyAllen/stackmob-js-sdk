@@ -355,32 +355,34 @@
     },
     //This is an internally used map that works with Backbone.js.  It maps methods to HTTP Verbs used when making ajax calls.
     METHOD_MAP : {
-      "create" : "POST",
-      "read" : "GET",
-      "update" : "PUT",
-      "delete" : "DELETE",
+      "create"                          : "POST",
+      "read"                            : "GET",
+      "update"                          : "PUT",
+      "delete"                          : "DELETE",
 
-      "post" : "POST",
-      "get" : "GET",
-      "put" : "PUT",
+      "post"                            : "POST",
+      "get"                             : "GET",
+      "put"                             : "PUT",
 
-      "addRelationship" : "POST",
-      "appendAndSave" : "PUT",
-      "deleteAndSave" : "DELETE",
+      "addRelationship"                 : "POST",
+      "appendAndSave"                   : "PUT",
+      "deleteAndSave"                   : "DELETE",
 
-      "login" : "GET",
-      "accessToken" : "POST",
-      "refreshToken" : "POST",
-      "logout" : "GET",
-      "forgotPassword" : "POST",
-      "loginWithTempAndSetNewPassword" : "GET",
-      "resetPassword" : "POST",
+      "login"                           : "GET",
+      "accessToken"                     : "POST",
+      "refreshToken"                    : "POST",
+      "logout"                          : "GET",
+      "forgotPassword"                  : "POST",
+      "loginWithTempAndSetNewPassword"  : "GET",
+      "resetPassword"                   : "POST",
 
-      "facebookAccessToken" : "POST",
-      "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST",
+      "facebookAccessToken"             : "POST",
+      "createUserWithFacebook"          : "POST",
+      "linkUserWithFacebook"            : "GET",
+      "unlinkUserFromFacebook"          : "DELETE",
 
-      "gigyaAccessToken" : "POST"
+      "gigyaAccessToken"                : "POST",
+      "unlinkUserFromGigya"             : "DELETE"
     },
 
     /**
@@ -1276,12 +1278,15 @@
 
         (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
       },
+      unlinkUserFromGigya : function(options) {
+        (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
+      },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
         var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
 
         StackMob.keepLoggedIn(remember);
-        
+
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
           "fb_at" : facebookAccessToken,
@@ -1314,6 +1319,9 @@
         });
 
         (this.sync || Backbone.sync).call(this, "linkUserWithFacebook", this, options);
+      },
+      unlinkUserFromFacebook : function(options) {
+        (this.sync || Backbone.sync).call(this, "unlinkUserFromFacebook", this, options);
       },
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
         options = options || {};
