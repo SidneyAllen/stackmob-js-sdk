@@ -465,11 +465,15 @@
 
       // Init variable 'apiDomain' should not contain a URL scheme (http:// or https://)
       // This will be prepended according to 'secure' setting
-      if (options['apiDomain']){
+      if (typeof options['apiDomain'] === "string"){
         if (options['apiDomain'].indexOf('http') == 0){
-          throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com/ instead of http://stackmob.com/. URL Scheme is determined by the 'secure' init variable.")
+          throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com instead of http://stackmob.com. URL Scheme is determined by the 'secure' init variable.")
         } else {
-          this.apiDomain = options['apiDomain'];
+          if (options['apiDomain'].indexof('/') == options['apiDomain'].length - 1){
+            this.apiDomain = options['apiDomain'];
+          } else {
+            this.apiDomain = options['apiDomain'] + '/';
+          }
         }
       }
 
@@ -1545,7 +1549,7 @@
        *
        * Example:
        *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
-       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
+       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC");
        *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
        *   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
        *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
@@ -1658,7 +1662,7 @@
        *
        * Example:
        *   var isAged  = new StackMob.Collection.Query().equals("age", "25");
-       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC")
+       *   var isNYC   = new StackMob.Collection.Query().equals("location", "NYC");
        *   var notJohn = new StackMob.Collection.Query().notEquals("name", "john");
        *   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
        *   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
