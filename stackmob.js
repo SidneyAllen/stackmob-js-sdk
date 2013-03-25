@@ -240,14 +240,15 @@
     isOAuth2Mode : function() {
       return !isNaN(StackMob['publicKey'] && !StackMob['privateKey']);
     },
-    prepareCredsForSaving : function(accessToken, refreshToken, macKey, expires, user) {
+    prepareCredsForSaving : function(accessToken, refreshToken, macKey, expires, user, schemaName) {
       //For convenience, the JS SDK will save the expiration date of these credentials locally so that the developer can check for it if need be.
       var unvalidated_expiretime = (new Date()).getTime() + (expires * 1000);
       var creds = {
         'oauth2.accessToken' : accessToken,
         'oauth2.macKey' : macKey,
         'oauth2.expires' : unvalidated_expiretime,
-        'oauth2.user' : user
+        'oauth2.user' : user,
+        'oauth2.schema' : schemaName
       };
       creds[StackMob.REFRESH_TOKEN_KEY] = refreshToken;
 
@@ -268,6 +269,7 @@
       this.Storage.persist(StackMob.REFRESH_TOKEN_KEY, refreshToken);
       this.Storage.persist('oauth2.macKey', creds['oauth2.macKey']);
       this.Storage.persist('oauth2.user', creds['oauth2.user']);
+      this.Storage.persist('oauth2.schema', creds['oauth2.schema']);
     },
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
     hasValidOAuth : function(options) {
@@ -333,10 +335,13 @@
       var oauth_macKey = StackMob.Storage.retrieve('oauth2.macKey');
       var oauth_expires = StackMob.Storage.retrieve('oauth2.expires');
       var oauth_refreshToken = StackMob.Storage.retrieve(StackMob.REFRESH_TOKEN_KEY);
+      var oauth_schema = StackMob.Storage.retrieve('oauth2.schema');
+      
       var creds = {
         'oauth2.accessToken' : oauth_accessToken,
         'oauth2.macKey' : oauth_macKey,
-        'oauth2.expires' : oauth_expires
+        'oauth2.expires' : oauth_expires,
+        'oauth2.schema' : oauth_schema
       };
       creds[StackMob.REFRESH_TOKEN_KEY] = oauth_refreshToken;
       return creds;
@@ -522,7 +527,7 @@
       this.sync.call(StackMob, method, null, options);
     },
 
-    processLogin : function(result) {
+    processLogin : function(result, options) {
       if(StackMob.isOAuth2Mode()) {
         var oauth2Creds = result;
 
@@ -535,8 +540,8 @@
 
         try {
           user = result['stackmob']['user'][StackMob['loginField']];
-          var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, user);
-
+          var userSchema = options['stackmob_userschema'];
+          var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, user, userSchema);
           //...then let's save the OAuth credentials to local storage.
           StackMob.saveOAuthCredentials(creds);
           StackMob.Storage.persist(StackMob.loggedInUserKey, user);
@@ -545,15 +550,6 @@
             console.error('Problem saving OAuth 2.0 credentials and user');
         }
       }
-    },
-    getCallId : function(method, model) {
-      var id = {
-        method : method,
-        model : (model || {}),
-        time : (new Date()).getTime()
-      };
-
-      return JSON.stringify(id);
     },
     sync : function(method, model, options) {
       options = options || {};
@@ -784,18 +780,19 @@
       if(!StackMob.isAccessTokenMethod(method))
         _prepareAuth(model, method, params);
 
-      StackMob.makeAPICall(model, params, method);
+      StackMob.makeAPICall(model, params, method, options);
     },
     refreshSession : function(options) {
+      
       //Make an ajax call here hitting the refreshToken access point and oncomplete, run whatever was passed in
       var refreshOptions = {};
 
       _.extend(refreshOptions, options);
 
       if(StackMob.hasRefreshToken()) {
-
+        var userSchema = StackMob.getOAuthCredentials()['oauth2.schema'];
         //set request call details
-        refreshOptions['url'] = "/" + StackMob['userSchema'];
+        refreshOptions['url'] = "/" + userSchema;
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
         refreshOptions['data'] = {
           refresh_token : StackMob.getOAuthCredentials()[StackMob.REFRESH_TOKEN_KEY],
@@ -832,26 +829,25 @@
         }
       }
     },
-    makeAPICall : function(model, params, method) {
+    makeAPICall : function(model, params, method, options) {
 
       if(StackMob['ajax']) {
-        return StackMob['ajax'](model, params, method);
+        return StackMob['ajax'](model, params, method, options);
       } else if(StackMob.isSencha()) {
-        return StackMob['ajaxOptions']['sencha'](model, params, method);
+        return StackMob['ajaxOptions']['sencha'](model, params, method, options);
       } else if(StackMob.isZepto()) {
-        return StackMob['ajaxOptions']['zepto'](model, params, method);
+        return StackMob['ajaxOptions']['zepto'](model, params, method, options);
       } else {
-        return StackMob['ajaxOptions']['jquery'](model, params, method);
+        return StackMob['ajaxOptions']['jquery'](model, params, method, options);
       }
     },
-    onsuccess : function(model, method, params, result, success) {
-
+    onsuccess : function(model, method, params, result, success, options) {
       /**
        * If there's an internal success callback function, execute it.
        */
       if(params) {
         if(_.isFunction(params['stackmob_on' + method]))
-          params['stackmob_on' + method](result);
+          params['stackmob_on' + method](result, options);
         if(_.isFunction(params['oncomplete']))
           params['oncomplete'](result);
       }
@@ -875,7 +871,7 @@
           success();
       }
     },
-    onerror : function(response, responseText, ajaxFunc, model, params, err) {
+    onerror : function(response, responseText, ajaxFunc, model, params, err, options) {
       var statusCode = response.status;
       var result;
       try {
@@ -1137,7 +1133,7 @@
 
       idAttribute : StackMob['loginField'],
 
-      schemaName : StackMob['userSchema'],
+      schemaName : StackMob['DEFAULT_LOGIN_SCHEMA'],
 
       getPrimaryKeyField : function() {
         return StackMob.loginField;
@@ -1271,6 +1267,12 @@
           password : newPassword
         };
         (this.sync || Backbone.sync).call(this, "resetPassword", this, options);
+      },
+      
+      sync : function(method, model, options) {
+        options = options || {};
+        options['stackmob_userschema'] = this.schemaName; // determine what user schema is making the call.  used eventually for processLogin/refreshSession
+        StackMob.Model.prototype.sync.call(this, method, model, options);
       }
     });
 
@@ -1610,7 +1612,7 @@
   var $ = root.jQuery || root.Ext || root.Zepto;
   _.extend(StackMob, {
     ajaxOptions : {
-      'sencha' : function(model, params, method) {
+      'sencha' : function(model, params, method, options) {
         var hash = {};
 
         // Set up success callback
@@ -1621,7 +1623,7 @@
           if(params["stackmob_count"] === true)
             result = response;
 
-          StackMob.onsuccess(model, method, params, result, success);
+          StackMob.onsuccess(model, method, params, result, success, options);
 
         };
         params['success'] = defaultSuccess;
@@ -1639,7 +1641,7 @@
 
         var defaultError = function(response, options) {
           var responseText = response.responseText || response.text;
-          StackMob.onerror(response, responseText, $.Ajax.request, model, hash, error);
+          StackMob.onerror(response, responseText, $.Ajax.request, model, hash, error, options);
         }
         params['error'] = defaultError;
         hash['failure'] = params['error'];
@@ -1647,13 +1649,13 @@
         return $.Ajax.request(hash);
       },
 
-      'zepto' : function(model, params, method) {
+      'zepto' : function(model, params, method, options) {
 
         // Set up success callback
         var success = params['success'];
         var defaultSuccess = function(response, result, xhr) {
           var result = response ? JSON.parse(response) : null;
-          StackMob.onsuccess(model, method, params, result, success);
+          StackMob.onsuccess(model, method, params, result, success, options);
         };
         params['success'] = defaultSuccess;
 
@@ -1661,7 +1663,7 @@
         var error = params['error'];
         var defaultError = function(xhr, errorType, err) {
           var responseText = xhr.responseText || xhr.text;
-          StackMob.onerror(xhr, responseText, $.ajax, model, params, error);
+          StackMob.onerror(xhr, responseText, $.ajax, model, params, error, options);
         }
         params['error'] = defaultError;
 
@@ -1678,7 +1680,9 @@
         return $.ajax(hash);
       },
 
-      'jquery' : function(model, params, method) {
+      'jquery' : function(model, params, method, options) {
+        
+        
         params['beforeSend'] = function(jqXHR, settings) {
           jqXHR.setRequestHeader("Accept", settings['accepts']);
           if(!_.isEmpty(settings['headers'])) {
@@ -1699,7 +1703,7 @@
             return;
           }
           var responseText = jqXHR.responseText || jqXHR.text;
-          StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error);
+          StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error, options);
         }
 
         // Set up success callback
@@ -1717,8 +1721,7 @@
           } else if(model) {
             result = model;
           }
-
-          StackMob.onsuccess(model, method, params, result, success);
+          StackMob.onsuccess(model, method, params, result, success, options);
 
         };
         params['success'] = defaultSuccess;
