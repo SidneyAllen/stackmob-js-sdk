@@ -245,7 +245,7 @@
     isOAuth2Mode : function() {
       return !isNaN(StackMob['publicKey'] && !StackMob['privateKey']);
     },
-    prepareCredsForSaving : function(accessToken, refreshToken, macKey, expires, user, schemaName) {
+    prepareCredsForSaving : function(accessToken, refreshToken, macKey, expires, user, schemaInfo) {
       //For convenience, the JS SDK will save the expiration date of these credentials locally so that the developer can check for it if need be.
       var unvalidated_expiretime = (new Date()).getTime() + (expires * 1000);
       var creds = {
@@ -253,7 +253,7 @@
         'oauth2.macKey' : macKey,
         'oauth2.expires' : unvalidated_expiretime,
         'oauth2.user' : user,
-        'oauth2.schema' : schemaName
+        'oauth2.userSchemaInfo' : schemaInfo
       };
       creds[StackMob.REFRESH_TOKEN_KEY] = refreshToken;
 
@@ -274,7 +274,7 @@
       this.Storage.persist(StackMob.REFRESH_TOKEN_KEY, refreshToken);
       this.Storage.persist('oauth2.macKey', creds['oauth2.macKey']);
       this.Storage.persist('oauth2.user', creds['oauth2.user']);
-      this.Storage.persist('oauth2.schema', creds['oauth2.schema']);
+      this.Storage.persist('oauth2.userSchemaInfo', JSON.stringify(creds['oauth2.userSchemaInfo']));
     },
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
     hasValidOAuth : function(options) {
@@ -307,14 +307,21 @@
         //If expired and async
         var originalSuccess = options['success'];
         options['success'] = function(input){
-          originalSuccess( input[StackMob['loginField']] );
+          var creds = StackMob.getOAuthCredentials();
+          
+          var loginField =  (creds['oauth2.userSchemaInfo'] && creds['oauth2.userSchemaInfo']['loginField']) ? 
+            creds['oauth2.userSchemaInfo']['loginField'] : StackMob['loginField'];
+          originalSuccess( input[loginField]);
         }
-        StackMob.refreshSession.call(StackMob, options);
+        this.initiateRefreshSessionCall(options)
       } else {
         //If expired and sync
         return false;
       }
 
+    },
+    initiateRefreshSessionCall: function(options) {
+      StackMob.refreshSession.call(StackMob, options);
     },
     shouldSendRefreshToken : function() {
       return this.hasExpiredOAuth() && this.hasRefreshToken() && this.shouldKeepLoggedIn();
@@ -342,13 +349,13 @@
       var oauth_macKey = StackMob.Storage.retrieve('oauth2.macKey');
       var oauth_expires = StackMob.Storage.retrieve('oauth2.expires');
       var oauth_refreshToken = StackMob.Storage.retrieve(StackMob.REFRESH_TOKEN_KEY);
-      var oauth_schema = StackMob.Storage.retrieve('oauth2.schema');
+      var oauth_schema = JSON.parse(StackMob.Storage.retrieve('oauth2.userSchemaInfo'));
       
       var creds = {
         'oauth2.accessToken' : oauth_accessToken,
         'oauth2.macKey' : oauth_macKey,
         'oauth2.expires' : oauth_expires,
-        'oauth2.schema' : oauth_schema
+        'oauth2.userSchemaInfo' : oauth_schema
       };
       creds[StackMob.REFRESH_TOKEN_KEY] = oauth_refreshToken;
       return creds;
@@ -360,32 +367,34 @@
     },
     //This is an internally used map that works with Backbone.js.  It maps methods to HTTP Verbs used when making ajax calls.
     METHOD_MAP : {
-      "create" : "POST",
-      "read" : "GET",
-      "update" : "PUT",
-      "delete" : "DELETE",
+      "create"                          : "POST",
+      "read"                            : "GET",
+      "update"                          : "PUT",
+      "delete"                          : "DELETE",
 
-      "post" : "POST",
-      "get" : "GET",
-      "put" : "PUT",
+      "post"                            : "POST",
+      "get"                             : "GET",
+      "put"                             : "PUT",
 
-      "addRelationship" : "POST",
-      "appendAndSave" : "PUT",
-      "deleteAndSave" : "DELETE",
+      "addRelationship"                 : "POST",
+      "appendAndSave"                   : "PUT",
+      "deleteAndSave"                   : "DELETE",
 
-      "login" : "GET",
-      "accessToken" : "POST",
-      "refreshToken" : "POST",
-      "logout" : "GET",
-      "forgotPassword" : "POST",
-      "loginWithTempAndSetNewPassword" : "GET",
-      "resetPassword" : "POST",
+      "login"                           : "GET",
+      "accessToken"                     : "POST",
+      "refreshToken"                    : "POST",
+      "logout"                          : "GET",
+      "forgotPassword"                  : "POST",
+      "loginWithTempAndSetNewPassword"  : "GET",
+      "resetPassword"                   : "POST",
 
-      "facebookAccessToken" : "POST",
-      "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST",
+      "facebookAccessToken"             : "POST",
+      "createUserWithFacebook"          : "POST",
+      "linkUserWithFacebook"            : "GET",
+      "unlinkUserFromFacebook"          : "DELETE",
 
-      "gigyaAccessToken" : "POST"
+      "gigyaAccessToken"                : "POST",
+      "unlinkUserFromGigya"             : "DELETE"
     },
 
     /**
@@ -407,9 +416,12 @@
       // Run stuff before StackMob is initialized.
       this.initStart(options);
 
-      this.userSchema = options['userSchema'] || this.DEFAULT_LOGIN_SCHEMA;
-      this.loginField = options['loginField'] || this.DEFAULT_LOGIN_FIELD;
-      this.passwordField = options['passwordField'] || this.DEFAULT_PASSWORD_FIELD;
+      /* DEPRECATED METHODS BELOW */
+      this.userSchema = options['userSchema']; //DEPRECATED: USED StackMob.User.extend({ schemaName: 'customschemaname' });
+      this.loginField = options['loginField']; //DEPRECATED: USED StackMob.User.extend({ loginField: 'customloginfield' });
+      this.passwordField = options['passwordField']; //DEPRECATED: USED StackMob.User.extend({ passwordField: 'custompasswordfield' });
+      /* DEPRECATED METHODS ABOVE */
+      
       this.newPasswordField = options['newPasswordField'] || 'new_password';
 
       this.apiVersion = options['apiVersion'] || this.DEFAULT_API_VERSION;
@@ -578,18 +590,25 @@
         var macKey = oauth2Creds['mac_key'];
         var expires = oauth2Creds['expires_in'];
 
-        var user = null;
-
         try {
-          user = result['stackmob']['user'][StackMob['loginField']];
-          var userSchema = options['stackmob_userschema'];
-          var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, user, userSchema);
+          var savedCreds = StackMob.getOAuthCredentials();
+          
+          /*
+           * processLogin can be call by the developer or automatically by refreshSession
+           * if by refreshSession, there is no user schema info passed from the options, so fetch it from the local storage if that's the case.'
+           */
+          var userSchemaInfo = options['stackmob_userschemainfo'] || savedCreds['oauth2.userSchemaInfo']; //get schema info
+          var loginField = userSchema['loginField']; //so that we can determine the primary key/login field
+           
+          var username = result['stackmob']['user'][loginField]; //figure out username
+          
+          var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, username, userSchemaInfo);
           //...then let's save the OAuth credentials to local storage.
           StackMob.saveOAuthCredentials(creds);
-          StackMob.Storage.persist(StackMob.loggedInUserKey, user);
+          StackMob.Storage.persist(StackMob.loggedInUserKey, username);
         } catch(err) {
           if(console)
-            console.error('Problem saving OAuth 2.0 credentials and user');
+            console.error('Problem saving OAuth 2.0 credentials and user: ' + err);
         }
       }
     },
@@ -765,8 +784,11 @@
             delete json['lastmoddate'];
             delete json['createddate'];
 
-            if(method == 'update')
-              delete json[StackMob['passwordField']];
+            if(method == 'update') {
+              var passwordField = options['stackmob_userschemainfo']['passwordField'];
+              delete json[passwordField];  
+            }
+              
             if(StackMob.isOAuth2Mode())
               delete json['sm_owner'];
             params['data'] = JSON.stringify(_.extend(json, params['data']));
@@ -837,7 +859,7 @@
       _.extend(refreshOptions, options);
 
       if(StackMob.hasRefreshToken()) {
-        var userSchema = StackMob.getOAuthCredentials()['oauth2.schema'];
+        var userSchema = StackMob.getOAuthCredentials()['oauth2.userSchemaInfo']['schemaName'];
         //set request call details
         refreshOptions['url'] = "/" + userSchema;
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
@@ -1194,12 +1216,14 @@
      */
     StackMob.User = StackMob.Model.extend({
 
-      idAttribute : StackMob['loginField'],
+      idAttribute : StackMob['DEFAULT_LOGIN_FIELD'],
 
-      schemaName : StackMob['DEFAULT_LOGIN_SCHEMA'],
+      schemaName : StackMob['userSchema'] || StackMob['DEFAULT_LOGIN_SCHEMA'], //StackMob['userSchema'] is deprecated but here for backwards compatibility
+      loginField : StackMob['loginField'] || StackMob['DEFAULT_LOGIN_FIELD'],  //StackMob['loginField'] is deprecated but here for backwards compatibility
+      passwordField : StackMob['passwordField'] || StackMob['DEFAULT_PASSWORD_FIELD'],  //StackMob['passwordField'] is deprecated but here for backwards compatibility
 
       getPrimaryKeyField : function() {
-        return StackMob.loginField;
+        return this.loginField;
       },
       create : function(options) {
         options = options || {};
@@ -1219,7 +1243,7 @@
           });
           StackMob.hasValidOAuth(options);
         } else {
-          return StackMob.isUserLoggedIn(this.get(StackMob['loginField']), options);
+          return StackMob.isUserLoggedIn(this.get(this.loginField), options);
         }
       },
       login : function(keepLoggedIn, options) {
@@ -1230,8 +1254,8 @@
 
         options['data'] = options['data'] || {};
 
-        options['data'][StackMob.loginField] = this.get(StackMob.loginField);
-        options['data'][StackMob.passwordField] = this.get(StackMob.passwordField);
+        options['data'][this.loginField] = this.get(this.loginField);
+        options['data'][this.passwordField] = this.get(this.passwordField);
 
         if(StackMob.isOAuth2Mode())
           options['data']['token_type'] = 'mac';
@@ -1243,14 +1267,14 @@
       logout : function(options) {
         options = options || {};
         options['data'] = options['data'] || {};
-        options['stackmob_onlogout'] = function() {
-          StackMob.Storage.remove(StackMob.loggedInUserKey);
-          StackMob.Storage.remove('oauth2.accessToken');
-          StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
-          StackMob.Storage.remove('oauth2.macKey');
-          StackMob.Storage.remove('oauth2.expires');
-          StackMob.Storage.remove('oauth2.user');
-        };
+
+        StackMob.Storage.remove(StackMob.loggedInUserKey);
+        StackMob.Storage.remove('oauth2.accessToken');
+        StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
+        StackMob.Storage.remove('oauth2.macKey');
+        StackMob.Storage.remove('oauth2.expires');
+        StackMob.Storage.remove('oauth2.user');
+        StackMob.Storage.remove('oauth2.userSchemaInfo');
 
         (this.sync || Backbone.sync).call(this, "logout", this, options);
       },
@@ -1272,12 +1296,15 @@
 
         (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
       },
+      unlinkUserFromGigya : function(options) {
+        (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
+      },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
         var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
 
         StackMob.keepLoggedIn(remember);
-        
+
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
           "fb_at" : facebookAccessToken,
@@ -1296,7 +1323,7 @@
           "token_type" : 'mac'
         });
 
-        options['data'][StackMob.loginField] = options[StackMob['loginField']] || this.get(StackMob['loginField']);
+        options['data'][this.loginField] = options[this['loginField']] || this.get(this['loginField']);
 
         (this.sync || Backbone.sync).call(this, "createUserWithFacebook", this, options);
       },
@@ -1311,6 +1338,9 @@
 
         (this.sync || Backbone.sync).call(this, "linkUserWithFacebook", this, options);
       },
+      unlinkUserFromFacebook : function(options) {
+        (this.sync || Backbone.sync).call(this, "unlinkUserFromFacebook", this, options);
+      },
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
         options = options || {};
         options['data'] = options['data'] || {};
@@ -1323,7 +1353,7 @@
       forgotPassword : function(options) {
         options = options || {};
         options['data'] = options['data'] || {};
-        options['data'][StackMob.loginField] = this.get(StackMob.loginField);
+        options['data'][this.loginField] = this.get(this.loginField);
         (this.sync || Backbone.sync).call(this, "forgotPassword", this, options);
       },
       resetPassword : function(oldPassword, newPassword, options) {
@@ -1340,7 +1370,11 @@
       
       sync : function(method, model, options) {
         options = options || {};
-        options['stackmob_userschema'] = this.schemaName; // determine what user schema is making the call.  used eventually for processLogin/refreshSession
+        options['stackmob_userschemainfo'] = {
+          schemaName: this.schemaName,
+          loginField: this.loginField,
+          passwordField: this.passwordField
+        }; // determine what user schema is making the call.  used eventually for processLogin/refreshSession
         StackMob.Model.prototype.sync.call(this, method, model, options);
       }
     });
