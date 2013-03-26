@@ -417,6 +417,7 @@
       "resetPassword"                   : "POST",
 
       "facebookAccessToken"             : "POST",
+      "facebookAccessTokenWithCreate"   : "POST",
       "createUserWithFacebook"          : "POST",
       "linkUserWithFacebook"            : "GET",
       "unlinkUserFromFacebook"          : "DELETE",
@@ -1400,8 +1401,18 @@
 
         options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
 
-        (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
+        if (options['createIfNeeded'] === true)
+          (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
+        else
+          (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
+
+        facebookAccessTokenWithCreate
       },
+      loginCreateWithFacebook : function(facebookAccessToken, keepLoggedIn, options){
+        options = options || {};
+        options['createIfNeeded'] = true;
+        loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
+      }
       createUserWithFacebook : function(facebookAccessToken, options) {
         options = options || {};
         options['data'] = options['data'] || {};
@@ -1865,7 +1876,7 @@
         }
         params['error'] = defaultError;
 
-        // Build jQuery options
+        // Build Zepto options
         var hash = {};
         hash['url'] = params['url'];
         hash['headers'] = params['headers'];
