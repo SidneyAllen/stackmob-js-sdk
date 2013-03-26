@@ -598,7 +598,7 @@
            * if by refreshSession, there is no user schema info passed from the options, so fetch it from the local storage if that's the case.'
            */
           var userSchemaInfo = options['stackmob_userschemainfo'] || savedCreds['oauth2.userSchemaInfo']; //get schema info
-          var loginField = userSchema['loginField']; //so that we can determine the primary key/login field
+          var loginField = userSchemaInfo['loginField']; //so that we can determine the primary key/login field
            
           var username = result['stackmob']['user'][loginField]; //figure out username
           
@@ -860,6 +860,7 @@
 
       if(StackMob.hasRefreshToken()) {
         var userSchema = StackMob.getOAuthCredentials()['oauth2.userSchemaInfo']['schemaName'];
+        
         //set request call details
         refreshOptions['url'] = "/" + userSchema;
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
@@ -1216,11 +1217,11 @@
      */
     StackMob.User = StackMob.Model.extend({
 
-      idAttribute : StackMob['DEFAULT_LOGIN_FIELD'],
-
       schemaName : StackMob['userSchema'] || StackMob['DEFAULT_LOGIN_SCHEMA'], //StackMob['userSchema'] is deprecated but here for backwards compatibility
       loginField : StackMob['loginField'] || StackMob['DEFAULT_LOGIN_FIELD'],  //StackMob['loginField'] is deprecated but here for backwards compatibility
       passwordField : StackMob['passwordField'] || StackMob['DEFAULT_PASSWORD_FIELD'],  //StackMob['passwordField'] is deprecated but here for backwards compatibility
+      
+      idAttribute : this.loginField,
 
       getPrimaryKeyField : function() {
         return this.loginField;
