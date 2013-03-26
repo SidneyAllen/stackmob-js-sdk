@@ -2,7 +2,6 @@
  * Unit Test that `obj.sdkMethod` will hit `endPoint` with `verb` request.
  */
 function expectEndpoint(obj, methodParams, sdkMethod, verb, endPoint) {
-  
   var methodParams = methodParams || [];
   methodParams.push({
     done: function(model, params, method) {

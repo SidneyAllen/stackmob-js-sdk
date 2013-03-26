@@ -1406,11 +1406,11 @@
         else
           (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
       },
-      facebookLoginWithCreate : function(facebookAccessToken, keepLoggedIn, options){
+      loginOrCreateAndLoginWithFacebook : function(facebookAccessToken, keepLoggedIn, options){
         options = options || {};
         options['createIfNeeded'] = true;
-        loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
-      }
+        this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
+      },
       createUserWithFacebook : function(facebookAccessToken, options) {
         options = options || {};
         options['data'] = options['data'] || {};
