@@ -11,7 +11,7 @@ describe("Social Unit Tests", function() {
 
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
-      testEndPoint(user, 'unlinkUserFromFacebook', 'DELETE', 'user/unlinkUserFromFacebook');
+      expectEndpoint(user, [], 'unlinkUserFromFacebook', 'DELETE', 'user/unlinkUserFromFacebook');
 
     });
 
@@ -24,7 +24,33 @@ describe("Social Unit Tests", function() {
 
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
-      testEndPoint(user, 'unlinkUserFromGigya', 'DELETE', 'user/unlinkUserFromGigya');
+      expectEndpoint(user, [], 'unlinkUserFromGigya', 'DELETE', 'user/unlinkUserFromGigya');
+
+    });
+
+  });
+
+  it("should call facebookAccessToken", function() {
+
+    runs(function() {
+      var model, params, method;
+
+      var user = new StackMob.User({username: "testUser", password: "testUser"});
+
+      expectEndpoint(user, ['', false], 'loginWithFacebookToken', 'POST', 'user/facebookAccessToken');
+
+    });
+
+  });
+
+  it("should call facebookAccessTokenWithCreate", function() {
+
+    runs(function() {
+      var model, params, method;
+
+      var user = new StackMob.User({username: "testUser", password: "testUser"});
+
+      expectEndpoint(user, ['', false],'loginOrCreateAndLoginWithFacebook', 'POST', 'user/facebookAccessTokenWithCreate');
 
     });
 
