@@ -1297,13 +1297,11 @@
         options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
 
         if (options['createIfNeeded'] === true)
-          (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
-        else
           (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
-
-        facebookAccessTokenWithCreate
+        else
+          (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
       },
-      loginCreateWithFacebook : function(facebookAccessToken, keepLoggedIn, options){
+      facebookLoginWithCreate : function(facebookAccessToken, keepLoggedIn, options){
         options = options || {};
         options['createIfNeeded'] = true;
         loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
