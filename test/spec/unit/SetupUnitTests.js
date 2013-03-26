@@ -10,3 +10,5 @@ StackMob.ajaxOptions.unitTest = function(model, params, method){
 StackMob.makeAPICall = function(model, params, method){
   return StackMob['ajaxOptions']['unitTest'](model, params, method);
 }
+
+StackMob.initiateRefreshSessionCall = function() {};
