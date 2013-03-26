@@ -1057,13 +1057,15 @@
       var accessTokenMethods = ['accessToken',
                         'refreshToken',
                         'facebookAccessToken',
+                        'facebookAccessTokenWithCreate',
                         'gigyaAccessToken'];
       return _.include(accessTokenMethods, method);
     },
     _isSecureMethod : function(method, params){
       var secureMethods = ['loginWithTempAndSetNewPassword',
                             'createUserWithFacebook',
-                            'linkUserWithFacebook'];
+                            'linkUserWithFacebook',
+                            'unlinkUserFromFacebook'];
       if (StackMob.isAccessTokenMethod(method)) {
         return true;
       } else if (params['isUserCreate'] == true) {
@@ -1399,12 +1401,14 @@
           "token_type" : 'mac'
         });
 
-        options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
-
-        if (options['createIfNeeded'] === true)
+        if (options['createIfNeeded'] === true){
+          options['stackmob_onfacebookAccessTokenWithCreate'] = StackMob.processLogin;
+          options['data'][StackMob.loginField] = options[StackMob['loginField']] || this.get(StackMob['loginField']);
           (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
-        else
+        } else {
+          options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
           (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
+        }
       },
       loginOrCreateAndLoginWithFacebook : function(facebookAccessToken, keepLoggedIn, options){
         options = options || {};
