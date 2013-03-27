@@ -362,9 +362,7 @@
         
         oauth_schema = JSON.parse(userSchemaInfo);
       } catch (e) {
-        console.debug("ERROR");
         console.debug(e);
-        console.debug(userSchemaInfo);
       }
 
       if (_.every([oauth_accessToken, oauth_macKey, oauth_expires, oauth_refreshToken, oauth_schema])) {
@@ -620,8 +618,8 @@
            * if by refreshSession, there is no user schema info passed from the options, so fetch it from the local storage if that's the case.'
            */
           var userSchemaInfo = options['stackmob_userschemainfo'] || savedCreds['oauth2.userSchemaInfo']; //get schema info
+          
           var loginField = userSchemaInfo['loginField']; //so that we can determine the primary key/login field
-           
           var username = result['stackmob']['user'][loginField]; //figure out username
           
           var creds = StackMob.prepareCredsForSaving(accessToken, refreshToken, macKey, expires, username, userSchemaInfo);
@@ -1744,7 +1742,7 @@
 
         // Set up success callback
         var success = params['success'];
-        var defaultSuccess = function(response, options) {
+        var defaultSuccess = function(response, opt) {
 
           var result = response && response.responseText ? JSON.parse(response.responseText) : null;
           if(params["stackmob_count"] === true)
