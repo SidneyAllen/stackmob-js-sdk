@@ -96,7 +96,7 @@ describe("Unit tests for queries", function() {
     runs(function() {
 
       var q = new StackMob.Collection.Query();
-      q.isEmptyString("name");
+      q.equals("name","");
 
       var expectation = {
         "name[empty]": true
@@ -112,7 +112,7 @@ it("should query for non-empty string", function() {
     runs(function() {
 
       var q = new StackMob.Collection.Query();
-      q.isNotEmptyString("name");
+      q.notEquals("name","");
 
       var expectation = {
         "name[empty]": false
