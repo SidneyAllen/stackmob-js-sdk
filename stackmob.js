@@ -80,6 +80,8 @@
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
+    
+    useLegacyCallbacks : false,
 
     /**
      * The Storage object lives within the StackMob object and provides an abstraction layer for client storage.  It's intended for internal use within the JS SDK.  The JS SDK is currently using HTML5's Local Storage feature to persist key/value items.
@@ -361,9 +363,7 @@
       try {
         
         oauth_schema = JSON.parse(userSchemaInfo);
-      } catch (e) {
-        console.debug(e);
-      }
+      } catch (e) {}
 
       if (_.every([oauth_accessToken, oauth_macKey, oauth_expires, oauth_refreshToken, oauth_schema])) {
         var creds = {
@@ -451,6 +451,8 @@
       this.clientSubdomain = this.getProperty(options, "clientSubdomain");
 
       this.publicKey = options['publicKey'];
+      
+      this.useLegacyCallbacks = options['useLegacyCallbacks'] ? options['useLegacyCallbacks'] === true : this._useBackboneLegacyCallbackSignature();
 
       if (typeof options['apiURL'] !== "undefined")
         throw new Error("Error: apiURL has been superseded by apiDomain");
@@ -482,6 +484,24 @@
     initStart : function(options) {
     },
     initEnd : function(options) {
+    },
+    
+    _useBackboneLegacyCallbackSignature: function() {
+      //only use legacy if you're not 1.x.y nor 0.9.9
+      return (Backbone && Backbone.Version) && 
+        (Backbone.Version.indexOf('0') == 0 && Backbone.Version != '0.9.9');
+    },
+    
+    /**
+     * This is here in case we need to change the callbacks for Backbone 0.9.2 and below vs. Backbone 1.0
+     */
+    wrapStackMobCallbacks: function(options) {
+      if (options && options['success'] && StackMob.useLegacyCallback === true) {
+        var success = options['success'];
+        options['success'] = function(model, result, options) {
+          success(model);
+        }  
+      }
     }
   };
 
@@ -1070,6 +1090,7 @@
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
+        StackMob.wrapStackMobCallbacks.call(this, options);
         this.save(null, newOptions);
       },
       query : function(stackMobQuery, options) {
@@ -1079,13 +1100,25 @@
         })
         this.fetch(options);
       },
+      fetch : function(options) {
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        Backbone.Model.prototype.fetch.call(this, options);
+      },
+      destroy: function(options) {
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        Backbone.Model.prototype.destroy.call(this, options);
+      },
       save : function(key, value) {
         var successFunc = key ? key['success'] : {};
         var errorFunc = key ? key['error'] : {};
         if( typeof value === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
+          StackMob.wrapStackMobCallbacks.call(this, key);
           Backbone.Model.prototype.save.call(this, null, key);
-        } else
+        } else {
+          StackMob.wrapStackMobCallbacks.call(this, value);
           Backbone.Model.prototype.save.call(this, key, value);
+        }
+          
       },
       fetchExpanded : function(depth, options) {
         if(depth < 0 || depth > 3)
@@ -1192,7 +1225,12 @@
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
+        StackMob.wrapStackMobCallbacks.call(this, newOptions);
         Backbone.Collection.prototype.create.call(this, model, newOptions);
+      },
+      fetch : function(options) {
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        Backbone.Collection.prototype.fetch.call(this, options);
       },
       count : function(stackMobQuery, options) {
         stackMobQuery = stackMobQuery || new StackMob.Collection.Query();
