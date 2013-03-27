@@ -246,12 +246,12 @@
       return !isNaN(StackMob['publicKey'] && !StackMob['privateKey']);
     },
     prepareCredsForSaving : function(accessToken, refreshToken, macKey, expires, user, schemaInfo) {
+      var expireTime = (new Date()).getTime() + (this._stubbedExpireTime(expires) * 1000);
       //For convenience, the JS SDK will save the expiration date of these credentials locally so that the developer can check for it if need be.
-      var unvalidated_expiretime = (new Date()).getTime() + (expires * 1000);
       var creds = {
         'oauth2.accessToken' : accessToken,
         'oauth2.macKey' : macKey,
-        'oauth2.expires' : unvalidated_expiretime,
+        'oauth2.expires' : expireTime,
         'oauth2.user' : user,
         'oauth2.userSchemaInfo' : schemaInfo
       };
@@ -259,6 +259,12 @@
 
       return creds;
     },
+    
+    //Why have this?  So that we can overwrite the expire time via _.extend(StackMob, { _stubbedExpireTime: ... }) for tests
+    _stubbedExpireTime: function(expires) {
+      return expires;
+    },
+    
     //Saves the OAuth 2.0 credentials (passed in as JSON) to client storage.
     saveOAuthCredentials : function(creds) {
       var accessToken = creds['oauth2.accessToken'];
@@ -289,7 +295,7 @@
 
       //Check to see if we have all the necessary OAuth 2.0 credentials locally AND if the credentials have expired.
       var creds = this.getOAuthCredentials();
-      var expires = creds['oauth2.expires'] || 0;
+      var expires =  (creds && creds['oauth2.expires']) || 0;
 
       //If no accesstoken, mackey, or expires..
       if ( !_.all([creds['oauth2.accessToken'], creds['oauth2.macKey'], expires], _.identity) ){
@@ -349,16 +355,32 @@
       var oauth_macKey = StackMob.Storage.retrieve('oauth2.macKey');
       var oauth_expires = StackMob.Storage.retrieve('oauth2.expires');
       var oauth_refreshToken = StackMob.Storage.retrieve(StackMob.REFRESH_TOKEN_KEY);
-      var oauth_schema = JSON.parse(StackMob.Storage.retrieve('oauth2.userSchemaInfo'));
+      var userSchemaInfo = StackMob.Storage.retrieve('oauth2.userSchemaInfo');
+      var oauth_schema = null;
       
-      var creds = {
-        'oauth2.accessToken' : oauth_accessToken,
-        'oauth2.macKey' : oauth_macKey,
-        'oauth2.expires' : oauth_expires,
-        'oauth2.userSchemaInfo' : oauth_schema
-      };
-      creds[StackMob.REFRESH_TOKEN_KEY] = oauth_refreshToken;
-      return creds;
+      try {
+        
+        oauth_schema = JSON.parse(userSchemaInfo);
+      } catch (e) {
+        console.debug("ERROR");
+        console.debug(e);
+        console.debug(userSchemaInfo);
+      }
+
+      if (_.every([oauth_accessToken, oauth_macKey, oauth_expires, oauth_refreshToken, oauth_schema])) {
+        var creds = {
+          'oauth2.accessToken' : oauth_accessToken,
+          'oauth2.macKey' : oauth_macKey,
+          'oauth2.expires' : oauth_expires,
+          'oauth2.userSchemaInfo' : oauth_schema
+        };
+        creds[StackMob.REFRESH_TOKEN_KEY] = oauth_refreshToken;
+        
+        return creds;
+      } else {
+        return {};
+      }
+      
     },
     //Returns the date (in milliseconds) for when the current user's OAuth 2.0 credentials expire.
     getOAuthExpireTime : function() {
@@ -785,7 +807,8 @@
             delete json['createddate'];
 
             if(method == 'update') {
-              var passwordField = options['stackmob_userschemainfo']['passwordField'];
+              var userSchemaInfo = options['stackmob_userschemainfo'];
+              var passwordField = userSchemaInfo ? userSchemaInfo : ['passwordField'];
               delete json[passwordField];  
             }
               
@@ -978,7 +1001,7 @@
         if(_.isFunction(params['oncomplete']))
           params['oncomplete'](result);
         if(err)
-          err(model, result)
+          err(result)
       }
     },
     isAccessTokenMethod : function(method) {
@@ -1045,7 +1068,7 @@
       create : function(options) {
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
-        _.extend(newOptions, options)
+        _.extend(newOptions, options);
         this.save(null, newOptions);
       },
       query : function(stackMobQuery, options) {
