@@ -1,5 +1,11 @@
 ## StackMob JavaScript SDK Change Log
 
+### v0.8.1 - March 15, 2013
+
+**FIX**
+
+* Facebook logins will now stayed logged in when setting `keepLoggedIn` flag to `true` in [login() method](https://developer.stackmob.com/sdks/js/api#a-login).
+
 ### v0.8.0 - Feb 14, 2013
 
 **FEATURE**
