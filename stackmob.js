@@ -488,11 +488,10 @@
 
       this.initEnd(options);
 
-      // [Any actions a developer may want to implement via _extend should be done here]
-
       return this;
     },
     initStart : function(options) {
+      // Any actions a developer may want to implement via _extend should be done here
     },
     initEnd : function(options) {
     },
