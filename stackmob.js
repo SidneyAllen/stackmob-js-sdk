@@ -805,9 +805,12 @@
             delete json['createddate'];
 
             if(method == 'update') {
-              var userSchemaInfo = options['stackmob_userschemainfo'];
-              var passwordField = userSchemaInfo ? userSchemaInfo : ['passwordField'];
-              delete json[passwordField];  
+              var userSchemaInfo = options['stackmob_userschemainfo'] || StackMob.getOAuthCredentials()['oauth2.userSchemaInfo'];
+              
+              if (userSchemaInfo) {
+                var passwordField = userSchemaInfo['passwordField'];
+                delete json[passwordField];
+              } 
             }
               
             if(StackMob.isOAuth2Mode())
@@ -1108,7 +1111,6 @@
           }
         }
       },
-      //Supporting from JS SDK V0.1.0
       appendAndCreate : function(fieldName, values, options) {
         this.addRelationship(fieldName, values, options);
       },
