@@ -1,6 +1,6 @@
 /*
- StackMob JS SDK Version 0.8.0
- Copyright 2012 StackMob Inc.
+ StackMob JS SDK Version 0.9.0
+ Copyright 2012-2013 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -65,11 +65,18 @@
 
     CONTENT_TYPE_JSON: 'application/json',
 
+    // Use HTTPS for all requests
+    SECURE_ALWAYS: "ALWAYS",
+    // Use HTTPS for only authentication methods. Deteremind by StackMob.isAccessTokenMethod
+    SECURE_MIXED: "MIXED",
+    // Never use HTTPS
+    SECURE_NEVER: "NEVER",
+
     //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
     apiVersion : 0,
 
     //The current version of the JS SDK.
-    sdkVersion : "0.8.0",
+    sdkVersion : "0.9.0",
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -106,6 +113,8 @@
      * Helper method to allow altering callback methods
      **/
     _generateCallbacks : function(options, methods){
+      options = options || {};
+
       // Wrap yes/no methods with a success method
       options['success'] = function(result){
         if ( methods['isValidResult'](result) ){
@@ -209,18 +218,14 @@
       }
     },
 
-    //An internally used method to get the scheme to use for API requests.
-    getScheme : function() {
-      return this.secure === true ? 'https' : 'http';
-    },
     //This is an internally used method to get the API URL no matter what the context - development, production, etc.  This envelopes `getDevAPIBase` and `getProdAPIBase` in that this method is smart enough to choose which of the URLs to use.
     getBaseURL : function() {
       if( StackMob['useRelativePathForAjax'] ){
         // Build "relative path" (also used for OAuth signing)
-        return StackMob.apiURL || (window.location.protocol + '//' + window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
+        return StackMob.apiDomain ? StackMob.apiDomain : (window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
       } else {
         // Use absolute path and operate through CORS
-        return StackMob.apiURL || (this.getScheme() + '://' + StackMob['API_SERVER'] + '/');
+        return StackMob.apiDomain ? StackMob.apiDomain : (StackMob['API_SERVER'] + '/');
       }
     },
     //The JS SDK calls this to throw an error.
@@ -271,6 +276,8 @@
     },
     //StackMob validates OAuth 2.0 credentials upon each request and will send back a error message if the credentials have expired.  To save the trip, developers can check to see if their user has valid OAuth 2.0 credentials that indicate the user is logged in.
     hasValidOAuth : function(options) {
+      options = options || {};
+
       //If we aren't running in OAuth 2.0 mode, then kick out early.
       if(!this.isOAuth2Mode()){
         if (options && options['error'])
@@ -348,32 +355,34 @@
     },
     //This is an internally used map that works with Backbone.js.  It maps methods to HTTP Verbs used when making ajax calls.
     METHOD_MAP : {
-      "create" : "POST",
-      "read" : "GET",
-      "update" : "PUT",
-      "delete" : "DELETE",
+      "create"                          : "POST",
+      "read"                            : "GET",
+      "update"                          : "PUT",
+      "delete"                          : "DELETE",
 
-      "post" : "POST",
-      "get" : "GET",
-      "put" : "PUT",
+      "post"                            : "POST",
+      "get"                             : "GET",
+      "put"                             : "PUT",
 
-      "addRelationship" : "POST",
-      "appendAndSave" : "PUT",
-      "deleteAndSave" : "DELETE",
+      "addRelationship"                 : "POST",
+      "appendAndSave"                   : "PUT",
+      "deleteAndSave"                   : "DELETE",
 
-      "login" : "GET",
-      "accessToken" : "POST",
-      "refreshToken" : "POST",
-      "logout" : "GET",
-      "forgotPassword" : "POST",
-      "loginWithTempAndSetNewPassword" : "GET",
-      "resetPassword" : "POST",
+      "login"                           : "GET",
+      "accessToken"                     : "POST",
+      "refreshToken"                    : "POST",
+      "logout"                          : "GET",
+      "forgotPassword"                  : "POST",
+      "loginWithTempAndSetNewPassword"  : "GET",
+      "resetPassword"                   : "POST",
 
-      "facebookAccessToken" : "POST",
-      "createUserWithFacebook" : "POST",
-      "linkUserWithFacebook" : "POST",
+      "facebookAccessToken"             : "POST",
+      "createUserWithFacebook"          : "POST",
+      "linkUserWithFacebook"            : "GET",
+      "unlinkUserFromFacebook"          : "DELETE",
 
-      "gigyaAccessToken" : "POST"
+      "gigyaAccessToken"                : "POST",
+      "unlinkUserFromGigya"             : "DELETE"
     },
 
     /**
@@ -392,7 +401,7 @@
     init : function(options) {
       options = options || {};
 
-      //Run stuff before StackMob is initialized.
+      // Run stuff before StackMob is initialized.
       this.initStart(options);
 
       this.userSchema = options['userSchema'] || this.DEFAULT_LOGIN_SCHEMA;
@@ -407,21 +416,31 @@
       this.clientSubdomain = this.getProperty(options, "clientSubdomain");
 
       this.publicKey = options['publicKey'];
-      this.apiURL = options['apiURL'];
+
+      if (typeof options['apiURL'] !== "undefined")
+        throw new Error("Error: apiURL has been superseded by apiDomain");
+
+      // Init variable 'apiDomain' should not contain a URL scheme (http:// or https://)
+      // This will be prepended according to 'secure' setting
+      if (options['apiDomain']){
+        if (options['apiDomain'].indexOf('http') == 0){
+          throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com/ instead of http://stackmob.com/. URL Scheme is determined by the 'secure' init variable.")
+        } else {
+          this.apiDomain = options['apiDomain'];
+        }
+      }
 
       var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
       this.useRelativePathForAjax = options['useRelativePathForAjax'] || isSMHosted;
 
       this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
 
-      this.secure = options['secure'] === true;
-      this.fullURL = (options['fullURL'] === true) || !( typeof PhoneGap === 'undefined') || this.fullURL;
+      this.secure = options['secure'] || this.SECURE_MIXED;
       this.ajax = options['ajax'] || this.ajax;
 
-      this.urlRoot = options['urlRoot'] || this.getBaseURL();
-
       this.initEnd(options);
-      //placeholder for any actions a developer may want to implement via _extend
+
+      // [Any actions a developer may want to implement via _extend should be done here]
 
       return this;
     },
@@ -465,7 +484,7 @@
     return 'MAC id="' + id + '",ts="' + ts + '",nonce="' + nonce + '",mac="' + mac + '"';
   }
 
-  function getAuthHeader(method, params){
+  function getAuthHeader(params){
     var host = StackMob.getBaseURL();
 
     var path = params['url'].replace(new RegExp(host, 'g'), '/');
@@ -479,6 +498,32 @@
       var authHeader = generateMAC(params['type'], accessToken, macKey, sighost, path, host);
       return authHeader;
     }
+  }
+
+  function _getURLScheme(method, params){
+    params = params || {};
+    var scheme,
+        HTTP  = 'http',
+        HTTPS = 'https';
+
+    if ( params['secureRequest'] === true ) {
+      scheme = HTTPS;
+    } else {
+      switch(StackMob.secure){
+        case StackMob.SECURE_ALWAYS:
+          scheme = HTTPS;
+          break;
+        case StackMob.SECURE_NEVER:
+          scheme = HTTP;
+          break;
+        case StackMob.SECURE_MIXED:
+        default:
+          scheme = StackMob._isSecureMethod(method, params) ? HTTPS : HTTP;
+          break;
+      }
+    }
+
+    return scheme + '://';
   }
 
   _.extend(StackMob, {
@@ -500,7 +545,6 @@
     },
 
     customcode : function(method, params, verb, options) {
-
       function isValidVerb(v) {
         return v && !_.isUndefined(StackMob.METHOD_MAP[verb.toLowerCase()]);
       }
@@ -518,7 +562,7 @@
       options['data'] = options['data'] || {};
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
-      options['url'] = this.getBaseURL();
+      options['url'] = _getURLScheme(method, params) + this.getBaseURL();
       this.sync.call(StackMob, method, null, options);
     },
 
@@ -569,7 +613,7 @@
         var originalThis = this;
 
         StackMob.refreshSession.call(StackMob, {
-          oncomplete : function() {//oncomplete because we don't care whether success or error
+          oncomplete : function() { // oncomplete because we don't care whether success or error
             StackMob.sync.call(originalThis, originalMethod, originalModel, originalOptions);
           }
         });
@@ -583,10 +627,14 @@
         method = 'create';
       }
 
-      function _prepareBaseURL(model, params) {
+      function _prepareBaseURL(model, method, params) {
+        params = params || {};
+
+        var scheme = _getURLScheme(method, params);
+
         //User didn't override the URL so use the one defined in the model
         if(!params['url'] && model) {
-          params['url'] = StackMob.getProperty(model, "url");
+          params['url'] = scheme + model.url();
         }
 
         var notCustomCode = method != 'cc';
@@ -594,7 +642,7 @@
         var notForcedCreateRequest = !forceCreateRequest;
         var isArrayMethod = (method == 'addRelationship' || method == 'appendAndSave' || method == 'deleteAndSave');
 
-        if(_isExtraMethodVerb(method)) {//Extra Method Verb? Add it to the model url. (e.g. /user/login)
+        if(_isExtraMethodVerb(method)) { // Extra Method Verb? Add it to the model url. (e.g. /user/login)
           var endpoint = method;
 
           params['url'] += (params['url'].charAt(params['url'].length - 1) == '/' ? '' : '/') + endpoint;
@@ -623,6 +671,8 @@
       }
 
       function _prepareHeaders(params, options) {
+        options = options || {};
+
         //Prepare Request Headers
         params['headers'] = params['headers'] || {};
 
@@ -749,13 +799,13 @@
         params['accepts'] = params['headers']["Accept"];
       }
 
-      function _prepareAuth(theModel, method, params) {
+      function _prepareAuth(method, params) {
         if(StackMob.isAccessTokenMethod(method)) {
           return;
           //then don't add an Authorization Header
         }
 
-        var authHeader = getAuthHeader(method, params);
+        var authHeader = getAuthHeader(params);
         if(authHeader) {
           params['headers']['Authorization'] = authHeader;
         }
@@ -777,12 +827,11 @@
 
       params['data'] = params['data'] || {};
 
-      _prepareBaseURL(model, params);
+      _prepareBaseURL(model, method, params);
       _prepareHeaders(params, options);
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
-      if(!StackMob.isAccessTokenMethod(method))
-        _prepareAuth(model, method, params);
+      _prepareAuth(method, params);
 
       StackMob.makeAPICall(model, params, method);
     },
@@ -833,7 +882,6 @@
       }
     },
     makeAPICall : function(model, params, method) {
-
       if(StackMob['ajax']) {
         return StackMob['ajax'](model, params, method);
       } else if(StackMob.isSencha()) {
@@ -905,7 +953,7 @@
 
         // Set delay for the next retry attempt
         _.delay(function() {
-          var authHeader = getAuthHeader(model, params);
+          var authHeader = getAuthHeader(params);
           params['headers']['Authorization'] = authHeader;
           ajaxFunc(params);
         }, wait);
@@ -917,7 +965,23 @@
       }
     },
     isAccessTokenMethod : function(method) {
-      return _.include(['accessToken', 'facebookAccessToken', 'refreshToken', 'gigyaAccessToken'], method);
+      var accessTokenMethods = ['accessToken',
+                        'refreshToken',
+                        'facebookAccessToken',
+                        'gigyaAccessToken'];
+      return _.include(accessTokenMethods, method);
+    },
+    _isSecureMethod : function(method, params){
+      var secureMethods = ['loginWithTempAndSetNewPassword',
+                            'createUserWithFacebook',
+                            'linkUserWithFacebook'];
+      if (StackMob.isAccessTokenMethod(method)) {
+        return true;
+      } else if (params['isUserCreate'] == true) {
+        return true;
+      } else {
+        return _.include(secureMethods, method);
+      }
     }
   });
   //end of StackMob
@@ -928,10 +992,10 @@
      * Abstract Class representing a StackMob Model
      */
     StackMob.Model = Backbone.Model.extend({
-      urlRoot : StackMob['urlRoot'],
+      urlRoot : StackMob.getBaseURL(),
 
       url : function() {
-        var base = StackMob['urlRoot'] || StackMob.urlError();
+        var base = StackMob.getBaseURL();
         base += this.schemaName;
         return base;
       },
@@ -943,7 +1007,8 @@
         //have to do this because I want to set this.id before this.set is called in default constructor
         Backbone.Model.prototype.constructor.apply(this, arguments);
       },
-      initialize : function(attributes, options) {StackMob.getProperty(this, 'schemaName') || StackMob.throwError('A schemaName must be defined');
+      initialize : function(attributes, options) {
+        StackMob.getProperty(this, 'schemaName') || StackMob.throwError('A schemaName must be defined');
         this.setIDAttribute();
       },
       setIDAttribute : function() {
@@ -1062,7 +1127,7 @@
         this.schemaName = (new this.model()).schemaName;
       },
       url : function() {
-        var base = StackMob['urlRoot'] || StackMob.urlError();
+        var base = StackMob.getBaseURL();
         base += this.schemaName;
         return base;
       },
@@ -1142,7 +1207,13 @@
       getPrimaryKeyField : function() {
         return StackMob.loginField;
       },
+      create : function(options) {
+        options = options || {};
+        options['isUserCreate'] = true;
+        StackMob.Model.prototype.create.call(this, options);
+      },
       isLoggedIn : function(options) {
+        options = options || {};
         if ( StackMob._containsCallbacks(options, ['yes', 'no']) ){
           options = StackMob._generateCallbacks(options, {
             'isValidResult': function(result) {
@@ -1207,12 +1278,15 @@
 
         (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
       },
+      unlinkUserFromGigya : function(options) {
+        (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
+      },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
         var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
 
         StackMob.keepLoggedIn(remember);
-        
+
         options['data'] = options['data'] || {};
         _.extend(options['data'], {
           "fb_at" : facebookAccessToken,
@@ -1245,6 +1319,9 @@
         });
 
         (this.sync || Backbone.sync).call(this, "linkUserWithFacebook", this, options);
+      },
+      unlinkUserFromFacebook : function(options) {
+        (this.sync || Backbone.sync).call(this, "unlinkUserFromFacebook", this, options);
       },
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
         options = options || {};
@@ -1420,7 +1497,11 @@
           // Copy B's params to newQuery
           for (key in b['params']){
             var newKey = orString(newQuery['orId']) + parsedAndString + key;
-            newQuery['params'][newKey] = b['params'][key];
+            if (typeof newQuery['params'][newKey] !== "undefined") {
+              throw new Error("Error: You are attempting to OR two or more values for the same field. You should use an mustBeOneOf method instead.");
+            } else {
+              newQuery['params'][newKey] = b['params'][key];
+            }
           }
 
           return newQuery;
@@ -1449,7 +1530,11 @@
           // Copy B's params to newQuery
           for (key in b['params']){
             var newKey = orString(newQuery['orId']) + parsedAndString + key;
-            newQuery['params'][newKey] = b['params'][key];
+            if (typeof newQuery['params'][newKey] !== "undefined") {
+              throw new Error("Error: You are attempting to OR two or more values for the same field. You should use an mustBeOneOf method instead.");
+            } else {
+              newQuery['params'][newKey] = b['params'][key];
+            }
           }
 
           return newQuery;
