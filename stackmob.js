@@ -1389,6 +1389,9 @@
       unlinkUserFromGigya : function(options) {
         (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
       },
+      loginWithFacebook : function(facebookAccessToken, keepLoggedIn, options) {
+        this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
+      },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
         var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
@@ -1410,7 +1413,7 @@
           (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
         }
       },
-      loginOrCreateAndLoginWithFacebook : function(facebookAccessToken, keepLoggedIn, options){
+      loginWithFacebookAutoCreate : function(facebookAccessToken, keepLoggedIn, options){
         options = options || {};
         options['createIfNeeded'] = true;
         this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
