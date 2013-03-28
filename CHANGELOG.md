@@ -5,6 +5,7 @@
 **UPGRADE NOTES**
 
 * `apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+* You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
 
 **FEATURE**
 

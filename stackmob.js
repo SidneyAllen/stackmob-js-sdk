@@ -455,10 +455,6 @@
 
       this.apiVersion = options['apiVersion'] || this.DEFAULT_API_VERSION;
 
-      this.appName = this.getProperty(options, "appName") || this.throwError("An appName must be specified");
-
-      this.clientSubdomain = this.getProperty(options, "clientSubdomain");
-
       this.publicKey = options['publicKey'];
       
       if (typeof options['apiURL'] !== "undefined")
