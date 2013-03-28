@@ -487,7 +487,7 @@
     },
     
     _useBackboneLegacyCallbackSignature: function() {
-      //only use legacy if you're not 1.x.y nor 0.9.9
+      //only use legacy if you're not 1.x.y nor 0.9.10
       
       return (Backbone && Backbone.VERSION) && 
         (Backbone.VERSION.indexOf('0') == 0 && Backbone.VERSION != '0.9.10');
