@@ -50,7 +50,7 @@ describe("Social Unit Tests", function() {
 
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
-      expectEndpoint(user, ['', false],'loginOrCreateAndLoginWithFacebook', 'POST', 'user/facebookAccessTokenWithCreate');
+      expectEndpoint(user, ['', false],'loginWithFacebookAutoCreate', 'POST', 'user/facebookAccessTokenWithCreate');
 
     });
 
