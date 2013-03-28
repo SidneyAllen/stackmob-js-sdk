@@ -491,9 +491,12 @@
   }
 
   function getAuthHeader(params){
-    var host = StackMob.getBaseURL();
+    var scheme = params['url'].match(/(^http|^https):\/\//g);
+    var host = scheme + StackMob.getBaseURL();
 
     var path = params['url'].replace(new RegExp(host, 'g'), '/');
+
+    // Remove trailing slash from host for signing
     var sighost = host.replace(new RegExp('^http://|^https://', 'g'), '').replace(new RegExp('/'), '');
 
     var accessToken = StackMob.Storage.retrieve('oauth2.accessToken');
