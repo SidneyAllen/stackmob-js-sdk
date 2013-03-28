@@ -377,6 +377,7 @@
       "resetPassword"                   : "POST",
 
       "facebookAccessToken"             : "POST",
+      "facebookAccessTokenWithCreate"   : "POST",
       "createUserWithFacebook"          : "POST",
       "linkUserWithFacebook"            : "GET",
       "unlinkUserFromFacebook"          : "DELETE",
@@ -444,13 +445,13 @@
 
       this.initEnd(options);
 
-      // [Any actions a developer may want to implement via _extend should be done here]
-
       return this;
     },
     initStart : function(options) {
+      // Any actions a developer may want to implement via _extend should be done here
     },
     initEnd : function(options) {
+      // Any actions a developer may want to implement via _extend should be done here
     }
   };
 
@@ -972,13 +973,15 @@
       var accessTokenMethods = ['accessToken',
                         'refreshToken',
                         'facebookAccessToken',
+                        'facebookAccessTokenWithCreate',
                         'gigyaAccessToken'];
       return _.include(accessTokenMethods, method);
     },
     _isSecureMethod : function(method, params){
       var secureMethods = ['loginWithTempAndSetNewPassword',
                             'createUserWithFacebook',
-                            'linkUserWithFacebook'];
+                            'linkUserWithFacebook',
+                            'unlinkUserFromFacebook'];
       if (StackMob.isAccessTokenMethod(method)) {
         return true;
       } else if (params['isUserCreate'] == true) {
@@ -1285,6 +1288,9 @@
       unlinkUserFromGigya : function(options) {
         (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
       },
+      loginWithFacebook : function(facebookAccessToken, keepLoggedIn, options) {
+        this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
+      },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
         var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
@@ -1297,9 +1303,19 @@
           "token_type" : 'mac'
         });
 
-        options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
-
-        (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
+        if (options['createIfNeeded'] === true){
+          options['stackmob_onfacebookAccessTokenWithCreate'] = StackMob.processLogin;
+          options['data'][StackMob.loginField] = options[StackMob['loginField']] || this.get(StackMob['loginField']);
+          (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
+        } else {
+          options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
+          (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
+        }
+      },
+      loginWithFacebookAutoCreate : function(facebookAccessToken, keepLoggedIn, options){
+        options = options || {};
+        options['createIfNeeded'] = true;
+        this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
       },
       createUserWithFacebook : function(facebookAccessToken, options) {
         options = options || {};
@@ -1752,7 +1768,7 @@
         }
         params['error'] = defaultError;
 
-        // Build jQuery options
+        // Build Zepto options
         var hash = {};
         hash['url'] = params['url'];
         hash['headers'] = params['headers'];
