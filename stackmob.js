@@ -1591,7 +1591,10 @@
         return this;
       },
       equals : function(field, value) {
-        this.params[field] = value;
+        if (value === "")
+          this.params[field + '[empty]'] = true;
+        else
+          this.params[field] = value;
         return this;
       },
       lt : function(field, value) {
@@ -1611,7 +1614,10 @@
         return this;
       },
       notEquals : function(field, value) {
-        this.params[field + '[ne]'] = value;
+        if (value === "")
+          this.params[field + '[empty]'] = false;
+        else
+          this.params[field + '[ne]'] = value;
         return this;
       },
       isNull : function(field) {
