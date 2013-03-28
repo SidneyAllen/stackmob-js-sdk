@@ -423,14 +423,15 @@
 
       // Init variable 'apiDomain' should not contain a URL scheme (http:// or https://)
       // This will be prepended according to 'secure' setting
-      if (typeof options['apiDomain'] === "string"){
-        if (options['apiDomain'].indexOf('http') == 0){
-          throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com instead of http://stackmob.com. URL Scheme is determined by the 'secure' init variable.")
+      var apiDomain = options['apiDomain'];
+      if (typeof apiDomain === "string"){
+        if (apiDomain.indexOf('http') == 0){
+          throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com instead of http://api.stackmob.com. URL Scheme is determined by the 'secure' init variable.")
         } else {
-          if (options['apiDomain'].indexof('/') == options['apiDomain'].length - 1){
-            this.apiDomain = options['apiDomain'];
+          if (apiDomain.indexOf('/') == apiDomain.length - 1){
+            this.apiDomain = apiDomain;
           } else {
-            this.apiDomain = options['apiDomain'] + '/';
+            this.apiDomain = apiDomain + '/';
           }
         }
       }
