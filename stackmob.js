@@ -452,7 +452,7 @@
 
       this.publicKey = options['publicKey'];
       
-      this.useLegacyCallbacks = options['useLegacyCallbacks'] ? options['useLegacyCallbacks'] === true : this._useBackboneLegacyCallbackSignature();
+      this.useLegacyCallbacks = !_.isUndefined(options['useLegacyCallbacks']) ? options['useLegacyCallbacks'] === true : this._useBackboneLegacyCallbackSignature();
 
       if (typeof options['apiURL'] !== "undefined")
         throw new Error("Error: apiURL has been superseded by apiDomain");
@@ -488,21 +488,17 @@
     
     _useBackboneLegacyCallbackSignature: function() {
       //only use legacy if you're not 1.x.y nor 0.9.9
-      return (Backbone && Backbone.Version) && 
-        (Backbone.Version.indexOf('0') == 0 && Backbone.Version != '0.9.9');
+      
+      return (Backbone && Backbone.VERSION) && 
+        (Backbone.VERSION.indexOf('0') == 0 && Backbone.VERSION != '0.9.10');
     },
     
-    /**
-     * This is here in case we need to change the callbacks for Backbone 0.9.2 and below vs. Backbone 1.0
+    /*
+     * Need to modify the options callbacks at all?  do that here.
+     * These are placed in methods where Backbone wraps the success/error calls so that
+     * we also have an opportunity to modify/wrap the options if necessary.
      */
-    wrapStackMobCallbacks: function(options) {
-      if (options && options['success'] && StackMob.useLegacyCallback === true) {
-        var success = options['success'];
-        options['success'] = function(model, result, options) {
-          success(model);
-        }  
-      }
-    }
+    wrapStackMobCallbacks: function(options, callInfo) {}
   };
 
 }).call(this);
@@ -975,13 +971,20 @@
             //If we have "stackmob" in the response, that means we're getting stackmob data back.
             //pass the user back to the user's success callback
             result = result['stackmob']['user'];
-            success(result);
+            if (!model.set(model.parse(result, options), options)) return false;
+            
+            if (StackMob.useLegacyCallbacks === true) success(result);
+            else success(model, result, options);
+            model.trigger('sync', model, result, options);
           } else {
-            success(result);
+            if (StackMob.useLegacyCallbacks === true) success(result);
+            else success(model, result, options);
           }
 
-        } else
-          success();
+        } else {
+          if (StackMob.useLegacyCallbacks === true) success();
+          else success(model, null, options);          
+        }
       }
     },
     onerror : function(response, responseText, ajaxFunc, model, params, err, options) {
@@ -1090,7 +1093,6 @@
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
-        StackMob.wrapStackMobCallbacks.call(this, options);
         this.save(null, newOptions);
       },
       query : function(stackMobQuery, options) {
@@ -1151,6 +1153,7 @@
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
+       
         StackMob.sync.call(this, 'addRelationship', this, options);
       },
       appendAndSave : function(fieldName, values, options) {
@@ -1873,18 +1876,18 @@
 
         // Set up success callback
         var success = params['success'];
-        var defaultSuccess = function(model, status, xhr) {
+        var defaultSuccess = function(response, status, xhr) {
           var result;
 
           if(params["stackmob_count"] === true) {
             result = xhr;
-          } else if(model && model.toJSON) {
-            result = model;
-          } else if(model && (model.responseText || model.text)) {
-            var json = JSON.parse(model.responseText || model.text);
+          } else if(response && response.toJSON) {
+            result = response;
+          } else if(response && (response.responseText || response.text)) {
+            var json = JSON.parse(response.responseText || response.text);
             result = json;
-          } else if(model) {
-            result = model;
+          } else if(response) {
+            result = response;
           }
           StackMob.onsuccess(model, method, params, result, success, options);
 
