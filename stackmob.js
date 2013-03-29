@@ -475,8 +475,7 @@
         }
       }
 
-      var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
-      this.useRelativePathForAjax = options['useRelativePathForAjax'] || isSMHosted;
+      this.useRelativePathForAjax = options['useRelativePathForAjax'] || false;
 
       this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
 
