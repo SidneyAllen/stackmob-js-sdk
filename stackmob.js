@@ -383,6 +383,7 @@
       "unlinkUserFromFacebook"          : "DELETE",
 
       "gigyaAccessToken"                : "POST",
+      "linkUserWithGigya"               : "POST",
       "unlinkUserFromGigya"             : "DELETE"
     },
 
@@ -981,7 +982,9 @@
       var secureMethods = ['loginWithTempAndSetNewPassword',
                             'createUserWithFacebook',
                             'linkUserWithFacebook',
-                            'unlinkUserFromFacebook'];
+                            'unlinkUserFromFacebook',
+                            'linkUserWithGigya',
+                            'unlinkUserFromGigya'];
       if (StackMob.isAccessTokenMethod(method)) {
         return true;
       } else if (params['isUserCreate'] == true) {
@@ -1284,6 +1287,18 @@
         options['stackmob_ongigyaAccessToken'] = StackMob.processLogin;
 
         (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
+      },
+      linkUserWithGigya : function(gigyaUID, gigyaTimestamp, gigyaSignature, options) {
+        options = options || {};
+        options['data'] = options['data'] || {};
+        _.extend(options['data'], {
+          "gigya_uid" : gigyaUID,
+          "gigya_ts" : gigyaTimestamp,
+          "gigya_sig" : gigyaSignature,
+          "token_type" : 'mac'
+        });
+
+        (this.sync || Backbone.sync).call(this, "linkUserWithGigya", this, options);
       },
       unlinkUserFromGigya : function(options) {
         (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
