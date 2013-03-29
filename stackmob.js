@@ -849,7 +849,7 @@
       if(StackMob.hasRefreshToken()) {
 
         //set request call details
-        refreshOptions['url'] = "/" + StackMob['userSchema'];
+        refreshOptions['url'] = _getURLScheme('refreshToken') + this.getBaseURL() + StackMob['userSchema'];
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
         refreshOptions['data'] = {
           refresh_token : StackMob.getOAuthCredentials()[StackMob.REFRESH_TOKEN_KEY],
