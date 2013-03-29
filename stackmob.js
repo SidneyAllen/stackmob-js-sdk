@@ -80,7 +80,7 @@
 
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
-
+    
     /**
      * The Storage object lives within the StackMob object and provides an abstraction layer for client storage.  It's intended for internal use within the JS SDK.  The JS SDK is currently using HTML5's Local Storage feature to persist key/value items.
      */
@@ -349,6 +349,17 @@
     hasExpiredOAuth : function() {
       return this.isOAuth2Mode() && (this.getOAuthExpireTime() == null) || (this.getOAuthExpireTime() <= (new Date()).getTime())
     },
+    
+    clearOAuthCredentials : function() {
+      StackMob.Storage.remove(StackMob.loggedInUserKey);
+      StackMob.Storage.remove('oauth2.accessToken');
+      StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
+      StackMob.Storage.remove('oauth2.macKey');
+      StackMob.Storage.remove('oauth2.expires');
+      StackMob.Storage.remove('oauth2.user');
+      StackMob.Storage.remove('oauth2.userSchemaInfo');
+    },
+    
     //Retrieve the OAuth 2.0 credentials from client storage.
     getOAuthCredentials : function() {
       var oauth_accessToken = StackMob.Storage.retrieve('oauth2.accessToken');
@@ -359,11 +370,8 @@
       var oauth_schema = null;
       
       try {
-        
         oauth_schema = JSON.parse(userSchemaInfo);
-      } catch (e) {
-        console.debug(e);
-      }
+      } catch (e) { /* Harmless if this fails (in theory!)*/ }
 
       if (_.every([oauth_accessToken, oauth_macKey, oauth_expires, oauth_refreshToken, oauth_schema])) {
         var creds = {
@@ -451,7 +459,7 @@
       this.clientSubdomain = this.getProperty(options, "clientSubdomain");
 
       this.publicKey = options['publicKey'];
-
+      
       if (typeof options['apiURL'] !== "undefined")
         throw new Error("Error: apiURL has been superseded by apiDomain");
 
@@ -482,7 +490,14 @@
     initStart : function(options) {
     },
     initEnd : function(options) {
-    }
+    },
+    
+    /*
+     * Need to modify the options callbacks at all?  do that here.
+     * These are placed in methods where Backbone wraps the success/error calls so that
+     * we also have an opportunity to modify/wrap the options if necessary.
+     */
+    wrapStackMobCallbacks: function(options, callInfo) {}
   };
 
 }).call(this);
@@ -958,16 +973,38 @@
            * But the user's success callback is only expecting the user, so let's deal with that here.
            */
           if(StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method) && result['stackmob']) {
+           
             //If we have "stackmob" in the response, that means we're getting stackmob data back.
             //pass the user back to the user's success callback
             result = result['stackmob']['user'];
+            
+            //When we login, we get the full user object back.  We give the developer the option to either populate the user schema with it or not.
+            //If not, then we only populate the username (useful if they log with nothing but a facebook token etc.)  We need the username to test
+            //user.isLoggedIn()
+            //If we do fully populate, then populate the whole object
+            var fullyPopulateUser = options['fullyPopulateUser'] === true;
+             
+            if (model && model.parse) {
+              if (!fullyPopulateUser) {
+                var toAdd = {};
+                toAdd[model.getPrimaryKeyField()] = result[model.getPrimaryKeyField()];
+                if (!model.set(toAdd, options)) return false;
+              } else {
+                if (!model.set(model.parse(result, options), options)) return false;
+              } 
+            }
+            
             success(result);
+
+            //trigger a change in the user if we've fully populated the user
+            if (fullyPopulateUser && model && model.trigger) model.trigger('sync', model, result, options);
           } else {
             success(result);
           }
 
-        } else
+        } else {
           success();
+        }
       }
     },
     onerror : function(response, responseText, ajaxFunc, model, params, err, options) {
@@ -1002,7 +1039,7 @@
         _.delay(function() {
           var authHeader = getAuthHeader(params);
           params['headers']['Authorization'] = authHeader;
-          ajaxFunc(params);
+          if (ajaxFunc) ajaxFunc(params);
         }, wait);
       } else {
         if(_.isFunction(params['oncomplete']))
@@ -1089,13 +1126,25 @@
         })
         this.fetch(options);
       },
+      fetch : function(options) {
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        Backbone.Model.prototype.fetch.call(this, options);
+      },
+      destroy: function(options) {
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        Backbone.Model.prototype.destroy.call(this, options);
+      },
       save : function(key, value) {
         var successFunc = key ? key['success'] : {};
         var errorFunc = key ? key['error'] : {};
         if( typeof value === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
+          StackMob.wrapStackMobCallbacks.call(this, key);
           Backbone.Model.prototype.save.call(this, null, key);
-        } else
+        } else {
+          StackMob.wrapStackMobCallbacks.call(this, value);
           Backbone.Model.prototype.save.call(this, key, value);
+        }
+          
       },
       fetchExpanded : function(depth, options) {
         if(depth < 0 || depth > 3)
@@ -1128,6 +1177,7 @@
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
+       
         StackMob.sync.call(this, 'addRelationship', this, options);
       },
       appendAndSave : function(fieldName, values, options) {
@@ -1202,7 +1252,12 @@
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
+        StackMob.wrapStackMobCallbacks.call(this, newOptions);
         Backbone.Collection.prototype.create.call(this, model, newOptions);
+      },
+      fetch : function(options) {
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        Backbone.Collection.prototype.fetch.call(this, options);
       },
       count : function(stackMobQuery, options) {
         stackMobQuery = stackMobQuery || new StackMob.Collection.Query();
@@ -1302,13 +1357,7 @@
         options = options || {};
         options['data'] = options['data'] || {};
 
-        StackMob.Storage.remove(StackMob.loggedInUserKey);
-        StackMob.Storage.remove('oauth2.accessToken');
-        StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
-        StackMob.Storage.remove('oauth2.macKey');
-        StackMob.Storage.remove('oauth2.expires');
-        StackMob.Storage.remove('oauth2.user');
-        StackMob.Storage.remove('oauth2.userSchemaInfo');
+        StackMob.clearOAuthCredentials();
 
         (this.sync || Backbone.sync).call(this, "logout", this, options);
       },
@@ -1845,18 +1894,18 @@
 
         // Set up success callback
         var success = params['success'];
-        var defaultSuccess = function(model, status, xhr) {
+        var defaultSuccess = function(response, status, xhr) {
           var result;
 
           if(params["stackmob_count"] === true) {
             result = xhr;
-          } else if(model && model.toJSON) {
-            result = model;
-          } else if(model && (model.responseText || model.text)) {
-            var json = JSON.parse(model.responseText || model.text);
+          } else if(response && response.toJSON) {
+            result = response;
+          } else if(response && (response.responseText || response.text)) {
+            var json = JSON.parse(response.responseText || response.text);
             result = json;
-          } else if(model) {
-            result = model;
+          } else if(response) {
+            result = response;
           }
           StackMob.onsuccess(model, method, params, result, success, options);
 

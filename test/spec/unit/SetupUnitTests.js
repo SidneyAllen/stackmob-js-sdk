@@ -1,7 +1,6 @@
 _.extend(StackMob, {
-  ajax: function(model, params, method) {
-    if (params && params['done']) params['done'](model, params, method);
+  ajax: function(model, params, method, options){
+    options['done'](model, params, method, options);
   },
   initiateRefreshSessionCall: function() {}
 });
-
