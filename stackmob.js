@@ -370,9 +370,8 @@
       var oauth_schema = null;
       
       try {
-        
         oauth_schema = JSON.parse(userSchemaInfo);
-      } catch (e) {}
+      } catch (e) { /* Harmless if this fails (in theory!)*/ }
 
       if (_.every([oauth_accessToken, oauth_macKey, oauth_expires, oauth_refreshToken, oauth_schema])) {
         var creds = {
