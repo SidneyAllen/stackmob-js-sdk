@@ -825,7 +825,13 @@
               if (userSchemaInfo) {
                 var passwordField = userSchemaInfo['passwordField'];
                 delete json[passwordField];
-              } 
+              }
+              
+              _.each(model.getBinaryFields(), function(field) {
+                if (json[field] && json[field].indexOf('http') == 0) {
+                  delete json[field];
+                }
+              });
             }
               
             if(StackMob.isOAuth2Mode())
@@ -1071,6 +1077,10 @@
      */
     StackMob.Model = Backbone.Model.extend({
       urlRoot : StackMob.getBaseURL(),
+      
+      getBinaryFields: function() {
+        return this.binaryFields || [];
+      },
 
       url : function() {
         var base = StackMob.getBaseURL();
