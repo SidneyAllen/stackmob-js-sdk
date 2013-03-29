@@ -81,8 +81,6 @@
     //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
     
-    useLegacyCallbacks : false,
-
     /**
      * The Storage object lives within the StackMob object and provides an abstraction layer for client storage.  It's intended for internal use within the JS SDK.  The JS SDK is currently using HTML5's Local Storage feature to persist key/value items.
      */
@@ -351,6 +349,17 @@
     hasExpiredOAuth : function() {
       return this.isOAuth2Mode() && (this.getOAuthExpireTime() == null) || (this.getOAuthExpireTime() <= (new Date()).getTime())
     },
+    
+    clearOAuthCredentials : function() {
+      StackMob.Storage.remove(StackMob.loggedInUserKey);
+      StackMob.Storage.remove('oauth2.accessToken');
+      StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
+      StackMob.Storage.remove('oauth2.macKey');
+      StackMob.Storage.remove('oauth2.expires');
+      StackMob.Storage.remove('oauth2.user');
+      StackMob.Storage.remove('oauth2.userSchemaInfo');
+    },
+    
     //Retrieve the OAuth 2.0 credentials from client storage.
     getOAuthCredentials : function() {
       var oauth_accessToken = StackMob.Storage.retrieve('oauth2.accessToken');
@@ -452,8 +461,6 @@
 
       this.publicKey = options['publicKey'];
       
-      this.useLegacyCallbacks = !_.isUndefined(options['useLegacyCallbacks']) ? options['useLegacyCallbacks'] === true : this._useBackboneLegacyCallbackSignature();
-
       if (typeof options['apiURL'] !== "undefined")
         throw new Error("Error: apiURL has been superseded by apiDomain");
 
@@ -968,22 +975,37 @@
            * But the user's success callback is only expecting the user, so let's deal with that here.
            */
           if(StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method) && result['stackmob']) {
+           
             //If we have "stackmob" in the response, that means we're getting stackmob data back.
             //pass the user back to the user's success callback
             result = result['stackmob']['user'];
-            if (!model.set(model.parse(result, options), options)) return false;
             
-            if (StackMob.useLegacyCallbacks === true) success(result);
-            else success(model, result, options);
-            model.trigger('sync', model, result, options);
+            //When we login, we get the full user object back.  We give the developer the option to either populate the user schema with it or not.
+            //If not, then we only populate the username (useful if they log with nothing but a facebook token etc.)  We need the username to test
+            //user.isLoggedIn()
+            //If we do fully populate, then populate the whole object
+            var fullyPopulateUser = options['fullyPopulateUser'] === true;
+             
+            if (model && model.parse) {
+              if (!fullyPopulateUser) {
+                var toAdd = {};
+                toAdd[model.getPrimaryKeyField()] = result[model.getPrimaryKeyField()];
+                if (!model.set(toAdd, options)) return false;
+              } else {
+                if (!model.set(model.parse(result, options), options)) return false;
+              } 
+            }
+            
+            success(result);
+
+            //trigger a change in the user if we've fully populated the user
+            if (fullyPopulateUser && model && model.trigger) model.trigger('sync', model, result, options);
           } else {
-            if (StackMob.useLegacyCallbacks === true) success(result);
-            else success(model, result, options);
+            success(result);
           }
 
         } else {
-          if (StackMob.useLegacyCallbacks === true) success();
-          else success(model, null, options);          
+          success();
         }
       }
     },
@@ -1019,7 +1041,7 @@
         _.delay(function() {
           var authHeader = getAuthHeader(params);
           params['headers']['Authorization'] = authHeader;
-          ajaxFunc(params);
+          if (ajaxFunc) ajaxFunc(params);
         }, wait);
       } else {
         if(_.isFunction(params['oncomplete']))
@@ -1333,13 +1355,7 @@
         options = options || {};
         options['data'] = options['data'] || {};
 
-        StackMob.Storage.remove(StackMob.loggedInUserKey);
-        StackMob.Storage.remove('oauth2.accessToken');
-        StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
-        StackMob.Storage.remove('oauth2.macKey');
-        StackMob.Storage.remove('oauth2.expires');
-        StackMob.Storage.remove('oauth2.user');
-        StackMob.Storage.remove('oauth2.userSchemaInfo');
+        StackMob.clearOAuthCredentials();
 
         (this.sync || Backbone.sync).call(this, "logout", this, options);
       },
