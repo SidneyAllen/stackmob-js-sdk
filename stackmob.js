@@ -493,13 +493,6 @@
     initEnd : function(options) {
     },
     
-    _useBackboneLegacyCallbackSignature: function() {
-      //only use legacy if you're not 1.x.y nor 0.9.10
-      
-      return (Backbone && Backbone.VERSION) && 
-        (Backbone.VERSION.indexOf('0') == 0 && Backbone.VERSION != '0.9.10');
-    },
-    
     /*
      * Need to modify the options callbacks at all?  do that here.
      * These are placed in methods where Backbone wraps the success/error calls so that
