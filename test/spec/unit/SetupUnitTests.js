@@ -1,14 +1,7 @@
-// Save original for reverting late
-StackMob.makeAPICall_original = StackMob.makeAPICall;
+_.extend(StackMob, {
+  ajax: function(model, params, method) {
+    if (params && params['done']) params['done'](model, params, method);
+  },
+  initiateRefreshSessionCall: function() {}
+});
 
-// Add Unit Test Handler
-StackMob.ajaxOptions.unitTest = function(model, params, method){
-  params['done'](model, params, method);
-}
-
-// Force Unit Test Callback Handler
-StackMob.makeAPICall = function(model, params, method){
-  return StackMob['ajaxOptions']['unitTest'](model, params, method);
-}
-
-StackMob.initiateRefreshSessionCall = function() {};
