@@ -63,7 +63,60 @@ describe("Unit tests for queries", function() {
       expect(q['params']).toEqual(expectation);
 
     });
+  });
 
+  it("should query fail and suggest IN - new OR query", function() {
+    runs(function() {
+
+      var q = function(){
+        isAged.and( isLA.or(isLA) );
+      }
+
+      expect(q).toThrow();
+
+    });
+  });
+
+  it("should query fail and suggest IN - existing OR query", function() {
+    runs(function() {
+
+      var q = function(){
+        isAged.and( notJohn.or(isLA).or(isLA) );
+      }
+
+      expect(q).toThrow();
+
+    });
+  });
+
+  it("should query for empty string", function() {
+    runs(function() {
+
+      var q = new StackMob.Collection.Query();
+      q.equals("name","");
+
+      var expectation = {
+        "name[empty]": true
+      };
+
+      expect(q['params']).toEqual(expectation);
+
+    });
+  });
+
+  it("should query for non-empty string", function() {
+    runs(function() {
+
+      var q = new StackMob.Collection.Query();
+      q.notEquals("name","");
+
+      var expectation = {
+        "name[empty]": false
+      };
+
+      expect(q['params']).toEqual(expectation);
+
+    });
   });
 
 });

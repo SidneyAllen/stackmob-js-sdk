@@ -1,5 +1,26 @@
 ## StackMob JavaScript SDK Change Log
 
+### v0.9.0
+
+**UPGRADE NOTES**
+
+* `apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+* You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
+
+**FEATURE**
+
+* Added configurable security policies to determine which methods are performed over SSL (`secure` init parameter)
+  * Always - All requests will be made over HTTPS
+  * Never - All requests will be made over HTTP
+  * Mixed (Default) - Only authentication and user creation methods will be made over HTTPS
+* Added `secureRequest` parameter to force SSL for any method.
+
+### v0.8.1 - March 15, 2013
+
+**FIX**
+
+* Facebook logins will now stayed logged in when setting `keepLoggedIn` flag to `true` in [login() method](https://developer.stackmob.com/sdks/js/api#a-login).
+
 ### v0.8.0 - Feb 14, 2013
 
 **FEATURE**
