@@ -6,7 +6,7 @@ describe("Binary Field Unit Tests", function() {
 
   var Profile = StackMob.Model.extend({ 
     schemaName: 'profile',
-    binaryFields: ['pic'] 
+    binaryFields: ['pic', 'pic2'] 
   });
 
   it("should exclude binary fields", function() {
@@ -15,7 +15,8 @@ describe("Binary Field Unit Tests", function() {
         profile_id: '123',
         item: 'stuff',
         profession: 'asdf',
-        pic: 'http://s3.amazonaws.com/stuff.png'
+        pic: 'http://s3.amazonaws.com/stuff.png',
+        pic2: 'https://s3.amazonaws.com/stuff.png'
       });
       
       p.save(null, {
