@@ -485,7 +485,7 @@
     return 'MAC id="' + id + '",ts="' + ts + '",nonce="' + nonce + '",mac="' + mac + '"';
   }
 
-  function getAuthHeader(params) {
+  function getAuthHeader(params){
     var scheme = params['url'].match(/(^http|^https):\/\//g);
     var host = scheme + StackMob.getBaseURL();
 
@@ -504,6 +504,32 @@
     }
   }
 
+  function _getURLScheme(method, params){
+    params = params || {};
+    var scheme,
+        HTTP  = 'http',
+        HTTPS = 'https';
+
+    if ( params['secureRequest'] === true ) {
+      scheme = HTTPS;
+    } else {
+      switch(StackMob.secure){
+        case StackMob.SECURE_ALWAYS:
+          scheme = HTTPS;
+          break;
+        case StackMob.SECURE_NEVER:
+          scheme = HTTP;
+          break;
+        case StackMob.SECURE_MIXED:
+        default:
+          scheme = StackMob._isSecureMethod(method, params) ? HTTPS : HTTP;
+          break;
+      }
+    }
+
+    return scheme + '://';
+  }
+  
   function _prepareHeaders(method, params, options) {
     options = options || {};
 
@@ -574,7 +600,7 @@
       }
     }
   }
-
+  
   function _prepareAjaxClientParams(params) {
     params = params || {};
     //Prepare 3rd party ajax settings
@@ -588,36 +614,12 @@
       return;
       //then don't add an Authorization Header
     }
-    var authHeader = getAuthHeader(method, params);
+
+    var authHeader = getAuthHeader(params);
     if(authHeader) {
       params['headers']['Authorization'] = authHeader;
     }
-  }
 
-  function _getURLScheme(method, params) {
-    params = params || {};
-    var scheme,
-        HTTP  = 'http',
-        HTTPS = 'https';
-
-    if ( params['secureRequest'] === true ) {
-      scheme = HTTPS;
-    } else {
-      switch(StackMob.secure){
-        case StackMob.SECURE_ALWAYS:
-          scheme = HTTPS;
-          break;
-        case StackMob.SECURE_NEVER:
-          scheme = HTTP;
-          break;
-        case StackMob.SECURE_MIXED:
-        default:
-          scheme = StackMob._isSecureMethod(method, params) ? HTTPS : HTTP;
-          break;
-      }
-    }
-
-    return scheme + '://';
   }
 
   _.extend(StackMob, {
@@ -761,6 +763,7 @@
             params['url'] += '/' + ids;
           }
         }
+
       }
 
       function _prepareRequestBody(method, params, options) {
@@ -828,7 +831,6 @@
 
       params['data'] = params['data'] || {};
 
-      // _prepareHeaders, _prepareAjaxClientParams, _prepareAuth are used for Collections as well
       _prepareBaseURL(model, method, params);
       _prepareHeaders(method, params, options);
       _prepareRequestBody(method, params, options);
@@ -1146,6 +1148,15 @@
         options = options || {};
 
         function _prepareBaseURL(model, params) {
+          params = params || {};
+  
+          var scheme = _getURLScheme(method, params);
+  
+          //User didn't override the URL so use the one defined in the model
+          if(!params['url'] && model) {
+            params['url'] = scheme + model.url();
+          }
+          
           //User didn't override the URL so use the one defined in the model
           if(!params['url'] && model) {
             params['url'] = StackMob.getProperty(model, "url");
@@ -1161,7 +1172,7 @@
             });
             return params.join('&');
           }
-
+          
           if (params['type'] == 'POST' || params['type'] == 'PUT') {
             params['data'] = JSON.stringify(model);
           } else {
@@ -1190,14 +1201,14 @@
         _prepareRequestBody(method, params, options);
         _prepareAjaxClientParams(params);
         _prepareAuth(method, params);
-        
+
         StackMob.makeAPICall(model, params, method);
       },
       query : function(stackMobQuery, options) {
         options = options || {};
         _.extend(options, {
           query : stackMobQuery
-        });
+        })
         this.fetch(options);
       },
       destroyAll : function(stackMobQuery, options) {
@@ -1235,12 +1246,12 @@
             var responseHeader = xhr.getResponseHeader('Content-Range');
             var count = 0;
             if(responseHeader) {
-              count = responseHeader.substring(responseHeader.indexOf('/') + 1, responseHeader.length);
+              count = responseHeader.substring(responseHeader.indexOf('/') + 1, responseHeader.length)
             }
 
             if(count === 0) {
               try {
-                count = JSON.parse(xhr.responseText).length;
+                count = JSON.parse(xhr.responseText).length
               } catch(err) {
               }
             }
@@ -1258,7 +1269,7 @@
         //check to see stackMobQuery is actually a StackMob.Collection.Query object before passing along
         if(stackMobQuery.setRange)
           options.query = (stackMobQuery).setRange(0, 0);
-        return (this.sync || Backbone.sync).call(this, 'query', this, options);
+        return (this.sync || Backbone.sync).call(this, 'query', this, options)
 
       }
     });
@@ -1464,19 +1475,19 @@
         this.lat = lat['lat'];
         this.lon = lat['lon'];
       }
-    };
+    }
 
     StackMob.GeoPoint.prototype.toJSON = function() {
       return {
         lat : this.lat,
         lon : this.lon
       };
-    };
+    }
 
     StackMob.Model.Query = function() {
       this.selectFields = [];
       this.params = {};
-    };
+    }
 
     _.extend(StackMob.Model.Query.prototype, {
       select : function(key) {
@@ -1487,14 +1498,14 @@
         this.params['_expand'] = depth;
         return this;
       }
-    });
+    })
 
     StackMob.Collection.Query = function() {
       this.params = {};
       this.selectFields = [];
       this.orderBy = [];
       this.range = null;
-    };
+    }
 
     StackMob.Collection.Query.prototype = new StackMob.Model.Query;
     StackMob.Collection.Query.prototype.constructor = StackMob.Collection.Query;
