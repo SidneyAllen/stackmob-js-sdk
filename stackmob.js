@@ -803,7 +803,7 @@
             params['data'] = JSON.stringify(_.extend(json, params['data']));
           } else
             params['data'] = JSON.stringify(params.data);
-        } else if(params['type'] == "GET") {
+        } else if(params['type'] == "GET" || params['type'] == "DELETE") {
           if(!_.isEmpty(params['data'])) {
             params['url'] += '?';
             var path = toParams(params['data']);
@@ -1145,64 +1145,7 @@
         return attrs;
       },
       sync : function(method, model, options) {
-        options = options || {};
-
-        function _prepareBaseURL(model, params) {
-          params = params || {};
-  
-          var scheme = _getURLScheme(method, params);
-  
-          //User didn't override the URL so use the one defined in the model
-          if(!params['url'] && model) {
-            params['url'] = scheme + model.url();
-          }
-          
-          //User didn't override the URL so use the one defined in the model
-          if(!params['url'] && model) {
-            params['url'] = StackMob.getProperty(model, "url");
-          }
-        }
-
-        function _prepareRequestBody(method, params, options) {
-          options = options || {};
-
-          function toParams(obj) {
-            var params = _.map(_.keys(obj), function(key) {
-              return key + '=' + encodeURIComponent(obj[key]);
-            });
-            return params.join('&');
-          }
-          
-          if (params['type'] == 'POST' || params['type'] == 'PUT') {
-            params['data'] = JSON.stringify(model);
-          } else {
-            if(!_.isEmpty(params['data'])) {
-              params['url'] += '?';
-              var path = toParams(params['data']);
-              params['url'] += path;
-            }
-          }
-        }
-
-        //Determine what kind of call to make: GET, POST, PUT, DELETE
-        var type = options['httpVerb'] || StackMob.METHOD_MAP[method] || 'GET';
-
-        //Prepare query configuration
-        var params = _.extend({
-          type : type,
-          dataType : 'json'
-        }, options);
-
-        params['data'] = params['data'] || {};
-
-        // _prepareHeaders, _prepareAjaxClientParams, _prepareAuth are used for Model as well
-        _prepareBaseURL(model, params);
-        _prepareHeaders(method, params, options);
-        _prepareRequestBody(method, params, options);
-        _prepareAjaxClientParams(params);
-        _prepareAuth(method, params);
-
-        StackMob.makeAPICall(model, params, method);
+        StackMob.sync.call(this, method, this, options);
       },
       query : function(stackMobQuery, options) {
         options = options || {};
