@@ -144,20 +144,20 @@ describe("CRUD Methods", function() {
 		// use the one field in `create 5 users`
 		q.equals('action', 'batch');
 
-		var result = 1; // some dummy value
+		var result = false;
 
 		users.destroyAll(q, {
 			success: function(model) {
-				result = model;
+				result = true;
 			}
 		});		
 
 		waitsFor(function() {
-			return result == undefined;
+			return result == true;
 		}, "model in success function should be undefined", waitTime);
 
 		runs(function() {
-			expect(result).toEqual(undefined);
+			expect(result).toEqual(true);
 		});
 	});
 
