@@ -19,6 +19,15 @@ beforeEach(function() {
   this.addMatchers({
     toCall: function(endPoint, verb) {
       return this.actual['url'].indexOf(endPoint) > -1 && this.actual['type'] === verb;
+    },
+    
+    toHaveParam: function(key, value) {
+      return _.contains(this.actual['data'].split('&'), (key + '=' + value));
+    },
+    
+    toHaveJSONWith: function(key, value) {
+      return this.actual['data']['key'] === value;
     }
   });
+  
 });

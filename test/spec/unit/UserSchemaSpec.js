@@ -14,8 +14,8 @@ describe("User Schema Tests", function() {
       var s = new Student({ username: 'testUser', password: 'testPass'});
       s.login(true, {
         done: function(model, params, method) {
-          expect(params['data'].indexOf('username=testUser') > -1).toEqual(true);
-          expect(params['data'].indexOf('password=testPass') > -1).toEqual(true);
+          expect(params).toHaveParam('username', 'testUser');
+          expect(params).toHaveParam('password', 'testPass');
         }
       });
     });
@@ -35,8 +35,8 @@ describe("User Schema Tests", function() {
       var s = new Student({ name: 'testUser', pass: 'testPass'});
       s.login(true, {
         done: function(model, params, method) {
-          expect(params['data'].indexOf('name=testUser') > -1).toEqual(true);
-          expect(params['data'].indexOf('pass=testPass') > -1).toEqual(true);
+          expect(params).toHaveParam('name', 'testUser');
+          expect(params).toHaveParam('pass', 'testPass');
         }
       });
     });
