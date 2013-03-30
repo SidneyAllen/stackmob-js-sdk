@@ -63,7 +63,7 @@ function createSimpleUser(usr) {
 }
 
 function loginUser(usr) {
-  it("should login '" + usr + "'", function() {
+  it("should login " + usr, function() {
     var loggedIn = false;
 
     var user = new StackMob.User({
@@ -78,7 +78,7 @@ function loginUser(usr) {
     });
 
     waitsFor(function() {
-      return loggedIn === true;
+      return loggedIn == true;
     }, "user logged in should be " + usr, 20000);
 
     runs(function() {

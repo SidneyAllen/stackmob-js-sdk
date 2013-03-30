@@ -529,6 +529,98 @@
 
     return scheme + '://';
   }
+  
+  function _prepareHeaders(method, params, options) {
+    options = options || {};
+
+    //Prepare Request Headers
+    params['headers'] = params['headers'] || {};
+
+    //Add API Version Number to Request Headers
+
+    //let users overwrite this if they know what they're doing
+    params['headers'] = _.extend({
+      "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
+    }, params['headers']);
+
+    //dont' let users overwrite the stackmob headers though..
+    _.extend(params['headers'], {
+      "X-StackMob-User-Agent" : "StackMob (JS; " + StackMob['sdkVersion'] + ")"
+    });
+
+    if(StackMob['publicKey'] && !StackMob['privateKey']) {
+      params['headers']['X-StackMob-API-Key'] = StackMob['publicKey'];
+      params['headers']['X-StackMob-Proxy-Plain'] = 'stackmob-api';
+      // CORS Support
+      params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "";
+    } else {
+      params['headers']['X-StackMob-Proxy'] = 'stackmob-api';
+    }
+
+    //let users overwrite this if they know what they're doing
+    if(StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method)) {
+      params['contentType'] = 'application/x-www-form-urlencoded';
+    } else if(_.include(['PUT', 'POST'], StackMob.METHOD_MAP[method])) {
+      params['contentType'] = params['contentType'] || StackMob.CONTENT_TYPE_JSON;
+    }
+
+    if(!isNaN(options[StackMob.CASCADE_DELETE])) {
+      params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
+    }
+
+    // If this is an advanced query, check headers
+    if(options['query']) {
+      var queryObj = params['query'] || throwError("No StackMobQuery object provided to the query call.");
+
+      if(queryObj['selectFields']) {
+        if(queryObj['selectFields'].length > 0) {
+          params['headers']["X-StackMob-Select"] = queryObj['selectFields'].join();
+        }
+      }
+
+      //Add Range Headers
+      if(queryObj['range']) {
+        params['headers']['Range'] = 'objects=' + queryObj['range']['start'] + '-' + queryObj['range']['end'];
+      }
+
+      //Add Query Parameters to Parameter Map
+      _.extend(params['data'], queryObj['params']);
+
+      //Add OrderBy Headers
+      if(queryObj['orderBy'] && queryObj['orderBy'].length > 0) {
+        var orderList = queryObj['orderBy'];
+        var order = '';
+        var size = orderList.length;
+        for(var i = 0; i < size; i++) {
+          order += orderList[i];
+          if(i + 1 < size)
+            order += ',';
+        }
+        params['headers']["X-StackMob-OrderBy"] = order;
+      }
+    }
+  }
+  
+  function _prepareAjaxClientParams(params) {
+    params = params || {};
+    //Prepare 3rd party ajax settings
+    params['processData'] = false;
+    //Put Accept into the header for jQuery
+    params['accepts'] = params['headers']["Accept"];
+  }
+
+  function _prepareAuth(method, params) {
+    if(StackMob.isAccessTokenMethod(method)) {
+      return;
+      //then don't add an Authorization Header
+    }
+
+    var authHeader = getAuthHeader(params);
+    if(authHeader) {
+      params['headers']['Authorization'] = authHeader;
+    }
+
+  }
 
   _.extend(StackMob, {
 
@@ -674,77 +766,6 @@
 
       }
 
-      function _prepareHeaders(params, options) {
-        options = options || {};
-
-        //Prepare Request Headers
-        params['headers'] = params['headers'] || {};
-
-        //Add API Version Number to Request Headers
-
-        //let users overwrite this if they know what they're doing
-        params['headers'] = _.extend({
-          "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
-        }, params['headers']);
-
-        //dont' let users overwrite the stackmob headers though..
-        _.extend(params['headers'], {
-          "X-StackMob-User-Agent" : "StackMob (JS; " + StackMob['sdkVersion'] + ")"
-        });
-
-        if(StackMob['publicKey'] && !StackMob['privateKey']) {
-          params['headers']['X-StackMob-API-Key'] = StackMob['publicKey'];
-          params['headers']['X-StackMob-Proxy-Plain'] = 'stackmob-api';
-          // CORS Support
-          params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "";
-        } else {
-          params['headers']['X-StackMob-Proxy'] = 'stackmob-api';
-        }
-
-        //let users overwrite this if they know what they're doing
-        if(StackMob.isOAuth2Mode() && StackMob.isAccessTokenMethod(method)) {
-          params['contentType'] = 'application/x-www-form-urlencoded';
-        } else if(_.include(['PUT', 'POST'], StackMob.METHOD_MAP[method])) {
-          params['contentType'] = params['contentType'] || StackMob.CONTENT_TYPE_JSON;
-        }
-
-        if(!isNaN(options[StackMob.CASCADE_DELETE])) {
-          params['headers']['X-StackMob-CascadeDelete'] = options[StackMob.CASCADE_DELETE] == true;
-        }
-
-        // If this is an advanced query, check headers
-        if(options['query']) {
-          var queryObj = params['query'] || throwError("No StackMobQuery object provided to the query call.");
-
-          if(queryObj['selectFields']) {
-            if(queryObj['selectFields'].length > 0) {
-              params['headers']["X-StackMob-Select"] = queryObj['selectFields'].join();
-            }
-          }
-
-          //Add Range Headers
-          if(queryObj['range']) {
-            params['headers']['Range'] = 'objects=' + queryObj['range']['start'] + '-' + queryObj['range']['end'];
-          }
-
-          //Add Query Parameters to Parameter Map
-          _.extend(params['data'], queryObj['params']);
-
-          //Add OrderBy Headers
-          if(queryObj['orderBy'] && queryObj['orderBy'].length > 0) {
-            var orderList = queryObj['orderBy'];
-            var order = '';
-            var size = orderList.length;
-            for(var i = 0; i < size; i++) {
-              order += orderList[i];
-              if(i + 1 < size)
-                order += ',';
-            }
-            params['headers']["X-StackMob-OrderBy"] = order;
-          }
-        }
-      }
-
       function _prepareRequestBody(method, params, options) {
         options = options || {};
 
@@ -782,7 +803,7 @@
             params['data'] = JSON.stringify(_.extend(json, params['data']));
           } else
             params['data'] = JSON.stringify(params.data);
-        } else if(params['type'] == "GET") {
+        } else if(params['type'] == "GET" || params['type'] == "DELETE") {
           if(!_.isEmpty(params['data'])) {
             params['url'] += '?';
             var path = toParams(params['data']);
@@ -793,27 +814,6 @@
         } else {
           delete params['data'];
         }
-      }
-
-      function _prepareAjaxClientParams(params) {
-        params = params || {};
-        //Prepare 3rd party ajax settings
-        params['processData'] = false;
-        //Put Accept into the header for jQuery
-        params['accepts'] = params['headers']["Accept"];
-      }
-
-      function _prepareAuth(method, params) {
-        if(StackMob.isAccessTokenMethod(method)) {
-          return;
-          //then don't add an Authorization Header
-        }
-
-        var authHeader = getAuthHeader(params);
-        if(authHeader) {
-          params['headers']['Authorization'] = authHeader;
-        }
-
       }
 
       function _isExtraMethodVerb(method) {
@@ -832,7 +832,7 @@
       params['data'] = params['data'] || {};
 
       _prepareBaseURL(model, method, params);
-      _prepareHeaders(params, options);
+      _prepareHeaders(method, params, options);
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
@@ -1154,11 +1154,28 @@
         })
         this.fetch(options);
       },
+      destroyAll : function(stackMobQuery, options) {
+        options = options || {};
+        var theCollection = this;
+        var success = options['success']; // original
+        var successFunc = function(model) {
+          // model is undefined
+          theCollection.remove(theCollection.models);
+          if (typeof success == 'function') success(model);
+        };
+        options['success'] = successFunc;
+        _.extend(options, { query : stackMobQuery });
+        return (this.sync || Backbone.sync).call(this, 'delete', this, options);
+      },
       create : function(model, options) {
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
         Backbone.Collection.prototype.create.call(this, model, newOptions);
+      },
+      createAll : function(options) {
+        options = options || {};
+        return (this.sync || Backbone.sync).call(this, 'create', this, options); 
       },
       count : function(stackMobQuery, options) {
         stackMobQuery = stackMobQuery || new StackMob.Collection.Query();
