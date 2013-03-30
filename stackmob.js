@@ -632,7 +632,7 @@
           var savedCreds = StackMob.getOAuthCredentials();
           
           /*
-           * processLogin can be call by the developer or automatically by refreshSession
+           * processLogin can be called by the developer or automatically by refreshSession
            * if by refreshSession, there is no user schema info passed from the options, so fetch it from the local storage if that's the case.'
            */
           var userSchemaInfo = options['stackmob_userschemainfo'] || savedCreds['oauth2.userSchemaInfo']; //get schema info
