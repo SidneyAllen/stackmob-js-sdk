@@ -907,10 +907,10 @@
       _.extend(refreshOptions, options);
 
       if(StackMob.hasRefreshToken()) {
-        var userSchema = StackMob.getOAuthCredentials()['oauth2.userSchemaInfo']['schemaName'];
+        var userSchema = StackMob.getOAuthCredentials()['oauth2.userSchemaInfo'] ? StackMob.getOAuthCredentials()['oauth2.userSchemaInfo']['schemaName'] : StackMob['userSchema'];
         
         //set request call details
-        refreshOptions['url'] = _getURLScheme('refreshToken') + this.getBaseURL() + StackMob['userSchema'];
+        refreshOptions['url'] = _getURLScheme('refreshToken') + this.getBaseURL() + userSchema;
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
         refreshOptions['data'] = {
           refresh_token : StackMob.getOAuthCredentials()[StackMob.REFRESH_TOKEN_KEY],
