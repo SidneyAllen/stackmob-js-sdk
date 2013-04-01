@@ -711,7 +711,7 @@
       this.sync.call(StackMob, method, null, options);
     },
 
-    processLogin : function(result) {
+    processLogin : function(result, options) {
       if(StackMob.isOAuth2Mode()) {
         var oauth2Creds = result;
 
