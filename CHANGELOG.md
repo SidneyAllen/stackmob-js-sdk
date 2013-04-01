@@ -9,16 +9,18 @@
 
 **FEATURE**
 
+* Supports Backbone 1.0 and Underscore 1.4.4
+  * Updating callbacks to match Backbone 1.0 `success(model, result, options)` and `error(model, result, options)`
 * Added configurable security policies to determine which methods are performed over SSL (`secure` init parameter)
   * Always - All requests will be made over HTTPS
   * Never - All requests will be made over HTTP
   * Mixed (Default) - Only authentication and user creation methods will be made over HTTPS
-* Added `secureRequest` parameter to force SSL for any method.
-* Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
+* Added optional `secureRequest` parameter to force SSL for any method.
 * Support multiple custom users
   * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
   * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
-* Updating callbacks to match Backbone 1.0 `success(model, result, options)` and `error(model, result, options)`
+* Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
+
 
 
 **FIX**
