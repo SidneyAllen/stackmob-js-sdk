@@ -15,15 +15,16 @@
   * Mixed (Default) - Only authentication and user creation methods will be made over HTTPS
 * Added `secureRequest` parameter to force SSL for any method.
 * Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
+* Support multiple custom users
+  * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
+  * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
 * Updating callbacks to match Backbone 1.0 `success(model, result, options)` and `error(model, result, options)`
 
 
 **FIX**
 
-* Support multiple custom users
-  * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
-  * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
 * Added `binaryFields` declaration to `StackMob.Model` to fix saving of binary fields that have already been converted to S3 urls
+* Deleting local keys immediately on `user.logout` instead of waiting for `success` callback.
 
 ### v0.8.1 - March 15, 2013
 
