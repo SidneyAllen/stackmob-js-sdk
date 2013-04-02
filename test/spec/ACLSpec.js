@@ -16,6 +16,50 @@ var LOGIN_TYPE = {
 	RELATIONSHIP: { username: "acl_relationship", password: "acl_relationship" }
 };
 
+function userWorks(userType){
+  it("should log in as " + userType.username, function(){
+    var user = new StackMob.User(userType);
+    aclLoginUser(user);
+    aclLogoutUser(user);
+  });
+}
+function aclLoginUser(user){
+  if (user.username == null)
+    return;
+  var loginFlag;
+  runs(function(){
+    user.login( false, {
+      success: function(){ loginFlag = true; },
+      error: function(){ loginFlag = false; }
+    });
+  });
+
+  waitsFor(function() {
+    return typeof loginFlag !== "undefined";
+  }, "user (" + user.username + ") to login");
+
+  runs(function(){
+    expect(loginFlag).toEqual(true);
+  });
+}
+
+function aclLogoutUser(user){
+  var logoutFlag;
+
+  runs(function(){
+    user.logout({
+      success: function(){ logoutFlag = true }
+    });
+  });
+
+  waitsFor(function() {
+    return typeof logoutFlag !== "undefined";
+  }, "user to logout");
+  runs(function(){
+    expect(logoutFlag).toEqual(true);
+  });
+}
+
 var makeACLTest = function( opt ){
     var dis = ( opt.expectation == HTTP_RESPONSE.SUCCESS ) ? "" : "dis"
 
@@ -244,6 +288,13 @@ var makeACLTest = function( opt ){
         }
     });
 }
+
+describe("Access Control Users Work", function(){
+  userWorks(LOGIN_TYPE.ANY);
+  userWorks(LOGIN_TYPE.ROLE);
+  userWorks(LOGIN_TYPE.OWNER);
+  userWorks(LOGIN_TYPE.RELATIONSHIP);
+});
 
 describe("Access Control Lists", function(){
 
