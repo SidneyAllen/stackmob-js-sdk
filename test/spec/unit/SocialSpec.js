@@ -32,7 +32,6 @@ describe("Social Unit Tests", function() {
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
       expectEndpoint(user, ['', false], 'loginWithFacebookToken', 'POST', 'user/facebookAccessToken');
-
     });
 
   });

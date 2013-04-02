@@ -15,15 +15,13 @@
 
   <!-- StackMob Dependencies -->
   <script type="text/javascript" src="http://static.stackmob.com/js/json2-min.js"></script>
-  <script type="text/javascript" src="http://static.stackmob.com/js/underscore-1.4.1-min.js"></script>
-  <script type="text/javascript" src="http://static.stackmob.com/js/backbone-0.9.2-min.js"></script>
+  <script type="text/javascript" src="http://static.stackmob.com/js/underscore-1.4.4-min.js"></script>
+  <script type="text/javascript" src="http://static.stackmob.com/js/backbone-1.0.0-min.js"></script>
   <script type="text/javascript" src="../stackmob.js"></script>
 
   <!-- Initialize StackMob JS Library -->
   <script type="text/javascript">
   StackMob.init({
-    appName: "you_app_name",
-    clientSubdomain: "your_client_subdomain",
     publicKey: "your_public_key",
     apiVersion: 0
   });
@@ -36,9 +34,12 @@
   <script type="text/javascript" src="spec/unit/SetupUnitTests.js"></script>
 
   <!-- Unit Tests -->
+  <script type="text/javascript" src="spec/unit/AuthSpec.js"></script>
   <script type="text/javascript" src="spec/unit/SecuritySpec.js"></script>
   <script type="text/javascript" src="spec/unit/QuerySpec.js"></script>
+  <script type="text/javascript" src="spec/unit/UserSchemaSpec.js"></script>
   <script type="text/javascript" src="spec/unit/SocialSpec.js"></script>
+  <script type="text/javascript" src="spec/unit/BinaryFieldSpec.js"></script>
 
   <!-- Jasmin Setup -->
   <script type="text/javascript">
