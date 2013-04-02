@@ -18,7 +18,12 @@ describe("Unit tests for Authentication", function() {
       var creds = {
         'oauth2.accessToken' : "access_token",
         'oauth2.macKey' : "mac_key",
-        'oauth2.expires' : 3600
+        'oauth2.expires' : 3600,
+        'oauth2.userSchemaInfo' : {
+          schemaName: 'user',
+          loginField: 'username',
+          passwordField: 'password'
+        }
       };
       creds[StackMob.REFRESH_TOKEN_KEY] = "refresh_token";
       return creds;
