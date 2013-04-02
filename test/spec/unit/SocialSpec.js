@@ -11,15 +11,22 @@
 
 describe("Social Unit Tests", function() {
 
+  it("should call linkUserWithFacebook", function() {
+
+    runs(function() {
+      var user = new StackMob.User({ username: "testUser", password: "testUser" });
+
+      expectEndpoint(user, [''], 'linkUserWithFacebook', 'GET', 'user/linkUserWithFacebook');
+    });
+
+  });
+
   it("should call unlinkUserFromFacebook", function() {
 
     runs(function() {
-      var model, params, method;
-
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
       expectEndpoint(user, [], 'unlinkUserFromFacebook', 'DELETE', 'user/unlinkUserFromFacebook');
-
     });
 
   });
@@ -27,8 +34,6 @@ describe("Social Unit Tests", function() {
   it("should call facebookAccessToken", function() {
 
     runs(function() {
-      var model, params, method;
-
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
       expectEndpoint(user, ['', false], 'loginWithFacebookToken', 'POST', 'user/facebookAccessToken');
@@ -39,8 +44,6 @@ describe("Social Unit Tests", function() {
   it("should call facebookAccessTokenWithCreate", function() {
 
     runs(function() {
-      var model, params, method;
-
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
       expectEndpoint(user, ['', false],'loginWithFacebookAutoCreate', 'POST', 'user/facebookAccessTokenWithCreate');
