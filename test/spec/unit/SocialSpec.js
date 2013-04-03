@@ -57,7 +57,7 @@ describe("Social Unit Tests", function() {
     runs(function() {
       var user = new StackMob.User({ username: "testUser", password: "testUser" });
 
-      expectEndpoint(user, ['', '', '', false], 'gigyaAccessToken', 'POST', 'user/gigyaAccessToken')
+      expectEndpoint(user, ['', '', '', false], 'loginWithGigya', 'POST', 'user/gigyaAccessToken')
     });
 
   });
