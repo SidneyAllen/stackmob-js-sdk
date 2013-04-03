@@ -63,7 +63,7 @@ function createSimpleUser(usr) {
 }
 
 function loginUser(usr) {
-  it("should login '" + usr + "'", function() {
+  it("should login " + usr, function() {
     var loggedIn = false;
 
     var user = new StackMob.User({
@@ -78,7 +78,7 @@ function loginUser(usr) {
     });
 
     waitsFor(function() {
-      return loggedIn === true;
+      return loggedIn == true;
     }, "user logged in should be " + usr, 20000);
 
     runs(function() {
@@ -255,158 +255,11 @@ function deleteAllAttractions() {
   var attrs = new Attractions();
   var attrIDs = [];
   attrs.fetch({
-   success: function(collection) {
-    for (var i = 0; i < collection.models.length; ++i) {
-     var attr = collection.models[i];
-     attr.destroy();
-   }
- }
-})
-}
-
-describe("Simple select functionality (standalone) on a model", function() {
-var mySingleUser = 'test0'; //this is the user that's created by createMultipleUser()
-createMultipleUser(1);
-
-it("should only fetch user with its money field only (along with the primary key, i.e. username)", function() {
-  var queriedUser = null;
-  var user = new StackMob.User({
-    username: mySingleUser
-  });
-  var myQuery = new StackMob.Model.Query();
-  myQuery.select('money');
-  user.query(myQuery, {
-    success: function(model) {
-      queriedUser = model;
-    }
-  });
-
-  waitsFor(function() {
-    return queriedUser !== null;
-  }, "to finish querying with select 'money'", 20000);
-
-  runs(function() {
-    expect(queriedUser['attributes']['username']).toNotEqual(undefined);
-    expect(queriedUser['attributes']['money']).toNotEqual(undefined);
-    expect(queriedUser['attributes']['age']).toEqual(undefined);
-    expect(queriedUser['attributes']['location']).toEqual(undefined);
-  });
-});
-
-it("should fetch user with its money and age fields only", function() {
-  var queriedUser = null;
-  var user = new StackMob.User({
-    username: mySingleUser
-  });
-  var myQuery = new StackMob.Model.Query();
-  myQuery.select('money').select('age');
-  user.query(myQuery, {
-    success: function(model) {
-      queriedUser = model;
-    }
-  });
-
-  waitsFor(function() {
-    return queriedUser !== null;
-  }, "to finish querying with select 'money'", 20000);
-
-  runs(function() {
-    expect(queriedUser['attributes']['username']).toNotEqual(undefined);
-    expect(queriedUser['attributes']['money']).toNotEqual(undefined);
-    expect(queriedUser['attributes']['age']).toNotEqual(undefined);
-    expect(queriedUser['attributes']['location']).toEqual(undefined);
-  });
-});
-
-deleteMultipleCreatedUsers(1);
-});
-
-describe("Testing combination of select functionality on a collection", function() {
-  var howMany = 10;
-var newAge = 21; // needs to be > 20. Look at the implementation of createMultipleUser
-var count = 0;
-var num = createMultipleUser(howMany);
-
-waitsFor(function() {
-  return num === howMany;
-}, "waits until all users creation to be done", howMany * 2000);
-
-it("should update some users data first to be able to see the select functionality power", function() {
-    //update some users so we can use some advanced query
-    var i = 0;
-    for (i = 0; i < howMany; ++i) {
-      if (i%2 === 0) {
-        var user = new StackMob.User({
-          username: 'test' + i
-        });
-        user.save({age:newAge}, {
-          success: function(model) {
-            count = count + 1;
-          }
-        });
+    success: function(collection) {
+      for (var i = 0; i < collection.models.length; ++i) {
+        var attr = collection.models[i];
+        attr.destroy();
       }
     }
-
-    waitsFor(function() {
-      return count === (howMany/2);
-    }, "waits for all users update to be done", howMany * 2000);
-
-    runs(function() {
-      expect(count).toEqual(howMany/2);
-    });
   });
-
-it("should fetch only " + (howMany / 2) + " users in total whose age is equal to 'newAge' and all of them should have only their money field", function() {
-  var users = new StackMob.Users();
-  var queriedUsers = null;
-  var myQuery = new StackMob.Collection.Query();
-  myQuery.select('money').equals('flag', 'mUser').equals('age', newAge);
-  users.query(myQuery, {
-    success: function(collection) {
-      queriedUsers = collection;
-    }
-  });
-
-  waitsFor(function() {
-    return queriedUsers !== null;
-  }, "finish querying with advanced query", howMany * 2000);
-
-  runs(function() {
-    expect(queriedUsers.length).toEqual(howMany/2);
-    var i = 0; var max = howMany/2;
-    for (i = 0; i < max; ++i) {
-      expect(queriedUsers.models[i]['attributes']['money']).toNotEqual(undefined);
-      expect(queriedUsers.models[i]['attributes']['age']).toEqual(undefined);
-      expect(queriedUsers.models[i]['attributes']['location']).toEqual(undefined);
-    }
-  });
-});
-
-it("should fetch only " + (howMany / 2) + " users in total whose age is < 'newAge' and all of them should have only their age and money fields", function() {
-  var users = new StackMob.Users();
-  var queriedUsers = null;
-  var myQuery = new StackMob.Collection.Query();
-  myQuery.select('money').equals('flag', 'mUser').lt('age', newAge).select('age');
-  users.query(myQuery, {
-    success: function(collection) {
-      queriedUsers = collection;
-    }
-  });
-
-  waitsFor(function() {
-    return queriedUsers !== null;
-  }, "finish querying with advanced query", howMany * 2000);
-
-  runs(function() {
-    expect(queriedUsers.length).toEqual(howMany/2);
-    var i = 0; var max = howMany/2;
-    for (i = 0; i < max; ++i) {
-      expect(queriedUsers.models[i]['attributes']['money']).toNotEqual(undefined);
-      expect(queriedUsers.models[i]['attributes']['age']).toNotEqual(undefined);
-      expect(queriedUsers.models[i]['attributes']['location']).toEqual(undefined);
-    }
-  });
-});
-
-deleteMultipleCreatedUsers(howMany);
-});
+}

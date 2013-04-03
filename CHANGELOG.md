@@ -1,4 +1,30 @@
-<h2> StackMob JavaScript SDK Change Log
+<h2> StackMob JavaScript SDK Change Log </h2>
+
+<h3>v0.9.0</h3>
+
+**Upgrade Notes**
+
+* `apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+* You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
+
+**Features**
+
+* Supports Backbone 1.0 and Underscore 1.4.4
+  * Updating callbacks to match Backbone 1.0 `success(model, result, options)` and `error(model, result, options)`
+* Added configurable security policies to determine which methods are performed over SSL (`secure` init parameter)
+  * Always - All requests will be made over HTTPS
+  * Never - All requests will be made over HTTP
+  * Mixed (Default) - Only authentication and user creation methods will be made over HTTPS
+* Added optional `secureRequest` parameter to force SSL for any method.
+* Support multiple custom users
+  * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
+  * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
+* Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
+
+**Fixes**
+
+* Added `binaryFields` declaration to `StackMob.Model` to fix saving of binary fields that have already been converted to S3 urls
+* Deleting local keys immediately on `user.logout` instead of waiting for `success` callback.
 
 <h3>v0.8.1 - March 15, 2013</h3>
 
