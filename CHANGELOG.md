@@ -1,10 +1,11 @@
 <h2> StackMob JavaScript SDK Change Log </h2>
 
-<h3>v0.9.0</h3>
+<h3>v0.9.0 - April 3, 2013</h3>
 
 **Upgrade Notes**
 
-* `apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+* If you set `apiURL` parameter to http://api.stackmob.com in the past, such as for PhoneGap, you should no longer set this field. Since SDK v0.8.0., the default API Domain is `api.stackmob.com`.  HTTPS requests will be determined by the `secure` parameter.
+`apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
 * You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
 
 **Features**
