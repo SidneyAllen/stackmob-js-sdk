@@ -1422,9 +1422,8 @@
         options = options || {};
         options['data'] = options['data'] || {};
 
-        StackMob.clearOAuthCredentials();
-
         (this.sync || Backbone.sync).call(this, "logout", this, options);
+        StackMob.clearOAuthCredentials();
       },
       loginWithGigya : function(gigyaUID, gigyaTimestamp, gigyaSignature, keepLoggedIn, options) {
         options = options || {};
