@@ -441,6 +441,9 @@
      * Externally called by user to initialize their StackMob config.
      */
     init : function(options) {
+      // Safeguard in case window is undefined
+      window = window || {location: {hostname:""}};
+
       options = options || {};
 
       // Run stuff before StackMob is initialized.
