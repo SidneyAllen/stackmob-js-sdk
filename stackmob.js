@@ -498,7 +498,7 @@
        * automatically.
        */
       var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
-      this.useRelativePathForAjax = options['useRelativePathForAjax'] || isSMHosted;
+      this.useRelativePathForAjax = (typeof options['useRelativePathForAjax'] === "boolean") ? options['useRelativePathForAjax'] : isSMHosted;
 
       /*
        * secure - Determine which requests should be done over SSL.
