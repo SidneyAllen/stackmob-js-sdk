@@ -4,9 +4,9 @@
 
 **Upgrade Notes**
 
-* If you set `apiURL` parameter to http://api.stackmob.com in the past, such as for PhoneGap, you should no longer set this field. Since SDK v0.8.0., the default API Domain is `api.stackmob.com`.  HTTPS requests will be determined by the `secure` parameter.
-`apiURL` init parameter has been superseded by `apiDomain` that will respect SSL preferences determined by the `secure` init parameter.
+* If you set `apiURL` parameter to http://api.stackmob.com in the past, such as for PhoneGap, you should no longer set this field. Since SDK v0.8.0, the default API Domain is `api.stackmob.com`.  HTTPS requests will be determined by the `secure` init parameter.
 * You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
+* To enable SSL for an app deployed on a [StackMob Custom Domain](https://marketplace.stackmob.com/module/customdomains), you must install the SSL package and set `useRelativePathForAjax: true` in StackMob.init(). [Read here for more details](https://developer.stackmob.com/sdks/js/api?refresh=true#a-init).
 
 **Features**
 
@@ -27,7 +27,7 @@
 
 **Fixes**
 
-* Facebook logins will now stayed logged in when setting `keepLoggedIn` flag to `true` in [login() method](https://developer.stackmob.com/sdks/js/api#a-login).
+* Facebook logins will now stay logged in when setting `keepLoggedIn` flag to `true` in [login() method](https://developer.stackmob.com/sdks/js/api#a-login).
 
 <h3>v0.8.0 - February 14, 2013</h3>
 
