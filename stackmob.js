@@ -23,6 +23,7 @@
    *
    * It is the only variable introduced globally.
    */
+
   window.StackMob = root.StackMob = {
 
     //Default API Version.  Set to 0 for your Development API.  Production APIs are 1, 2, 3+
@@ -441,8 +442,6 @@
      * Externally called by user to initialize their StackMob config.
      */
     init : function(options) {
-      // Safeguard in case window is undefined
-      window = window || {location: {hostname:""}};
 
       options = options || {};
 
