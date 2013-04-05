@@ -6,17 +6,17 @@
 
 * If you set `apiURL` parameter to http://api.stackmob.com in the past, such as for PhoneGap, you should no longer set this field. Since SDK v0.8.0, the default API Domain is `api.stackmob.com`.  HTTPS requests will be determined by the `secure` init parameter.
 * You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
-* To enable SSL for an app deployed on a [StackMob Custom Domain](https://marketplace.stackmob.com/module/customdomains), you must install the SSL package and set `useRelativePathForAjax: true` in StackMob.init(). [Read here for more details](https://developer.stackmob.com/sdks/js/api?refresh=true#a-init).
 
 **Features**
 
 * Supports Backbone 1.0 and Underscore 1.4.4
   * Updating callbacks to match Backbone 1.0 `success(model, result, options)` and `error(model, result, options)`
-* API Requests will be made over SSL from HTTPS URLS. [Read more about specifying security modes here](https://developer.stackmob.com/sdks/js/api#a-init).
+* API Requests will be made over SSL if the window URL is HTTPS. [More details on SSL and the JS SDK](https://developer.stackmob.com/sdks/js/api#a-init).
 * Support multiple custom users
   * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
   * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
 * Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
+* Support `OR` operator for more advanced queries. [Read here for more details](https://developer.stackmob.com/sdks/js/api?refresh=true#a-or).
 
 **Fixes**
 
