@@ -23,6 +23,7 @@
    *
    * It is the only variable introduced globally.
    */
+
   window.StackMob = root.StackMob = {
 
     //Default API Version.  Set to 0 for your Development API.  Production APIs are 1, 2, 3+
@@ -35,21 +36,21 @@
     DEFAULT_LOGIN_FIELD : 'username',
     DEFAULT_PASSWORD_FIELD : 'password',
 
-    //Radians are defined for use with the geospatial methods.
+    // Radians are defined for use with the geospatial methods.
     EARTH_RADIANS_MI : 3956.6,
     EARTH_RADIANS_KM : 6367.5,
 
-    //Backbone.js will think you're updating an object if you provide an ID.  This flag is used internally in the JS SDK to force a POST rather than a PUT if you provide an object ID.
+    // Backbone.js will think you're updating an object if you provide an ID.  This flag is used internally in the JS SDK to force a POST rather than a PUT if you provide an object ID.
     FORCE_CREATE_REQUEST : 'stackmob_force_create_request',
 
-    //These constants are used internally in the JS SDK to help with queries involving arrays.
+    // These constants are used internally in the JS SDK to help with queries involving arrays.
     ARRAY_FIELDNAME : 'stackmob_array_fieldname',
     ARRAY_VALUES : 'stackmob_array_values',
 
-    //This flag is used internally in the JS SDK to help with deletion of objects in relationships.
+    // This flag is used internally in the JS SDK to help with deletion of objects in relationships.
     CASCADE_DELETE : 'stackmob_cascade_delete',
 
-    //These constants are intended for public use to help with deletion of objects in relationships.
+    // These constants are intended for public use to help with deletion of objects in relationships.
     HARD_DELETE : true,
     SOFT_DELETE : false,
 
@@ -72,13 +73,13 @@
     // Never use HTTPS
     SECURE_NEVER: "NEVER",
 
-    //This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
+    // This specifies the server-side API this instance of the JS SDK should point to.  It's set to the Development environment (0) by default.  This should be over-ridden when the user initializes their StackMob instance.
     apiVersion : 0,
 
-    //The current version of the JS SDK.
+    // The current version of the JS SDK.
     sdkVersion : "0.9.0",
 
-    //This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
+    // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
 
     /**
@@ -441,28 +442,39 @@
      * Externally called by user to initialize their StackMob config.
      */
     init : function(options) {
+
       options = options || {};
 
       // Run stuff before StackMob is initialized.
       this.initStart(options);
 
       /* DEPRECATED METHODS BELOW */
-      this.userSchema = options['userSchema']; //DEPRECATED: USED StackMob.User.extend({ schemaName: 'customschemaname' });
-      this.loginField = options['loginField']; //DEPRECATED: USED StackMob.User.extend({ loginField: 'customloginfield' });
-      this.passwordField = options['passwordField']; //DEPRECATED: USED StackMob.User.extend({ passwordField: 'custompasswordfield' });
+      this.userSchema = options['userSchema'];        // DEPRECATED: Use StackMob.User.extend({ schemaName: 'customschemaname' });
+      this.loginField = options['loginField'];        // DEPRECATED: Use StackMob.User.extend({ loginField: 'customloginfield' });
+      this.passwordField = options['passwordField'];  // DEPRECATED: Use StackMob.User.extend({ passwordField: 'custompasswordfield' });
       /* DEPRECATED METHODS ABOVE */
 
       this.newPasswordField = options['newPasswordField'] || 'new_password';
 
-      this.apiVersion = options['apiVersion'] || this.DEFAULT_API_VERSION;
-
       this.publicKey = options['publicKey'];
 
+      this.apiVersion = options['apiVersion'] || this.DEFAULT_API_VERSION;
+
+      /*
+       * apiURL (DEPRECATED) - Advaanced Users Only.  Use apiDomain instead.
+       * Used to redirect SDK requests to a different URL.
+       *
+       */
       if (typeof options['apiURL'] !== "undefined")
         throw new Error("Error: apiURL has been superseded by apiDomain");
 
-      // Init variable 'apiDomain' should not contain a URL scheme (http:// or https://)
-      // This will be prepended according to 'secure' setting
+      /*
+       * apiDomain - Advanced Users Only. Only set apiDomain to redirect SDK
+       * requests to a different domain.
+       *
+       * Init variable 'apiDomain' should not contain a URL scheme (http:// or https://).
+       * Scheme will be prepended according to 'secure' init setting.
+       */
       var apiDomain = options['apiDomain'];
       if (typeof apiDomain === "string"){
         if (apiDomain.indexOf('http') == 0){
@@ -476,11 +488,36 @@
         }
       }
 
-      this.useRelativePathForAjax = options['useRelativePathForAjax'] || false;
+      /*
+       * useRelativePathForAjax - Advanced Users Only. Use to redirect SDK requests to a
+       * path relative to the current URL.  Will only work for StackMob Hosts that can
+       * properly proxy requests to api.stackmob.com
+       *
+       * HTML5 apps hosted on stackmobapp.com will be set to `true` and use a relative path
+       * automatically.
+       */
+      var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
+      this.useRelativePathForAjax = (typeof options['useRelativePathForAjax'] === "boolean") ? options['useRelativePathForAjax'] : isSMHosted;
 
-      this.oauth2targetdomain = options['oauth2targetdomain'] || this.oauth2targetdomain || 'www.stackmob.com';
+      /*
+       * secure - Determine which requests should be done over SSL.
+       * Default the security mode to match the current URL scheme.
+       *
+       * If current page is HTTPS, set to SECURE_ALWAYS.
+       * If current page is HTTP, set to SECURE_NEVER.
+       * Otherwise, set to SECURE_MIXED.
+       * Can be overridden by manually specifying a security mode in init().
+       */
+      if (options['secure']) {
+        this.secure = options['secure'];
+      } else if (window.location.protocol.indexOf("https:") == 0) {
+        this.secure = this.SECURE_ALWAYS;
+      } else if (window.location.protocol.indexOf("http:") == 0) {
+        this.secure = this.SECURE_NEVER;
+      } else {
+        this.secure = this.SECURE_MIXED;
+      }
 
-      this.secure = options['secure'] || this.SECURE_MIXED;
       this.ajax = options['ajax'] || this.ajax;
 
       this.initEnd(options);
@@ -1384,9 +1421,8 @@
         options = options || {};
         options['data'] = options['data'] || {};
 
-        StackMob.clearOAuthCredentials();
-
         (this.sync || Backbone.sync).call(this, "logout", this, options);
+        StackMob.clearOAuthCredentials();
       },
       loginWithGigya : function(gigyaUID, gigyaTimestamp, gigyaSignature, keepLoggedIn, options) {
         options = options || {};

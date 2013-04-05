@@ -47,24 +47,35 @@ function createSimpleUser(usr) {
       password : usr
     });
 
-    var createdUser = null;
+    var createdUser = null,
+        error = false;
 
-    user.create({
-      success: function(model) {
-        createdUser = model.toJSON();
-      }
+    runs(function() {
+      user.create({
+        success: function(model) {
+          createdUser = model.toJSON();
+        },
+        error: function(){
+          error = true;
+        }
+      });
     });
 
     waitsFor(function() {
-      return createdUser;
+      return createdUser || error;
     }, 'StackMob should respond', 20000);
+
+    runs(function() {
+      expect(error).toEqual(false);
+    });
 
   });
 }
 
 function loginUser(usr) {
   it("should login " + usr, function() {
-    var loggedIn = false;
+    var loggedIn = false,
+        error = false;
 
     var user = new StackMob.User({
       username : usr,
@@ -74,14 +85,18 @@ function loginUser(usr) {
     user.login(false, {
       success : function(model) {
         loggedIn = true;
+      },
+      error: function(){
+        error = true;
       }
     });
 
     waitsFor(function() {
-      return loggedIn == true;
-    }, "user logged in should be " + usr, 20000);
+      return loggedIn === true || error;
+    }, "user logged in should be " + usr);
 
     runs(function() {
+      expect(error).toEqual(false);
       expect(loggedIn).toBeTruthy();
       expect(user.isLoggedIn()).toBeTruthy();
       expect(StackMob.isLoggedOut()).toBeFalsy();
@@ -97,19 +112,24 @@ function logoutUser(usr) {
       username : usr
     });
 
-    var loggedOut = false;
+    var loggedOut = false,
+        error = false;
 
     user.logout({
       success : function(model) {
         loggedOut = true;
+      },
+      error: function(){
+        error = true;
       }
     });
 
     waitsFor(function() {
-      return loggedOut === true;
-    }, "user logged out should be " + usr, 20000);
+      return loggedOut === true || error;
+    }, "user logged out should be " + usr);
 
     runs(function() {
+      expect(error).toEqual(false);
       expect(loggedOut).toBeTruthy();
       expect(user.isLoggedIn()).toBeFalsy();
       expect(StackMob.isLoggedOut()).toBeTruthy();
@@ -208,25 +228,25 @@ function deleteMultipleCreatedUsers(howMany) {
 */
 function deleteUser(usr) {
   it("should delete user: " + usr, function() {
-   var user = new StackMob.User({
-    username : usr
+    var user = new StackMob.User({
+      username : usr
+    });
+    var name = "";
+
+    user.destroy({
+      success : function(model) {
+        name = model.get('username');
+      }
+    });
+
+    waitsFor(function() {
+      return name === usr;
+    }, "user deleted should be " + usr, 20000);
+
+    runs(function() {
+      expect(name).toEqual(usr);
+    });
   });
-   var name = "";
-
-   user.destroy({
-    success : function(model) {
-     name = model.get('username');
-   }
- });
-
-   waitsFor(function() {
-    return name === usr;
-  }, "user deleted should be " + usr, 20000);
-
-   runs(function() {
-    expect(name).toEqual(usr);
-  });
- });
 }
 
 /** CREATE AND DELETE USER SECTION END **/
