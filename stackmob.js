@@ -466,7 +466,7 @@
        *
        */
       if (typeof options['apiURL'] !== "undefined")
-        throw new Error("Error: apiURL has been superseded by apiDomain");
+        throw new Error("Error: apiURL is no longer supported.  The API URL is now automatically set for PhoneGap users.");
 
       /*
        * apiDomain - Advanced Users Only. Only set apiDomain to redirect SDK
