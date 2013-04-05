@@ -32,6 +32,7 @@ describe("asyncronous authentication methods", function(){
     });
 
     var createdUser = null;
+    var error = false;
 
     user.create({
       success: function(model) {

@@ -1,10 +1,33 @@
-<h2> StackMob JavaScript SDK Change Log
+<h2> StackMob JavaScript SDK Change Log </h2>
+
+<h3>v0.9.0 - April 5, 2013</h3>
+
+**Upgrade Notes**
+
+* If you set `apiURL` parameter to http://api.stackmob.com in the past, such as for PhoneGap, you should no longer set this field. Since SDK v0.8.0, the default API Domain is `api.stackmob.com`.  HTTPS requests will be determined by the `secure` init parameter.
+* You no longer need to specify appName or clientSubdomain in the StackMob.init() method.
+
+**Features**
+
+* Supports Backbone 1.0 and Underscore 1.4.4
+  * Updating callbacks to match Backbone 1.0 `success(model, result, options)` and `error(model, result, options)`
+* API Requests will be made over SSL if the window URL is HTTPS. [More details on SSL and the JS SDK](https://developer.stackmob.com/sdks/js/api#a-init).
+* Support multiple custom users
+  * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
+  * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
+* Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
+* Support `OR` operator for more advanced queries. [Read here for more details](https://developer.stackmob.com/sdks/js/api?refresh=true#a-or).
+
+**Fixes**
+
+* Added `binaryFields` declaration to `StackMob.Model` to fix saving of binary fields that have already been converted to S3 urls
+* Deleting local keys immediately on `user.logout` instead of waiting for `success` callback.
 
 <h3>v0.8.1 - March 15, 2013</h3>
 
 **Fixes**
 
-* Facebook logins will now stayed logged in when setting `keepLoggedIn` flag to `true` in [login() method](https://developer.stackmob.com/sdks/js/api#a-login).
+* Facebook logins will now stay logged in when setting `keepLoggedIn` flag to `true` in [login() method](https://developer.stackmob.com/sdks/js/api#a-login).
 
 <h3>v0.8.0 - February 14, 2013</h3>
 
