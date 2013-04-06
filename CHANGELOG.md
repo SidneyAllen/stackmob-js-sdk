@@ -16,7 +16,7 @@
   * Moved custom `loginField` and `passwordField` on a user schema to `StackMob.User.extend({ loginField: ..., passwordField: ... })`
   * `StackMob.init({ loginField: ..., passwordField: ... });` deprecated but backwards supported
 * Added `fullyPopulateUser` flag on `login` calls to populate the user from the server if set to true. Default false.
-* Support `OR` operator for more advanced queries. [Read here for more details](https://developer.stackmob.com/sdks/js/api?refresh=true#a-or).
+* Support `OR` operator for more advanced queries. [Read here for more details](https://developer.stackmob.com/sdks/js/api#a-or).
 
 **Fixes**
 
