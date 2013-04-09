@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.9.0
+ StackMob JS SDK Version 0.9.1
  Copyright 2012-2013 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,7 +77,7 @@
     apiVersion : 0,
 
     // The current version of the JS SDK.
-    sdkVersion : "0.9.0",
+    sdkVersion : "0.9.1",
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -639,7 +639,9 @@
       params['headers']['X-StackMob-API-Key'] = StackMob['publicKey'];
       params['headers']['X-StackMob-Proxy-Plain'] = 'stackmob-api';
       // CORS Support
-      params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "";
+      // The value is set to something arbitrary because IE strips out
+      // headers with empty values.
+      params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "1";
     } else {
       params['headers']['X-StackMob-Proxy'] = 'stackmob-api';
     }
