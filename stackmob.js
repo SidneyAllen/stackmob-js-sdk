@@ -454,7 +454,7 @@
       this.passwordField = options['passwordField'];  // DEPRECATED: Use StackMob.User.extend({ passwordField: 'custompasswordfield' });
       /* DEPRECATED METHODS ABOVE */
 
-      this.newPasswordField = options['newPasswordField'] || 'new_password';
+      this.newPasswordField = 'new_password';
 
       this.publicKey = options['publicKey'];
 
@@ -1515,9 +1515,8 @@
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
         options = options || {};
         options['data'] = options['data'] || {};
-        var obj = {};
-        obj[StackMob.passwordField] = tempPassword;
-        this.set(obj);
+
+        this.set(this.passwordField, tempPassword);
         options['data'][StackMob.newPasswordField] = newPassword;
         this.login(keepLoggedIn, options);
       },
