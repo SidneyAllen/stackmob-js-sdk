@@ -7,9 +7,9 @@ describe("User Schema Tests", function() {
     runs(function() {
       var s = new Student({ username: 'testUser', password: 'testPass'});
       expectEndpoint(s, [true], 'login', 'POST', 'user/accessToken');
-      
+
     });
-    
+
     runs(function() {
       var s = new Student({ username: 'testUser', password: 'testPass'});
       s.login(true, {
@@ -28,9 +28,9 @@ describe("User Schema Tests", function() {
     runs(function() {
       var s = new Student({ name: 'testUser', pass: 'testPass'});
       expectEndpoint(s, [true], 'login', 'POST', 'student/accessToken');
-      
+
     });
-    
+
     runs(function() {
       var s = new Student({ name: 'testUser', pass: 'testPass'});
       s.login(true, {
@@ -40,6 +40,26 @@ describe("User Schema Tests", function() {
         }
       });
     });
+  });
+
+  it("should send correct username, temp password, and new password with loginWithTempAndSetNewPassword", function() {
+
+    runs(function() {
+
+      var user = new StackMob.User({ username: 'testUser', loginField: 'yoosername', passwordField: 'passwerd' });
+
+      // TODO: test with custom user schema
+      user.loginWithTempAndSetNewPassword('tempPassword', 'newPassword', false, {
+        done: function(model, params, method){
+          expect(model.get(model['loginField'])).toEqual('testUser');
+          expect(model.get(model['passwordField'])).toEqual('tempPassword');
+
+          expect(params['data']).toContain("new_password=newPassword");
+        }
+      });
+
+    });
+
   });
 
 });

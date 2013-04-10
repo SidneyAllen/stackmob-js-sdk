@@ -41,12 +41,28 @@ describe("Social Unit Tests", function() {
 
   });
 
+  it("should call createUserWithFacebook", function() {
+
+    runs(function() {
+      var user = new StackMob.User({username: "testUser", password: "testUser"});
+
+      expectEndpoint(user, [''], 'createUserWithFacebook', 'POST', 'user/createUserWithFacebook');
+    });
+
+  });
+
   it("should call facebookAccessTokenWithCreate", function() {
 
     runs(function() {
       var user = new StackMob.User({username: "testUser", password: "testUser"});
 
       expectEndpoint(user, ['', false],'loginWithFacebookAutoCreate', 'POST', 'user/facebookAccessTokenWithCreate');
+
+      user.loginWithFacebookAutoCreate('token', false, {
+        done: function(model, params, method){
+          expect(params['data']).toContain(model['loginField'] + "=testUser");
+        }
+      });
 
     });
 

@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.9.0
+ StackMob JS SDK Version 0.9.1
  Copyright 2012-2013 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,7 +77,7 @@
     apiVersion : 0,
 
     // The current version of the JS SDK.
-    sdkVersion : "0.9.0",
+    sdkVersion : "0.9.1",
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -317,7 +317,7 @@
           var creds = StackMob.getOAuthCredentials();
 
           var loginField =  (creds['oauth2.userSchemaInfo'] && creds['oauth2.userSchemaInfo']['loginField']) ? 
-            creds['oauth2.userSchemaInfo']['loginField'] : StackMob['loginField'];
+            creds['oauth2.userSchemaInfo']['loginField'] : this['loginField'];
           originalSuccess( input[loginField]);
         }
         this.initiateRefreshSessionCall(options)
@@ -454,7 +454,7 @@
       this.passwordField = options['passwordField'];  // DEPRECATED: Use StackMob.User.extend({ passwordField: 'custompasswordfield' });
       /* DEPRECATED METHODS ABOVE */
 
-      this.newPasswordField = options['newPasswordField'] || 'new_password';
+      this.newPasswordField = 'new_password';
 
       this.publicKey = options['publicKey'];
 
@@ -639,7 +639,9 @@
       params['headers']['X-StackMob-API-Key'] = StackMob['publicKey'];
       params['headers']['X-StackMob-Proxy-Plain'] = 'stackmob-api';
       // CORS Support
-      params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "";
+      // The value is set to something arbitrary because IE strips out
+      // headers with empty values.
+      params['headers']['X-StackMob-API-Key-' + StackMob['publicKey']] = "1";
     } else {
       params['headers']['X-StackMob-Proxy'] = 'stackmob-api';
     }
@@ -1474,7 +1476,7 @@
 
         if (options['createIfNeeded'] === true){
           options['stackmob_onfacebookAccessTokenWithCreate'] = StackMob.processLogin;
-          options['data'][StackMob.loginField] = options[StackMob['loginField']] || this.get(StackMob['loginField']);
+          options['data'][this['loginField']] = options[this['loginField']] || this.get(this['loginField']);
           (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
         } else {
           options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
@@ -1515,9 +1517,8 @@
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
         options = options || {};
         options['data'] = options['data'] || {};
-        var obj = {};
-        obj[StackMob.passwordField] = tempPassword;
-        this.set(obj);
+
+        this.set(this.passwordField, tempPassword);
         options['data'][StackMob.newPasswordField] = newPassword;
         this.login(keepLoggedIn, options);
       },
