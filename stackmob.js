@@ -317,7 +317,7 @@
           var creds = StackMob.getOAuthCredentials();
 
           var loginField =  (creds['oauth2.userSchemaInfo'] && creds['oauth2.userSchemaInfo']['loginField']) ? 
-            creds['oauth2.userSchemaInfo']['loginField'] : StackMob['loginField'];
+            creds['oauth2.userSchemaInfo']['loginField'] : this['loginField'];
           originalSuccess( input[loginField]);
         }
         this.initiateRefreshSessionCall(options)
@@ -1474,7 +1474,7 @@
 
         if (options['createIfNeeded'] === true){
           options['stackmob_onfacebookAccessTokenWithCreate'] = StackMob.processLogin;
-          options['data'][StackMob.loginField] = options[StackMob['loginField']] || this.get(StackMob['loginField']);
+          options['data'][this['loginField']] = options[this['loginField']] || this.get(this['loginField']);
           (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
         } else {
           options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;

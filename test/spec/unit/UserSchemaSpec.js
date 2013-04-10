@@ -55,9 +55,6 @@ describe("User Schema Tests", function() {
           expect(model.get(model['passwordField'])).toEqual('tempPassword');
 
           expect(params['data']).toContain("new_password=newPassword");
-          console.log(model);
-          console.log(params);
-          console.log(method);
         }
       });
 
