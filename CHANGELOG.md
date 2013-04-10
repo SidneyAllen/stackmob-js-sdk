@@ -1,5 +1,11 @@
 <h2> StackMob JavaScript SDK Change Log </h2>
 
+<h3>v0.9.1</h3>
+
+**Fixes**
+
+* Bug with IE stripping out HTTP headers need for CORS to work correctly
+
 <h3>v0.9.0 - April 5, 2013</h3>
 
 **Upgrade Notes**
