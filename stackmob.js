@@ -1326,8 +1326,8 @@
       },
 
       count : function(stackMobQuery, options) {
-        stackMobQuery = stackMobQuery || new StackMob.Collection.Query();
-        options = options || {};
+        stackMobQuery = (typeof stackMobQuery === 'object') ? stackMobQuery.clone() : new StackMob.Collection.Query();
+        options = _.clone(options) || {};
         options.stackmob_count = true;
         var success = options['success'];
 
