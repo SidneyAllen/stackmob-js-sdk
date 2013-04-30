@@ -1963,6 +1963,18 @@
 
       'jquery' : function(model, params, method, options) {
 
+        // Revert jQuery 1.9.1 update to treat
+        // empty HTTP responses as errors.
+        params['converters'] = {
+          'text json': function(json_string) {
+            if ( typeof json_string != 'string' || !$.trim(json_string).length ) {
+              return {};
+            } else {
+              return jQuery.parseJSON( json_string );
+            }
+          }
+        };
+
         params['beforeSend'] = function(jqXHR, settings) {
           jqXHR.setRequestHeader("Accept", settings['accepts']);
           if(!_.isEmpty(settings['headers'])) {
