@@ -734,11 +734,13 @@
         return v && !_.isUndefined(StackMob.METHOD_MAP[verb.toLowerCase()]);
       }
 
+      // Verb is an optional parameter, so `options` may be passed into
+      // this slot instead of the verb string.
       if(_.isObject(verb)) {
+        // If this is an object, assume it is the `options` param instead
         options = verb || {};
-        var verb = options['httpVerb'];
-        verb = isValidVerb(verb) ? verb : 'GET'
-        options['httpVerb'] = verb;
+        var theVerb = options['httpVerb'];
+        options['httpVerb'] = isValidVerb(theVerb) ? theVerb : 'GET';
       } else {
         options = options || {};
         if(_.isString(verb) && isValidVerb(verb))
