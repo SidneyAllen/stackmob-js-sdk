@@ -626,7 +626,7 @@
 
     //let users overwrite this if they know what they're doing
     params['headers'] = _.extend({
-      "Accept" : 'text/plain'
+      "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
     }, params['headers']);
 
     //dont' let users overwrite the stackmob headers though..
