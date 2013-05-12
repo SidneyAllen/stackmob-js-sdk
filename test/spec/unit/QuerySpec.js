@@ -70,7 +70,7 @@ describe("Unit tests for queries", function() {
 
       var q = function(){
         isAged.and( isLA.or(isLA) );
-      }
+      };
 
       expect(q).toThrow();
 
@@ -82,7 +82,7 @@ describe("Unit tests for queries", function() {
 
       var q = function(){
         isAged.and( notJohn.or(isLA).or(isLA) );
-      }
+      };
 
       expect(q).toThrow();
 
@@ -135,7 +135,7 @@ describe("Unit tests for queries", function() {
 
   });
 
-it("should query for non-empty string", function() {
+  it("should query for non-empty string", function() {
     runs(function() {
 
       var q = new StackMob.Collection.Query();
@@ -146,6 +146,26 @@ it("should query for non-empty string", function() {
       };
 
       expect(q['params']).toEqual(expectation);
+
+    });
+
+  });
+
+  it("should not alter query object on count query", function() {
+    runs(function() {
+
+      var Item = StackMob.Model.extend({ schemaName: 'item' }),
+          Items = StackMob.Collection.extend({ model: Item }),
+          itemsCount = new Items(),
+          q = new StackMob.Collection.Query();
+
+      itemsCount.count(q, {
+        done: function(count) {
+          // No need to do anything
+        }
+      });
+
+      expect(q).toEqual(new StackMob.Collection.Query());
 
     });
 
