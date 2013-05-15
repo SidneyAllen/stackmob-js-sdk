@@ -621,7 +621,7 @@
     options = options || {};
 
     //Prepare Request Headers
-    params['headers'] = params['headers'] || options['headers'] || {};
+    params['headers'] = params['headers'] || {};
 
     //Add API Version Number to Request Headers
 
