@@ -621,14 +621,14 @@
     options = options || {};
 
     //Prepare Request Headers
-    params['headers'] = params['headers'] || {};
+    params['headers'] = params['headers'] || options['headers'] || {};
 
     //Add API Version Number to Request Headers
 
     //let users overwrite this if they know what they're doing
-    params['headers'] = _.extend({
+    params['headers'] = _.extend(params['headers'], {
       "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
-    }, params['headers']);
+    });
 
     //dont' let users overwrite the stackmob headers though..
     _.extend(params['headers'], {
@@ -1899,8 +1899,16 @@
         // Set up success callback
         var success = params['success'];
         var defaultSuccess = function(response, opt) {
+          var result = null;
 
-          var result = response && response.responseText ? JSON.parse(response.responseText) : null;
+          if(response && response.responseText) {
+            try {
+              result = JSON.parse(response.responseText);
+            } catch(e) {
+              result = response.responseText;
+            }
+          }
+
           if(params["stackmob_count"] === true)
             result = response;
 
@@ -1935,7 +1943,12 @@
         // Set up success callback
         var success = params['success'];
         var defaultSuccess = function(response, result, xhr) {
-          var result = response ? JSON.parse(response) : null;
+          var result = response;
+
+          try {
+            result = JSON.parse(response)
+          } catch(e) {}
+
           StackMob.onsuccess(model, method, params, result, success, options);
         };
         params['success'] = defaultSuccess;
@@ -1996,8 +2009,13 @@
           } else if(response && response.toJSON) {
             result = response;
           } else if(response && (response.responseText || response.text)) {
-            var json = JSON.parse(response.responseText || response.text);
-            result = json;
+            var result;
+
+            try {
+              result = JSON.parse(response.responseText || response.text);
+            } catch (e) {
+              result = response.responseText || response.text;
+            }
           } else if(response) {
             result = response;
           }
