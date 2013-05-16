@@ -922,11 +922,10 @@
 
       //Determine what kind of call to make: GET, POST, PUT, DELETE
       var type = options['httpVerb'] || StackMob.METHOD_MAP[method] || 'GET';
-
       //Prepare query configuration
+
       var params = _.extend({
-        type : type,
-        dataType : 'json'
+        type : type
       }, options);
 
       params['data'] = params['data'] || {};
@@ -1055,7 +1054,7 @@
       var result;
       try {
         result = JSON.parse(responseText);
-      } catch (err) {
+      } catch (e) {
         result = {
           error : 'Invalid JSON returned.'
         };
