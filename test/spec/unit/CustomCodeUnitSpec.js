@@ -1,7 +1,3 @@
-/**
- * This suite will test custom code methods
- */
-
 describe("Unit tests for Custom Code", function() {
 
   it("should set http verb to POST", function() {
@@ -30,4 +26,29 @@ describe("Unit tests for Custom Code", function() {
 
   });
 
+  it("should have user headers in the call", function() {
+    runs(function() {
+      StackMob.customcode('hello_world', {}, 'GET', {
+        headers: {'a': 'b'},
+        done: function(model, param, method) {
+          expect(param['headers']['a']).toEqual('b');
+        }
+      });
+
+    });
+
+  });
+
+  it("should overwrite custom headers if in use by StackMob", function() {
+    runs(function() {
+      StackMob.customcode('hello_world', {}, 'GET', {
+        headers: {'Accept': 'b'},
+        done: function(model, param, method) {
+          expect(param['headers']['Accept']).toNotEqual('b');
+        }
+      });
+
+    });
+
+  });  
 });
