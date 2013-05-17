@@ -19,7 +19,7 @@
   var root = this;
 
   //in case the JS SDK is being included in environments without window
-  var thisWindow = window || { location: { hostname: 'api.stackmob.com', port: '443', protocol: 'https:' }};
+  var thisWindow = typeof window !== "undefined" ? window : { location: { hostname: 'api.stackmob.com', port: '443', protocol: 'https:' }};
   
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
