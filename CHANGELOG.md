@@ -1,6 +1,6 @@
 <h2> StackMob JavaScript SDK Change Log </h2>
 
-<h3>v0.10.0 - May 23, 2013</h3>
+<h3>v0.9.2 - May 23, 2013</h3>
 
 **Features**
 
