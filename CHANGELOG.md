@@ -5,7 +5,7 @@
 **Features**
 
 * jQuery 1.9.1 Compatibility
-* Support for custom code: custom headers and non JSON responses
+* Support for new custom code features: custom headers and non JSON responses
 
 **Fixes**
 
