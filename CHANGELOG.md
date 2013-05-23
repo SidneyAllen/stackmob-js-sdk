@@ -1,5 +1,17 @@
 <h2> StackMob JavaScript SDK Change Log </h2>
 
+<h3>v0.10.0 - May 23, 2013</h3>
+
+**Features**
+
+* Support for custom code: custom headers and non JSON responses
+
+**Fixes**
+
+* Call `window` by reference so that devices that don't have `window` won't fail
+
+
+
 <h3>v0.9.1 - April 9, 2013</h3>
 
 **Fixes**
