@@ -18,13 +18,15 @@
 (function() {
   var root = this;
 
+  //in case the JS SDK is being included in environments without window
+  var thisWindow = typeof window !== "undefined" ? window : { location: { hostname: 'api.stackmob.com', port: '443', protocol: 'https:' }};
+  
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
    *
    * It is the only variable introduced globally.
    */
-
-  window.StackMob = root.StackMob = {
+  thisWindow.StackMob = root.StackMob = {
 
     //Default API Version.  Set to 0 for your Development API.  Production APIs are 1, 2, 3+
     DEFAULT_API_VERSION : 0,
@@ -81,6 +83,15 @@
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
+    
+    
+    /**
+     * Methods to help with api signing
+     */
+    getProtocol: function() { return thisWindow.location.protocol; },
+    getHostname: function() { return thisWindow.location.hostname; },
+    getPort:function () { return thisWindow.location.port; },
+  
 
     /**
      * The Storage object lives within the StackMob object and provides an abstraction layer for client storage.  It's intended for internal use within the JS SDK.  The JS SDK is currently using HTML5's Local Storage feature to persist key/value items.
@@ -223,7 +234,7 @@
     getBaseURL : function() {
       if( StackMob['useRelativePathForAjax'] ){
         // Build "relative path" (also used for OAuth signing)
-        return StackMob.apiDomain ? StackMob.apiDomain : (window.location.hostname + (window.location.port ? ':' + window.location.port : '')) + '/';
+        return StackMob.apiDomain ? StackMob.apiDomain : (this.getHostname() + (this.getPort() ? ':' + this.getPort() : '')) + '/';
       } else {
         // Use absolute path and operate through CORS
         return StackMob.apiDomain ? StackMob.apiDomain : (StackMob['API_SERVER'] + '/');
@@ -496,7 +507,7 @@
        * HTML5 apps hosted on stackmobapp.com will be set to `true` and use a relative path
        * automatically.
        */
-      var isSMHosted = (window.location.hostname.indexOf('.stackmobapp.com') > 0);
+      var isSMHosted = (this.getHostname().indexOf('.stackmobapp.com') > 0);
       this.useRelativePathForAjax = (typeof options['useRelativePathForAjax'] === "boolean") ? options['useRelativePathForAjax'] : isSMHosted;
 
       /*
@@ -510,9 +521,9 @@
        */
       if (options['secure']) {
         this.secure = options['secure'];
-      } else if (window.location.protocol.indexOf("https:") === 0) {
+      } else if (this.getProtocol().indexOf("https:") == 0) {
         this.secure = this.SECURE_ALWAYS;
-      } else if (window.location.protocol.indexOf("http:") === 0) {
+      } else if (this.getProtocol().indexOf("http:") == 0) {
         this.secure = this.SECURE_NEVER;
       } else {
         this.secure = this.SECURE_MIXED;
