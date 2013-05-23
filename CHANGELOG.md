@@ -4,12 +4,14 @@
 
 **Features**
 
+* jQuery 1.9.1 Compatibility
 * Support for custom code: custom headers and non JSON responses
 
 **Fixes**
 
 * Call `window` by reference so that devices that don't have `window` won't fail
-
+* Query object is now immutable for Count queries
+* Small syntax fixes from linter
 
 
 <h3>v0.9.1 - April 9, 2013</h3>
