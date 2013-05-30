@@ -1,5 +1,19 @@
 <h2> StackMob JavaScript SDK Change Log </h2>
 
+<h3>v0.9.2 - May 23, 2013</h3>
+
+**Features**
+
+* jQuery 1.9.1 Compatibility
+* Support for new custom code features: custom headers and non JSON responses
+
+**Fixes**
+
+* Call `window` by reference so that devices that don't have `window` won't fail
+* Query object is now immutable for Count queries
+* Small syntax fixes from linter
+
+
 <h3>v0.9.1 - April 9, 2013</h3>
 
 **Fixes**
