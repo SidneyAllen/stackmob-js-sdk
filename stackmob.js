@@ -640,6 +640,90 @@
       "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
     });
 
+
+    /**
+     * `params` contains:
+     * {accepts, beforeSend, contentType, converters, data, error, headers, processData,
+     * stackmob_attempted_refresh, stackmob_force_create_request, success, type, url}
+     */
+    // check for geolocation and binary create
+    if (params['data']) {
+      // variable container for field type header
+      var fieldTypeHeader = '';
+
+      /**
+       * function to add String into `fieldTypeHeader`
+       * Add `&` if there's some String inside `fieldTypeHeader`
+       * @param str String to add
+       */
+      var addFieldTypeHeader = function(str) {
+        if (fieldTypeHeader.length == 0) {
+          fieldTypeHeader += str;
+        } else {
+          fieldTypeHeader += '&' + str;
+        }
+      };
+
+      var isGeoLocation = false;
+      var isBinary = false;
+
+      try {
+        var parsedData = JSON.parse(params['data']);
+
+        // traverse through the keys inside `data`
+        for (var dataKey in parsedData) {
+
+          if (!isGeoLocation && typeof parsedData[dataKey] == 'object') { // check for geolocation field
+
+            // since our `data` is an `object`, it seems that this request is for geolocation
+            isGeoLocation = true;
+
+            // let's make sure that this object has only `lat` and `lon` keys
+            var locKeys = Object.keys(parsedData[dataKey]);
+            for (var key in locKeys) {
+              if (locKeys[key] != 'lat' && locKeys[key] != 'lon') {
+                // there are key(s) other than `lat` and `lon`, so not geolocation!
+                isGeoLocation = false;
+              }
+            }
+
+            // if it is geolocation and params['headers'] exists, then add the header type of `geopoint`
+            if (isGeoLocation && params['headers']) {
+              addFieldTypeHeader(dataKey + '=geopoint');
+            }
+
+          } else if (!isBinary && typeof parsedData[dataKey] == 'string') { // check for binary field
+
+            // check for all the required attributes for file
+            var file = parsedData[dataKey];
+            if (file.indexOf('Content-Type:') != -1 &&
+                file.indexOf('Content-Disposition:') != -1 &&
+                file.indexOf('filename=') != -1 &&
+                file.indexOf('Content-Transfer-Encoding:') != -1) {
+              // woah, it's a binary file, let's set the header for this badboy :)
+              isBinary = true;
+              addFieldTypeHeader(dataKey + '=binary');
+            }
+
+          } else {
+
+            // nothing, don't mind me
+
+          }
+        }
+
+      } catch (e) {
+        // do nothing
+      }
+
+      // if there's either geolocation or binary, add it to header
+      if (isGeoLocation || isBinary) {
+        params['headers'] = _.extend(params['headers'], {
+          "X-StackMob-FieldTypes": fieldTypeHeader
+        });
+      }
+    }
+
     //dont' let users overwrite the stackmob headers though..
     _.extend(params['headers'], {
       "X-StackMob-User-Agent" : "StackMob (JS; " + StackMob['sdkVersion'] + ")"
@@ -943,8 +1027,8 @@
       params['data'] = params['data'] || {};
 
       _prepareBaseURL(model, method, params);
-      _prepareHeaders(method, params, options);
       _prepareRequestBody(method, params, options);
+      _prepareHeaders(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
 
