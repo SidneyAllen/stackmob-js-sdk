@@ -1,3 +1,7 @@
+var Attraction = StackMob.Model.extend({
+  schemaName: 'attraction'
+});
+
 /**
  * Unit Test that `obj.sdkMethod` will hit `endPoint` with `verb` request.
  */

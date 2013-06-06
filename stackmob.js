@@ -439,6 +439,9 @@
       "unlinkUserFromGigya"             : "DELETE"
     },
 
+    // this is to check whether we need to check for geopoint or binary header field addition
+    METHOD_FIELD_TYPE_HEADER : ["create", "update"],
+
     /**
      * Convenience method to retrieve the value of a key in an object.  If it's a function, give its return value.
      */
@@ -627,27 +630,14 @@
     return scheme + '://';
   }
 
-  function _prepareHeaders(method, params, options) {
-    options = options || {};
-
-    //Prepare Request Headers
-    params['headers'] = params['headers'] || {};
-
-    //Add API Version Number to Request Headers
-
-    //let users overwrite this if they know what they're doing
-    params['headers'] = _.extend(params['headers'], {
-      "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
-    });
-
-
+  function _addInferenceHeader(method, params, options) {
     /**
      * `params` contains:
      * {accepts, beforeSend, contentType, converters, data, error, headers, processData,
      * stackmob_attempted_refresh, stackmob_force_create_request, success, type, url}
      */
-    // check for geolocation and binary create
-    if (params['data']) {
+    // check for geopoint and binary create
+    if (_.contains(StackMob.METHOD_FIELD_TYPE_HEADER, method) && params['data']) {
       // variable container for field type header
       var fieldTypeHeader = '';
 
@@ -664,8 +654,10 @@
         }
       };
 
-      var isGeoLocation = false;
-      var isBinary = false;
+      // Will check the content later to decide whether there are more than 2 geopoint fields
+      // A schema can only have one GeoPoint field
+      var isGeoPointFields = []; // array of booleans
+      var isBinaryFields = []; // array of booleans
 
       try {
         var parsedData = JSON.parse(params['data']);
@@ -673,26 +665,27 @@
         // traverse through the keys inside `data`
         for (var dataKey in parsedData) {
 
-          if (!isGeoLocation && typeof parsedData[dataKey] == 'object') { // check for geolocation field
+          if (typeof parsedData[dataKey] == 'object') { // check for geolocation field
 
             // since our `data` is an `object`, it seems that this request is for geolocation
-            isGeoLocation = true;
+            var isGeoPoint = true;
 
             // let's make sure that this object has only `lat` and `lon` keys
             var locKeys = Object.keys(parsedData[dataKey]);
             for (var key in locKeys) {
               if (locKeys[key] != 'lat' && locKeys[key] != 'lon') {
                 // there are key(s) other than `lat` and `lon`, so not geolocation!
-                isGeoLocation = false;
+                isGeoPoint = false;
               }
             }
 
             // if it is geolocation and params['headers'] exists, then add the header type of `geopoint`
-            if (isGeoLocation && params['headers']) {
+            if (isGeoPoint && params['headers']) {
+              isGeoPointFields.push(true); // add this to our counter
               addFieldTypeHeader(dataKey + '=geopoint');
             }
 
-          } else if (!isBinary && typeof parsedData[dataKey] == 'string') { // check for binary field
+          } else if (typeof parsedData[dataKey] == 'string') { // check for binary field
 
             // check for all the required attributes for file
             var file = parsedData[dataKey];
@@ -701,7 +694,7 @@
                 file.indexOf('filename=') != -1 &&
                 file.indexOf('Content-Transfer-Encoding:') != -1) {
               // woah, it's a binary file, let's set the header for this badboy :)
-              isBinary = true;
+              isBinaryFields.push(true);
               addFieldTypeHeader(dataKey + '=binary');
             }
 
@@ -713,16 +706,43 @@
         }
 
       } catch (e) {
-        // do nothing
+
+        // throw error since parsing failed
+        StackMob.throwError("Failed parsing data params. Reason: " + e.message);
+
       }
 
-      // if there's either geolocation or binary, add it to header
-      if (isGeoLocation || isBinary) {
-        params['headers'] = _.extend(params['headers'], {
-          "X-StackMob-FieldTypes": fieldTypeHeader
-        });
+      // make sure there's only one GeoPoint field
+      if (_.filter(isGeoPointFields, function(x) { return x == true; }).length <= 1) {
+
+        // if there's either geolocation or binary, add it to header
+        if (_.contains(isGeoPointFields, true) || _.contains(isBinaryFields, true)) {
+          params['headers'] = _.extend(params['headers'], {
+            "X-StackMob-FieldTypes": fieldTypeHeader
+          });
+        }
+
+      } else {
+
+        // there are more than 1 GeoPoint field, so throw an error
+        StackMob.throwError("StackMob only supports one GeoPoint field: " + fieldTypeHeader);
+
       }
     }
+  }
+
+  function _prepareHeaders(method, params, options) {
+    options = options || {};
+
+    //Prepare Request Headers
+    params['headers'] = params['headers'] || {};
+
+    //Add API Version Number to Request Headers
+
+    //let users overwrite this if they know what they're doing
+    params['headers'] = _.extend(params['headers'], {
+      "Accept" : 'application/vnd.stackmob+json; version=' + StackMob['apiVersion']
+    });
 
     //dont' let users overwrite the stackmob headers though..
     _.extend(params['headers'], {
@@ -979,7 +999,7 @@
             delete json['lastmoddate'];
             delete json['createddate'];
 
-            if(method == 'update') {
+            if (method == 'update') {
               var userSchemaInfo = options['stackmob_userschemainfo'] || StackMob.getOAuthCredentials()['oauth2.userSchemaInfo'];
 
               if (userSchemaInfo) {
@@ -994,12 +1014,18 @@
               });
             }
 
-            if(StackMob.isOAuth2Mode())
+            if (StackMob.isOAuth2Mode()) {
               delete json['sm_owner'];
+            }
             params['data'] = JSON.stringify(_.extend(json, params['data']));
-          } else
+          } else {
             params['data'] = JSON.stringify(params.data);
-        } else if(params['type'] == "GET" || params['type'] == "DELETE") {
+          }
+
+          // let's see whether we need to add inference header for geopoint and/or binary fields
+          _addInferenceHeader(method, params, options);
+
+        } else if (params['type'] == "GET" || params['type'] == "DELETE") {
           if(!_.isEmpty(params['data'])) {
             params['url'] += '?';
             var path = toParams(params['data']);
@@ -1027,8 +1053,8 @@
       params['data'] = params['data'] || {};
 
       _prepareBaseURL(model, method, params);
-      _prepareRequestBody(method, params, options);
       _prepareHeaders(method, params, options);
+      _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
 

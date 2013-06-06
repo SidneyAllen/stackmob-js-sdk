@@ -29,9 +29,25 @@ describe("Binary Field Unit Tests", function() {
           });
         }
       });
-
     });
+  });
 
+  it("should have headers binary field set", function() {
+    runs(function() {
+      var p = new Profile({
+        profile_id: '123',
+        item: 'stuff',
+        profession: 'asdf',
+        bin_inference: "Content-Type: application/x-x509-ca-cert\nContent-Disposition: attachment; filename=arcee-testing.crt\nContent-Transfer-Encoding: base64\n\nLS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS"
+      });
+
+      p.save(null, {
+        done: function(model, param, method) {
+          var headerFieldType = param['headers']['X-StackMob-FieldTypes'];
+          expect(headerFieldType).toEqual('bin_inference=binary');
+        }
+      });
+    });
   });
 
 });
