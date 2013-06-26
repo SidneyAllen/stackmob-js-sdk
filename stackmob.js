@@ -1212,7 +1212,7 @@
         newOptions['data'] = newOptions['data'] || {};
         newOptions['data']['_expand'] = depth;
 
-        this.fetch(newOptions);
+        return this.fetch(newOptions);
       },
       getAsModel : function(fieldName, model) {
         var obj = this.get(fieldName);
