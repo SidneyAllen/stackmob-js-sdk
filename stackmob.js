@@ -948,7 +948,7 @@
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
 
-      StackMob.makeAPICall(model, params, method, options);
+      return StackMob.makeAPICall(model, params, method, options);
     },
     refreshSession : function(options) {
 
@@ -1170,12 +1170,13 @@
       },
       sync : function(method, model, options) {
         StackMob.sync.call(this, method, this, options);
+        return StackMob.sync.call(this, method, this, options);
       },
       create : function(options) {
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
-        this.save(null, newOptions);
+        return this.save(null, newOptions);
       },
       query : function(stackMobQuery, options) {
         options = options || {};
@@ -1186,21 +1187,21 @@
       },
       fetch : function(options) {
         StackMob.wrapStackMobCallbacks.call(this, options);
-        Backbone.Model.prototype.fetch.call(this, options);
+        return Backbone.Model.prototype.fetch.call(this, options);
       },
       destroy: function(options) {
         StackMob.wrapStackMobCallbacks.call(this, options);
-        Backbone.Model.prototype.destroy.call(this, options);
+        return Backbone.Model.prototype.destroy.call(this, options);
       },
       save : function(key, value) {
         var successFunc = key ? key['success'] : {};
         var errorFunc = key ? key['error'] : {};
         if( typeof value === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
           StackMob.wrapStackMobCallbacks.call(this, key);
-          Backbone.Model.prototype.save.call(this, null, key);
+          return Backbone.Model.prototype.save.call(this, null, key);
         } else {
           StackMob.wrapStackMobCallbacks.call(this, value);
-          Backbone.Model.prototype.save.call(this, key, value);
+          return Backbone.Model.prototype.save.call(this, key, value);
         }
       },
       fetchExpanded : function(depth, options) {
