@@ -667,6 +667,11 @@
     })();
   }
 
+  /**
+   * Method to check whether the request method is `create` or `update`
+   * @param method [String]
+   * @returns {boolean} true if it's either `create` or `update`; false otherwise
+   */
   function isCreateOrSave(method) {
     return method == 'create' || method == 'update';
   }
@@ -674,7 +679,7 @@
   /**
    * Method to check whether a `fieldValue` is a GeoPoint field
    * It is a GeoPoint field if it contains ONLY `lat` and `lon` keys
-   * @param fieldValue the value of the schema field
+   * @param fieldValue [object] the value of the schema field
    * @returns {boolean} true if it contains ONLY `lat` and `lon` keys; false otherwise
    */
   function isGeoPointField(fieldValue) {
@@ -689,11 +694,11 @@
   }
 
   /**
-   * Method to add inference header if the field is Binary
-   * @param fieldTypeHeader array container that the header will be pushed to
-   * @param dataKey the field name
-   * @param parsedData the JSON parsed data
-   * @param params params
+   * Method to add inference header if the field is GeoPoint
+   * @param fieldTypeHeader [array of String] container that the header will be pushed to
+   * @param dataKey [String] the field name
+   * @param parsedData [object] the JSON parsed data
+   * @param params [object] params
    */
   function addHeaderToContainerIfGeoPoint(fieldTypeHeader, dataKey, parsedData, params) {
     if (isGeoPointField(parsedData[dataKey]) && params['headers']) {
@@ -703,9 +708,9 @@
 
   /**
    * Method to add inference header if the field is Binary
-   * @param fieldTypeHeader array container that the header will be pushed to
-   * @param dataKey the field name
-   * @param parsedData the JSON parsed data
+   * @param fieldTypeHeader [array of String] array container that the header will be pushed to
+   * @param dataKey [String] the field name
+   * @param parsedData [object] the JSON parsed data
    */
   function addHeaderToContainerIfBinary(fieldTypeHeader, dataKey, parsedData) {
     if (typeof parsedData[dataKey] == 'string') { // check for binary field
@@ -726,8 +731,8 @@
   /**
    * Method to verify whether we should add inference header for Binary && GeoPoint fields
    * StackMob allows only 1 GeoPoint field per schema, hence this method will just check for that
-   * @param method the method for request
-   * @param params request params
+   * @param method [String] the method for request
+   * @param params [object] request params
    * @returns {boolean} true if there's 0 or 1 GeoPoint field; false otherwise
    */
   function verifyValidInferenceHeader(method, params) {
@@ -763,8 +768,8 @@
 
   /**
    * Method to add inference header for GeoPoint and Binary fields
-   * @param method the request method
-   * @param params the request params
+   * @param method [String] the request method
+   * @param params [object] the request params
    */
   function _addInferenceHeader(method, params) {
     /**
