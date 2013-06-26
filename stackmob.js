@@ -439,9 +439,6 @@
       "unlinkUserFromGigya"             : "DELETE"
     },
 
-    // this is to check whether we need to check for geopoint or binary header field addition
-    METHOD_FIELD_TYPE_HEADER : ["create", "update"],
-
     /**
      * Convenience method to retrieve the value of a key in an object.  If it's a function, give its return value.
      */
@@ -630,78 +627,120 @@
     return scheme + '://';
   }
 
-  function _addInferenceHeader(method, params, options) {
-    /**
-     * `params` contains:
-     * {accepts, beforeSend, contentType, converters, data, error, headers, processData,
-     * stackmob_attempted_refresh, stackmob_force_create_request, success, type, url}
-     */
-    // check for geopoint and binary create
-    if (_.contains(StackMob.METHOD_FIELD_TYPE_HEADER, method) && params['data']) {
-      // variable container for field type header
-      var fieldTypeHeader = '';
 
-      /**
-       * function to add String into `fieldTypeHeader`
-       * Add `&` if there's some String inside `fieldTypeHeader`
-       * @param str String to add
-       */
-      var addFieldTypeHeader = function(str) {
-        if (fieldTypeHeader.length == 0) {
-          fieldTypeHeader += str;
-        } else {
-          fieldTypeHeader += '&' + str;
+  // ===== HEADER INFERENCE RELATED METHODS =====
+
+  /**
+   * Object.keys backward compatibility
+   */
+  if (!Object.keys) {
+    Object.keys = (function () {
+      var hasOwnProperty = Object.prototype.hasOwnProperty,
+          hasDontEnumBug = !({toString: null}).propertyIsEnumerable('toString'),
+          dontEnums = [
+            'toString',
+            'toLocaleString',
+            'valueOf',
+            'hasOwnProperty',
+            'isPrototypeOf',
+            'propertyIsEnumerable',
+            'constructor'
+          ],
+          dontEnumsLength = dontEnums.length;
+
+      return function (obj) {
+        if (typeof obj !== 'object' && typeof obj !== 'function' || obj === null) throw new TypeError('Object.keys called on non-object');
+
+        var result = [];
+
+        for (var prop in obj) {
+          if (hasOwnProperty.call(obj, prop)) result.push(prop);
         }
-      };
 
-      // Will check the content later to decide whether there are more than 2 geopoint fields
-      // A schema can only have one GeoPoint field
-      var isGeoPointFields = []; // array of booleans
-      var isBinaryFields = []; // array of booleans
+        if (hasDontEnumBug) {
+          for (var i=0; i < dontEnumsLength; i++) {
+            if (hasOwnProperty.call(obj, dontEnums[i])) result.push(dontEnums[i]);
+          }
+        }
+        return result;
+      };
+    })();
+  }
+
+  function isCreateOrSave(method) {
+    return method == 'create' || method == 'update';
+  }
+
+  /**
+   * Method to check whether a `fieldValue` is a GeoPoint field
+   * It is a GeoPoint field if it contains ONLY `lat` and `lon` keys
+   * @param fieldValue the value of the schema field
+   * @returns {boolean} true if it contains ONLY `lat` and `lon` keys; false otherwise
+   */
+  function isGeoPointField(fieldValue) {
+    if (Object.prototype.toString.call(fieldValue) === "[object Object]") {
+
+      var valueKeys = Object.keys(fieldValue);
+      return valueKeys.length == 2 && _.has(fieldValue, 'lat') && _.has(fieldValue, 'lon');
+
+    }
+
+    return false;
+  }
+
+  /**
+   * Method to add inference header if the field is Binary
+   * @param fieldTypeHeader array container that the header will be pushed to
+   * @param dataKey the field name
+   * @param parsedData the JSON parsed data
+   * @param params params
+   */
+  function addHeaderToContainerIfGeoPoint(fieldTypeHeader, dataKey, parsedData, params) {
+    if (isGeoPointField(parsedData[dataKey]) && params['headers']) {
+      fieldTypeHeader.push(dataKey + '=geopoint');
+    }
+  }
+
+  /**
+   * Method to add inference header if the field is Binary
+   * @param fieldTypeHeader array container that the header will be pushed to
+   * @param dataKey the field name
+   * @param parsedData the JSON parsed data
+   */
+  function addHeaderToContainerIfBinary(fieldTypeHeader, dataKey, parsedData) {
+    if (typeof parsedData[dataKey] == 'string') { // check for binary field
+
+      // check for all the required attributes for file
+      var file = parsedData[dataKey];
+      if (file.indexOf('Content-Type:') != -1 &&
+          file.indexOf('Content-Disposition:') != -1 &&
+          file.indexOf('filename=') != -1 &&
+          file.indexOf('Content-Transfer-Encoding:') != -1) {
+        // woah, it's a binary file, let's set the header for this bad boy :)
+        fieldTypeHeader.push(dataKey + '=binary');
+      }
+
+    }
+  }
+
+  /**
+   * Method to verify whether we should add inference header for Binary && GeoPoint fields
+   * StackMob allows only 1 GeoPoint field per schema, hence this method will just check for that
+   * @param method the method for request
+   * @param params request params
+   * @returns {boolean} true if there's 0 or 1 GeoPoint field; false otherwise
+   */
+  function verifyValidInferenceHeader(method, params) {
+    var geoPointFieldCount = 0;
+
+    if (isCreateOrSave(method) && params['data']) {
 
       try {
+
         var parsedData = JSON.parse(params['data']);
-
-        // traverse through the keys inside `data`
         for (var dataKey in parsedData) {
-
-          if (typeof parsedData[dataKey] == 'object') { // check for geolocation field
-
-            // since our `data` is an `object`, it seems that this request is for geolocation
-            var isGeoPoint = true;
-
-            // let's make sure that this object has only `lat` and `lon` keys
-            var locKeys = Object.keys(parsedData[dataKey]);
-            for (var key in locKeys) {
-              if (locKeys[key] != 'lat' && locKeys[key] != 'lon') {
-                // there are key(s) other than `lat` and `lon`, so not geolocation!
-                isGeoPoint = false;
-              }
-            }
-
-            // if it is geolocation and params['headers'] exists, then add the header type of `geopoint`
-            if (isGeoPoint && params['headers']) {
-              isGeoPointFields.push(true); // add this to our counter
-              addFieldTypeHeader(dataKey + '=geopoint');
-            }
-
-          } else if (typeof parsedData[dataKey] == 'string') { // check for binary field
-
-            // check for all the required attributes for file
-            var file = parsedData[dataKey];
-            if (file.indexOf('Content-Type:') != -1 &&
-                file.indexOf('Content-Disposition:') != -1 &&
-                file.indexOf('filename=') != -1 &&
-                file.indexOf('Content-Transfer-Encoding:') != -1) {
-              // woah, it's a binary file, let's set the header for this badboy :)
-              isBinaryFields.push(true);
-              addFieldTypeHeader(dataKey + '=binary');
-            }
-
-          } else {
-
-            // nothing, don't mind me
-
+          if (isGeoPointField(parsedData[dataKey])) {
+            geoPointFieldCount++;
           }
         }
 
@@ -712,24 +751,56 @@
 
       }
 
-      // make sure there's only one GeoPoint field
-      if (_.filter(isGeoPointFields, function(x) { return x == true; }).length <= 1) {
+    }
 
-        // if there's either geolocation or binary, add it to header
-        if (_.contains(isGeoPointFields, true) || _.contains(isBinaryFields, true)) {
+    if (geoPointFieldCount <= 1) {
+      return true;
+    } else {
+      StackMob.throwError("You can only have 1 GeoPoint field per Schema");
+      return false;
+    }
+  }
+
+  /**
+   * Method to add inference header for GeoPoint and Binary fields
+   * @param method the request method
+   * @param params the request params
+   */
+  function _addInferenceHeader(method, params) {
+    /**
+     * `params` contains:
+     * {accepts, beforeSend, contentType, converters, data, error, headers, processData,
+     * stackmob_attempted_refresh, stackmob_force_create_request, success, type, url}
+     */
+    // check for geopoint and binary create
+    if (isCreateOrSave(method) && params['data']) {
+      // variable container for field type header
+      var fieldTypeHeader = [];
+
+      try {
+        var parsedData = JSON.parse(params['data']);
+
+        // traverse through the keys inside `data`
+        for (var dataKey in parsedData) {
+          addHeaderToContainerIfGeoPoint(fieldTypeHeader, dataKey, parsedData, params);
+          addHeaderToContainerIfBinary(fieldTypeHeader, dataKey, parsedData);
+        }
+
+        if (fieldTypeHeader.length > 0) {
           params['headers'] = _.extend(params['headers'], {
-            "X-StackMob-FieldTypes": fieldTypeHeader
+            "X-StackMob-FieldTypes": fieldTypeHeader.join('&')
           });
         }
 
-      } else {
+      } catch (e) {
 
-        // there are more than 1 GeoPoint field, so throw an error
-        StackMob.throwError("StackMob only supports one GeoPoint field: " + fieldTypeHeader);
+        // throw error since parsing failed
+        StackMob.throwError("Failed parsing data params. Reason: " + e.message);
 
       }
     }
   }
+  // ===========
 
   function _prepareHeaders(method, params, options) {
     options = options || {};
@@ -1023,7 +1094,9 @@
           }
 
           // let's see whether we need to add inference header for geopoint and/or binary fields
-          _addInferenceHeader(method, params, options);
+          if (verifyValidInferenceHeader(method, params)) {
+            _addInferenceHeader(method, params);
+          }
 
         } else if (params['type'] == "GET" || params['type'] == "DELETE") {
           if(!_.isEmpty(params['data'])) {
