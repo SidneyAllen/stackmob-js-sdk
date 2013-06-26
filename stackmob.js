@@ -948,7 +948,7 @@
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
 
-      StackMob.makeAPICall(model, params, method, options);
+      return StackMob.makeAPICall(model, params, method, options);
     },
     refreshSession : function(options) {
 
