@@ -1160,14 +1160,6 @@
       setIDAttribute : function() {
         this.idAttribute = this.getPrimaryKeyField();
       },
-      parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] === '')))
-          return data;
-
-        var attrs = JSON.parse(data['text']);
-
-        return attrs;
-      },
       sync : function(method, model, options) {
         StackMob.sync.call(this, method, this, options);
       },
