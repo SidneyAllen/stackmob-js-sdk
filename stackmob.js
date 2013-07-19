@@ -1160,14 +1160,6 @@
       setIDAttribute : function() {
         this.idAttribute = this.getPrimaryKeyField();
       },
-      parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] === '')))
-          return data;
-
-        var attrs = JSON.parse(data['text']);
-
-        return attrs;
-      },
       sync : function(method, model, options) {
         StackMob.sync.call(this, method, this, options);
       },
@@ -1287,13 +1279,6 @@
         var base = StackMob.getBaseURL();
         base += this.schemaName;
         return base;
-      },
-      parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] === '')))
-          return data;
-
-        var attrs = JSON.parse(data['text']);
-        return attrs;
       },
       sync : function(method, model, options) {
         StackMob.sync.call(this, method, this, options);
@@ -1838,18 +1823,22 @@
       },
       mustBeOneOf : function(field, value) {
         var inValue = '';
-        if(_.isArray(value)) {
-          var newValue = '';
-          var size = value.length;
-          for(var i = 0; i < size; i++) {
-            inValue += value[i];
-            if(i + 1 < size)
-              inValue += ',';
-          }
-        } else
+        if(_.isArray(value))
+          inValue = value.join();
+        else
           inValue = value;
 
         this.params[field + '[in]'] = inValue;
+        return this;
+      },
+      mustNotBeOneOf : function(field, value) {
+        var ninValue = '';
+        if(_.isArray(value))
+          ninValue = value.join();
+        else
+          ninValue = value;
+
+        this.params[field + '[nin]'] = ninValue;
         return this;
       },
       orderAsc : function(field) {
