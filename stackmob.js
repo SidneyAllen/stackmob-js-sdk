@@ -20,7 +20,7 @@
 
   //in case the JS SDK is being included in environments without window
   var thisWindow = typeof window !== "undefined" ? window : { location: { hostname: 'api.stackmob.com', port: '443', protocol: 'https:' }};
-  
+
   /**
    * The StackMob object is the core of the JS SDK.  It holds static variables, methods, and configuration information.
    *
@@ -83,15 +83,15 @@
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
-    
-    
+
+
     /**
      * Methods to help with api signing
      */
     getProtocol: function() { return thisWindow.location.protocol; },
     getHostname: function() { return thisWindow.location.hostname; },
     getPort:function () { return thisWindow.location.port; },
-  
+
 
     /**
      * The Storage object lives within the StackMob object and provides an abstraction layer for client storage.  It's intended for internal use within the JS SDK.  The JS SDK is currently using HTML5's Local Storage feature to persist key/value items.
@@ -107,6 +107,7 @@
         if(localStorage)
           localStorage.setItem(this.STORAGE_PREFIX + key, value);
       },
+
       //Read a value from local storage given the `key`.
       retrieve : function(key) {
         if(localStorage)
@@ -114,6 +115,7 @@
         else
           return null;
       },
+
       //Remove a value from local storage given the `key`.
       remove : function(key) {
         if(localStorage)
@@ -240,23 +242,28 @@
         return StackMob.apiDomain ? StackMob.apiDomain : (StackMob['API_SERVER'] + '/');
       }
     },
+
     //The JS SDK calls this to throw an error.
     throwError : function(msg) {
       throw new Error(msg);
     },
+
     //The JS SDK calls this specifically when there's a URL error.
     urlError : function() {
       this.throwError('A "url" property or function must be specified');
     },
+
     //Some methods are OAuth 2.0 only.  This is used internally in the JS SDK to throw an error if a public key is required in initialization.
     requirePublicKey : function() {
       if(!StackMob.publicKey)
         this.throwError("Error: This requires that you initialize StackMob with a public key.");
     },
+
     //Checks to see if the JS SDK is in OAuth 2.0 mode or not.
     isOAuth2Mode : function() {
       return !isNaN(StackMob['publicKey'] && !StackMob['privateKey']);
     },
+
     prepareCredsForSaving : function(accessToken, refreshToken, macKey, expires, user, schemaInfo) {
       var expireTime = (new Date()).getTime() + (this._stubbedExpireTime(expires) * 1000);
       //For convenience, the JS SDK will save the expiration date of these credentials locally so that the developer can check for it if need be.
@@ -736,7 +743,7 @@
     },
 
     cc : function(method, params, verb, options) {
-      this.customcode(method, params, verb, options);
+      return this.customcode(method, params, verb, options);
     },
 
     customcode : function(method, params, verb, options) {
@@ -760,7 +767,7 @@
       if (verb !== 'GET') options['contentType'] = options['contentType'] || StackMob.CONTENT_TYPE_JSON;
       _.extend(options['data'], params);
       options['url'] = _getURLScheme(method, params) + this.getBaseURL();
-      this.sync.call(StackMob, method, null, options);
+      return this.sync.call(StackMob, method, null, options);
     },
 
     processLogin : function(result, options) {
@@ -1162,37 +1169,38 @@
       },
       sync : function(method, model, options) {
         StackMob.sync.call(this, method, this, options);
+        return StackMob.sync.call(this, method, this, options);
       },
       create : function(options) {
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
-        this.save(null, newOptions);
+        return this.save(null, newOptions);
       },
       query : function(stackMobQuery, options) {
         options = options || {};
         _.extend(options, {
           query : stackMobQuery
         });
-        this.fetch(options);
+        return this.fetch(options);
       },
       fetch : function(options) {
         StackMob.wrapStackMobCallbacks.call(this, options);
-        Backbone.Model.prototype.fetch.call(this, options);
+        return Backbone.Model.prototype.fetch.call(this, options);
       },
       destroy: function(options) {
         StackMob.wrapStackMobCallbacks.call(this, options);
-        Backbone.Model.prototype.destroy.call(this, options);
+        return Backbone.Model.prototype.destroy.call(this, options);
       },
       save : function(key, value) {
         var successFunc = key ? key['success'] : {};
         var errorFunc = key ? key['error'] : {};
         if( typeof value === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
           StackMob.wrapStackMobCallbacks.call(this, key);
-          Backbone.Model.prototype.save.call(this, null, key);
+          return Backbone.Model.prototype.save.call(this, null, key);
         } else {
           StackMob.wrapStackMobCallbacks.call(this, value);
-          Backbone.Model.prototype.save.call(this, key, value);
+          return Backbone.Model.prototype.save.call(this, key, value);
         }
       },
       fetchExpanded : function(depth, options) {
@@ -1203,7 +1211,7 @@
         newOptions['data'] = newOptions['data'] || {};
         newOptions['data']['_expand'] = depth;
 
-        this.fetch(newOptions);
+        return this.fetch(newOptions);
       },
       getAsModel : function(fieldName, model) {
         var obj = this.get(fieldName);
@@ -1220,20 +1228,20 @@
         }
       },
       appendAndCreate : function(fieldName, values, options) {
-        this.addRelationship(fieldName, values, options);
+        return this.addRelationship(fieldName, values, options);
       },
       addRelationship : function(fieldName, values, options) {
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
 
-        StackMob.sync.call(this, 'addRelationship', this, options);
+        return StackMob.sync.call(this, 'addRelationship', this, options);
       },
       appendAndSave : function(fieldName, values, options) {
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
-        StackMob.sync.call(this, 'appendAndSave', this, options);
+        return StackMob.sync.call(this, 'appendAndSave', this, options);
       },
       deleteAndSave : function(fieldName, values, cascadeDelete, options) {
         options = options || {};
@@ -1246,7 +1254,7 @@
             var existingValues = model.get(fieldName);
             model.set(fieldName, _.difference(existingValues, values) );
         };
-        StackMob.sync.call(this, 'deleteAndSave', this, options);
+        return StackMob.sync.call(this, 'deleteAndSave', this, options);
       },
       setBinaryFile : function(fieldName, filename, filetype, base64EncodedData) {
         var binaryValueString = 'Content-Type: ' + filetype + '\n' + 'Content-Disposition: attachment; ' + 'filename=' + filename + '\n' + 'Content-Transfer-Encoding: base64\n\n' + base64EncodedData;
@@ -1269,6 +1277,7 @@
     });
 
   };
+
   var createStackMobCollection = function() {
     StackMob.Collection = Backbone.Collection.extend({
       initialize : function() {
@@ -1281,14 +1290,14 @@
         return base;
       },
       sync : function(method, model, options) {
-        StackMob.sync.call(this, method, this, options);
+        return StackMob.sync.call(this, method, this, options);
       },
       query : function(stackMobQuery, options) {
         options = options || {};
         _.extend(options, {
           query : stackMobQuery
         });
-        this.fetch(options);
+        return this.fetch(options);
       },
       destroyAll : function(stackMobQuery, options) {
         options = options || {};
@@ -1308,12 +1317,12 @@
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
         _.extend(newOptions, options);
         StackMob.wrapStackMobCallbacks.call(this, newOptions);
-        Backbone.Collection.prototype.create.call(this, model, newOptions);
+        return Backbone.Collection.prototype.create.call(this, model, newOptions);
       },
 
       fetch : function(options) {
         StackMob.wrapStackMobCallbacks.call(this, options);
-        Backbone.Collection.prototype.fetch.call(this, options);
+        return Backbone.Collection.prototype.fetch.call(this, options);
       },
 
       createAll : function(options) {
@@ -1347,8 +1356,9 @@
             if(success) {
               success(count);
             }
-          } else
-            success(xhr);
+          } else {
+            if(success) success(xhr);
+          }
           //not actually xhr but actual value
         };
 
@@ -1362,6 +1372,7 @@
       }
     });
   };
+
   var createStackMobUserModel = function() {
     /**
      * User object
@@ -1380,7 +1391,7 @@
       create : function(options) {
         options = options || {};
         options['isUserCreate'] = true;
-        StackMob.Model.prototype.create.call(this, options);
+        return StackMob.Model.prototype.create.call(this, options);
       },
       isLoggedIn : function(options) {
         options = options || {};
@@ -1414,7 +1425,7 @@
 
         options['stackmob_onaccessToken'] = StackMob.processLogin;
 
-        (this.sync || Backbone.sync).call(this, (StackMob.isOAuth2Mode() ? 'accessToken' : 'login'), this, options);
+        return (this.sync || Backbone.sync).call(this, (StackMob.isOAuth2Mode() ? 'accessToken' : 'login'), this, options);
       },
       logout : function(options) {
         options = options || {};
@@ -1439,7 +1450,7 @@
 
         options['stackmob_ongigyaAccessToken'] = StackMob.processLogin;
 
-        (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
+        return (this.sync || Backbone.sync).call(this, "gigyaAccessToken", this, options);
       },
       linkUserWithGigya : function(gigyaUID, gigyaTimestamp, gigyaSignature, options) {
         options = options || {};
@@ -1451,13 +1462,13 @@
           "token_type" : 'mac'
         });
 
-        (this.sync || Backbone.sync).call(this, "linkUserWithGigya", this, options);
+        return (this.sync || Backbone.sync).call(this, "linkUserWithGigya", this, options);
       },
       unlinkUserFromGigya : function(options) {
-        (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
+        return (this.sync || Backbone.sync).call(this, "unlinkUserFromGigya", this, options);
       },
       loginWithFacebook : function(facebookAccessToken, keepLoggedIn, options) {
-        this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
+        return this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
       },
       loginWithFacebookToken : function(facebookAccessToken, keepLoggedIn, options) {
         options = options || {};
@@ -1474,16 +1485,16 @@
         if (options['createIfNeeded'] === true){
           options['stackmob_onfacebookAccessTokenWithCreate'] = StackMob.processLogin;
           options['data'][this['loginField']] = options[this['loginField']] || this.get(this['loginField']);
-          (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
+          return (this.sync || Backbone.sync).call(this, "facebookAccessTokenWithCreate", this, options);
         } else {
           options['stackmob_onfacebookAccessToken'] = StackMob.processLogin;
-          (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
+          return (this.sync || Backbone.sync).call(this, "facebookAccessToken", this, options);
         }
       },
       loginWithFacebookAutoCreate : function(facebookAccessToken, keepLoggedIn, options){
         options = options || {};
         options['createIfNeeded'] = true;
-        this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
+        return this.loginWithFacebookToken(facebookAccessToken, keepLoggedIn, options);
       },
       createUserWithFacebook : function(facebookAccessToken, options) {
         options = options || {};
@@ -1495,7 +1506,7 @@
 
         options['data'][this.loginField] = options[this['loginField']] || this.get(this['loginField']);
 
-        (this.sync || Backbone.sync).call(this, "createUserWithFacebook", this, options);
+        return (this.sync || Backbone.sync).call(this, "createUserWithFacebook", this, options);
       },
       //Use after a user has logged in with a regular user account and you want to add Facebook to their account
       linkUserWithFacebook : function(facebookAccessToken, options) {
@@ -1506,10 +1517,10 @@
           "token_type" : "mac"
         });
 
-        (this.sync || Backbone.sync).call(this, "linkUserWithFacebook", this, options);
+        return (this.sync || Backbone.sync).call(this, "linkUserWithFacebook", this, options);
       },
       unlinkUserFromFacebook : function(options) {
-        (this.sync || Backbone.sync).call(this, "unlinkUserFromFacebook", this, options);
+        return (this.sync || Backbone.sync).call(this, "unlinkUserFromFacebook", this, options);
       },
       loginWithTempAndSetNewPassword : function(tempPassword, newPassword, keepLoggedIn, options) {
         options = options || {};
@@ -1517,13 +1528,13 @@
 
         this.set(this.passwordField, tempPassword);
         options['data'][StackMob.newPasswordField] = newPassword;
-        this.login(keepLoggedIn, options);
+        return this.login(keepLoggedIn, options);
       },
       forgotPassword : function(options) {
         options = options || {};
         options['data'] = options['data'] || {};
         options['data'][this.loginField] = this.get(this.loginField);
-        (this.sync || Backbone.sync).call(this, "forgotPassword", this, options);
+        return (this.sync || Backbone.sync).call(this, "forgotPassword", this, options);
       },
       resetPassword : function(oldPassword, newPassword, options) {
         options = options || {};
@@ -1534,7 +1545,7 @@
         options['data']['new'] = {
           password : newPassword
         };
-        (this.sync || Backbone.sync).call(this, "resetPassword", this, options);
+        return (this.sync || Backbone.sync).call(this, "resetPassword", this, options);
       },
 
       sync : function(method, model, options) {
@@ -1544,7 +1555,7 @@
           loginField: this.loginField,
           passwordField: this.passwordField
         }; // determine what user schema is making the call.  used eventually for processLogin/refreshSession
-        StackMob.Model.prototype.sync.call(this, method, model, options);
+        return StackMob.Model.prototype.sync.call(this, method, model, options);
       }
     });
 
@@ -2022,8 +2033,6 @@
           } else if(response && response.toJSON) {
             result = response;
           } else if(response && (response.responseText || response.text)) {
-            var result;
-
             try {
               result = JSON.parse(response.responseText || response.text);
             } catch (e) {

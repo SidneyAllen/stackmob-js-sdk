@@ -1,5 +1,15 @@
 describe("User Schema Tests", function() {
 
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
+
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
+  });
+
   it("should be a 'user' schema and use 'username' and 'password' as the username and password fields by default", function() {
 
     var Student = StackMob.User.extend({});
@@ -60,6 +70,12 @@ describe("User Schema Tests", function() {
 
     });
 
+  });
+
+  it("should clear ajax mocks", function() {
+    runs(function() {
+      clearAllAjaxMocks();
+    });
   });
 
 });

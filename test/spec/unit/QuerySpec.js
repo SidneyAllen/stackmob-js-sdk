@@ -7,6 +7,17 @@
 
 describe("Unit tests for queries", function() {
 
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
+
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
+  });
+
+
   var isAged  = new StackMob.Collection.Query().equals("age", "25");
   var notJohn = new StackMob.Collection.Query().notEquals("name", "john").equals("location", "NYC");
   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
@@ -167,6 +178,12 @@ describe("Unit tests for queries", function() {
 
     });
 
+  });
+
+  it("should clear ajax mocks", function() {
+    runs(function() {
+      clearAllAjaxMocks();
+    });
   });
 
 });
