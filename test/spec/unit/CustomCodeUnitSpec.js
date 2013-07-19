@@ -1,5 +1,15 @@
 describe("Unit tests for Custom Code", function() {
 
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
+
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
+  });
+
   it("should set http verb to POST", function() {
 
     var theMethod = 'cc-method';
@@ -50,5 +60,12 @@ describe("Unit tests for Custom Code", function() {
 
     });
 
-  });  
+  });
+
+  it("should clear ajax mocks", function() {
+    runs(function() {
+      clearAllAjaxMocks();
+    });
+  });
+
 });

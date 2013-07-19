@@ -1371,8 +1371,9 @@
             if(success) {
               success(count);
             }
-          } else
-            success(xhr);
+          } else {
+            if(success) success(xhr);
+          }
           //not actually xhr but actual value
         };
 
@@ -2043,8 +2044,6 @@
           } else if(response && response.toJSON) {
             result = response;
           } else if(response && (response.responseText || response.text)) {
-            var result;
-
             try {
               result = JSON.parse(response.responseText || response.text);
             } catch (e) {

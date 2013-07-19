@@ -10,6 +10,16 @@ describe("Unit tests for security modes", function() {
   var HTTP  = "http://",
       HTTPS = "https://";
 
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
+
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
+  });
+
   /******************************************
    ***** SETTING SECURITY MODE TO MIXED *****
    ******************************************/
@@ -19,18 +29,30 @@ describe("Unit tests for security modes", function() {
   });
 
   it("should use HTTP for non authentication methods", function() {
+
+    var params,
+        running = true;
+
     runs(function() {
-      var model, params, method;
+      var model, method;
       var Thing = StackMob.Model.extend({ schemaName: 'thing' });
       var thing = new Thing({ name: "testThing" });
       thing.create({
         done: function(mod,p,m){
+
+          running = false;
           model = mod;
           params = p;
           method = m;
         }
       });
+    });
 
+    waitsFor(function() {
+      return running === false;
+    });
+
+    runs(function() {
       expect(params['url'].indexOf(HTTP)).toEqual(0);
     });
   });
@@ -212,6 +234,12 @@ describe("Unit tests for security modes", function() {
       });
 
       expect(params['url'].indexOf(HTTPS)).toEqual(0);
+    });
+  });
+
+  it("should clear ajax mocks", function() {
+    runs(function() {
+      clearAllAjaxMocks();
     });
   });
 

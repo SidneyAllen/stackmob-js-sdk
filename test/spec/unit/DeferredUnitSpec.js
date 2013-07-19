@@ -1,49 +1,13 @@
 describe("Unit tests for Deferred Objects", function() {
 
-  // Set up mock call
-  var mockCreate = $.mockjax({
-    url: 'http://api.stackmob.com/*',
-    status: 200,
-    type: "POST",
-    responseTime: 10,
-    responseText: {
-      hello: 'World!'
-    }
-  });
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
 
-  // Set up mock call
-  var mockFetch = $.mockjax({
-    url: 'http://api.stackmob.com/*',
-    status: 200,
-    type: "GET",
-    responseTime: 10,
-    responseText: {
-      hello: 'World!'
-    }
-  });
-
-  // Set up mock call
-  var mockPut = $.mockjax({
-    url: 'http://api.stackmob.com/*',
-    status: 200,
-    type: "PUT",
-    responseTime: 10,
-    response: function(settings) {
-      this.responseText = {
-        hello: 'World!'
-      };
-    }
-  });
-
-  // Set up mock call
-  var mockDelete = $.mockjax({
-    url: 'http://api.stackmob.com/*',
-    status: 200,
-    type: "DELETE",
-    responseTime: 10,
-    responseText: {
-      hello: 'World!'
-    }
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
   });
 
   var Thing = StackMob.Model.extend({

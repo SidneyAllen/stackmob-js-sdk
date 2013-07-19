@@ -7,6 +7,16 @@
 
 describe("Unit tests for Authentication", function() {
 
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
+
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
+  });
+
   it("should override getOAuthCredentials", function() {
     StackMob._getOAuthCredentials = StackMob.getOAuthCredentials;
 
@@ -44,6 +54,12 @@ describe("Unit tests for Authentication", function() {
 
   it("should restore getOAuthCredentials()", function() {
     StackMob.getOAuthCredentials = StackMob._getOAuthCredentials;
+  });
+
+  it("should clear ajax mocks", function() {
+    runs(function() {
+      clearAllAjaxMocks();
+    });
   });
 
 });
