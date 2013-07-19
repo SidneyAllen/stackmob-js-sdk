@@ -1,7 +1,6 @@
+// Set default response content type to JSON
+$.mockjaxSettings.contentType = 'text/json';
+
 _.extend(StackMob, {
-  ajax: function(model, params, method, options){
-    if (typeof options['done'] === "function")
-      options['done'](model, params, method, options);
-  },
   initiateRefreshSessionCall: function() {}
 });
