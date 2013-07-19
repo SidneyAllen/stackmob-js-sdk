@@ -1823,18 +1823,22 @@
       },
       mustBeOneOf : function(field, value) {
         var inValue = '';
-        if(_.isArray(value)) {
-          var newValue = '';
-          var size = value.length;
-          for(var i = 0; i < size; i++) {
-            inValue += value[i];
-            if(i + 1 < size)
-              inValue += ',';
-          }
-        } else
+        if(_.isArray(value))
+          inValue = value.join();
+        else
           inValue = value;
 
         this.params[field + '[in]'] = inValue;
+        return this;
+      },
+      mustNotBeOneOf : function(field, value) {
+        var ninValue = '';
+        if(_.isArray(value))
+          ninValue = value.join();
+        else
+          ninValue = value;
+
+        this.params[field + '[nin]'] = ninValue;
         return this;
       },
       orderAsc : function(field) {
