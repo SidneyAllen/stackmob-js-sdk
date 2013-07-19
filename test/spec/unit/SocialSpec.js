@@ -11,6 +11,16 @@
 
 describe("Social Unit Tests", function() {
 
+  // Mock Ajax Calls
+  var mockCreate, mockFetch, mockPut, mockDelete;
+
+  it("should set up mock ajax", function() {
+    mockCreate = mockCreateAsSuccess();
+    mockFetch = mockFetchAsSuccess();
+    mockPut = mockUpdateAsSuccess();
+    mockDelete = mockDeleteAsSuccess();
+  });
+
   it("should call linkUserWithFacebook", function() {
 
     runs(function() {
@@ -96,6 +106,12 @@ describe("Social Unit Tests", function() {
       expectEndpoint(user, [], 'unlinkUserFromGigya', 'DELETE', 'user/unlinkUserFromGigya');
     });
 
+  });
+
+  it("should clear ajax mocks", function() {
+    runs(function() {
+      clearAllAjaxMocks();
+    });
   });
 
 });
