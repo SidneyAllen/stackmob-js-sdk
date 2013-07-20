@@ -1130,7 +1130,7 @@
           err(result);
       }
 
-      StackMob.always(model, params, method, options);
+      StackMob.always(model, params, null, options);
     },
     isAccessTokenMethod : function(method) {
       var accessTokenMethods = ['accessToken',

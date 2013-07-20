@@ -23,88 +23,73 @@ describe("Social Unit Tests", function() {
 
   it("should call linkUserWithFacebook", function() {
 
-    runs(function() {
-      var user = new StackMob.User({ username: "testUser", password: "testUser" });
+    var user = new StackMob.User({ username: "testUser", password: "testUser" });
 
-      expectEndpoint(user, [''], 'linkUserWithFacebook', 'GET', 'user/linkUserWithFacebook');
-    });
+    expectEndpoint(user, [''], 'linkUserWithFacebook', 'GET', 'user/linkUserWithFacebook');
 
   });
 
   it("should call unlinkUserFromFacebook", function() {
 
-    runs(function() {
-      var user = new StackMob.User({username: "testUser", password: "testUser"});
+    var user = new StackMob.User({username: "testUser", password: "testUser"});
 
-      expectEndpoint(user, [], 'unlinkUserFromFacebook', 'DELETE', 'user/unlinkUserFromFacebook');
-    });
+    expectEndpoint(user, [], 'unlinkUserFromFacebook', 'DELETE', 'user/unlinkUserFromFacebook');
 
   });
 
   it("should call facebookAccessToken", function() {
 
-    runs(function() {
-      var user = new StackMob.User({username: "testUser", password: "testUser"});
+    var user = new StackMob.User({username: "testUser", password: "testUser"});
 
-      expectEndpoint(user, ['', false], 'loginWithFacebookToken', 'POST', 'user/facebookAccessToken');
-    });
+    expectEndpoint(user, ['', false], 'loginWithFacebookToken', 'POST', 'user/facebookAccessToken');
 
   });
 
   it("should call createUserWithFacebook", function() {
 
-    runs(function() {
-      var user = new StackMob.User({username: "testUser", password: "testUser"});
+    var user = new StackMob.User({username: "testUser", password: "testUser"});
 
-      expectEndpoint(user, [''], 'createUserWithFacebook', 'POST', 'user/createUserWithFacebook');
-    });
+    expectEndpoint(user, [''], 'createUserWithFacebook', 'POST', 'user/createUserWithFacebook');
 
   });
 
   it("should call facebookAccessTokenWithCreate", function() {
 
+    var user = new StackMob.User({username: "testUser", password: "testUser"});
+
+    expectEndpoint(user, ['', false],'loginWithFacebookAutoCreate', 'POST', 'user/facebookAccessTokenWithCreate');
+
     runs(function() {
-      var user = new StackMob.User({username: "testUser", password: "testUser"});
-
-      expectEndpoint(user, ['', false],'loginWithFacebookAutoCreate', 'POST', 'user/facebookAccessTokenWithCreate');
-
       user.loginWithFacebookAutoCreate('token', false, {
         done: function(model, params, method){
           expect(params['data']).toContain(model['loginField'] + "=testUser");
         }
       });
-
     });
 
   });
 
   it("should call gigyaAccessToken", function() {
 
-    runs(function() {
-      var user = new StackMob.User({ username: "testUser", password: "testUser" });
+    var user = new StackMob.User({ username: "testUser", password: "testUser" });
 
-      expectEndpoint(user, ['', '', '', false], 'loginWithGigya', 'POST', 'user/gigyaAccessToken')
-    });
+    expectEndpoint(user, ['', '', '', false], 'loginWithGigya', 'POST', 'user/gigyaAccessToken')
 
   });
 
   it("should call linkUserWithGigya", function() {
 
-    runs(function() {
-      var user = new StackMob.User({ username: "testUser", password: "testUser" });
+    var user = new StackMob.User({ username: "testUser", password: "testUser" });
 
-      expectEndpoint(user, ['', '', ''], 'linkUserWithGigya', 'POST', 'user/linkUserWithGigya');
-    });
+    expectEndpoint(user, ['', '', ''], 'linkUserWithGigya', 'POST', 'user/linkUserWithGigya');
 
   });
 
   it("should call unlinkUserFromGigya", function() {
 
-    runs(function() {
-      var user = new StackMob.User({ username: "testUser", password: "testUser" });
+    var user = new StackMob.User({ username: "testUser", password: "testUser" });
 
-      expectEndpoint(user, [], 'unlinkUserFromGigya', 'DELETE', 'user/unlinkUserFromGigya');
-    });
+    expectEndpoint(user, [], 'unlinkUserFromGigya', 'DELETE', 'user/unlinkUserFromGigya');
 
   });
 

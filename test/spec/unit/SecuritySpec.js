@@ -14,6 +14,13 @@ describe("Unit tests for security modes", function() {
   var mockCreate, mockFetch, mockPut, mockDelete;
 
   it("should set up mock ajax", function() {
+    mockLogin = $.mockjax({
+      url: 'https://api.stackmob.com/user/accessToken',
+      status: 200,
+      type: 'POST',
+      responseText: {"access_token":"32IhEH7WsuOmin6JvL7ZnrdhdEIhyCX3","mac_key":"uIEJTvImfqJ3pMQfp05U3nT1ePa7kDJd","mac_algorithm":"hmac-sha-1","token_type":"mac","expires_in":3600,"refresh_token":"wkaOCn9kmcZWbUdj2s3HGr1pvWmOKC5A","stackmob":{"user":{"location":"7be52c12445e446998f24a18b582c6e6","username":"justin","lastmoddate":1362793271996,"sm_owner":"user/justin","createddate":1362793271996}}}
+    });
+
     mockCreate = mockCreateAsSuccess();
     mockFetch = mockFetchAsSuccess();
     mockPut = mockUpdateAsSuccess();

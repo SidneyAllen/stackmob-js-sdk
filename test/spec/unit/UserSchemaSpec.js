@@ -14,11 +14,9 @@ describe("User Schema Tests", function() {
 
     var Student = StackMob.User.extend({});
 
-    runs(function() {
-      var s = new Student({ username: 'testUser', password: 'testPass'});
-      expectEndpoint(s, [true], 'login', 'POST', 'user/accessToken');
+    var s = new Student({ username: 'testUser', password: 'testPass'});
 
-    });
+    expectEndpoint(s, [true], 'login', 'POST', 'user/accessToken');
 
     runs(function() {
       var s = new Student({ username: 'testUser', password: 'testPass'});
@@ -35,11 +33,9 @@ describe("User Schema Tests", function() {
 
     var Student = StackMob.User.extend({ schemaName: 'student', loginField: 'name', passwordField: 'pass' });
 
-    runs(function() {
-      var s = new Student({ name: 'testUser', pass: 'testPass'});
-      expectEndpoint(s, [true], 'login', 'POST', 'student/accessToken');
+    var s = new Student({ name: 'testUser', pass: 'testPass'});
 
-    });
+    expectEndpoint(s, [true], 'login', 'POST', 'student/accessToken');
 
     runs(function() {
       var s = new Student({ name: 'testUser', pass: 'testPass'});

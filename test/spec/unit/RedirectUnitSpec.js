@@ -16,7 +16,6 @@ describe("Unit tests for API Redirect", function() {
       url: 'http://api.stackmob.com/thing',
       status: 302,
       type: 'POST',
-      responseTime: 1000,
       responseText: {
         sample: 'data'
       },
@@ -29,7 +28,6 @@ describe("Unit tests for API Redirect", function() {
       url: 'http://api.redirected.com/thing',
       status: 201,
       type: 'POST',
-      responseTime: 1000,
       responseText: {
         sample: 'data'
       }
@@ -57,6 +55,7 @@ describe("Unit tests for API Redirect", function() {
     });
 
     runs(function() {
+      console.log(params['url']);
       expect(params['url'].indexOf('http://api.redirected.com/')).toEqual(0);
     });
   });

@@ -7,10 +7,12 @@ $.mockjaxSettings.contentType = 'text/json';
  */
 _.extend(StackMob, {
   always: function(model, params, method, options){
-    if (typeof options['done'] === "function")
+    if (typeof options['done'] === "function"){
       options['done'](model, params, method, options);
+    }
   },
-  initiateRefreshSessionCall: function() {}
+  initiateRefreshSessionCall: function() {},
+  processLogin: function() {}
 });
 
 // Helper methods for setting ajax mocks
