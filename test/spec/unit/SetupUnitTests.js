@@ -6,11 +6,9 @@ $.mockjaxSettings.contentType = 'text/json';
  * also preserve the ajax call that will be mocked.
  */
 _.extend(StackMob, {
-  ajax: function(model, params, method, options){
+  always: function(model, params, method, options){
     if (typeof options['done'] === "function")
       options['done'](model, params, method, options);
-
-    return $.ajax(params);
   },
   initiateRefreshSessionCall: function() {}
 });

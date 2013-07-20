@@ -1016,6 +1016,9 @@
         return StackMob['ajaxOptions']['jquery'](model, params, method, options);
       }
     },
+    always : function(model, params, method, options) {
+
+    },
     onsuccess : function(model, method, params, result, success, options) {
       /**
        * If there's an internal success callback function, execute it.
@@ -1067,6 +1070,7 @@
           success();
         }
       }
+      StackMob.always(model, params, method, options);
     },
     onerror : function(response, responseText, ajaxFunc, model, params, err, options) {
       var statusCode = response.status;
@@ -1079,7 +1083,7 @@
         };
       }
 
-      if(statusCode == 503) {
+      if(statusCode == 503) { // RETRY
         var wait = response.getResponseHeader('retry-after');
         try {
           wait = parseInt(responseHeaderValue, 10) * 1000;
@@ -1102,12 +1106,31 @@
           params['headers']['Authorization'] = authHeader;
           if (ajaxFunc) ajaxFunc(params);
         }, wait);
-      } else {
+
+      } else if (statusCode == 302) { // REDIRECT API
+
+        var newLocation = response.getResponseHeader('location');
+        if(typeof newLocation === 'string' && typeof ajaxFunc === 'function'){
+          // Set new location
+          params['url'] = newLocation;
+
+          // Get auth for new location
+          var authHeader = getAuthHeader(params);
+          params['headers']['Authorization'] = authHeader;
+
+          // Retry request on new location
+          ajaxFunc(params);
+        }
+
+      } else { // ALL OTHER REQUESTS
+
         if(_.isFunction(params['oncomplete']))
           params['oncomplete'](result);
         if(err)
           err(result);
       }
+
+      StackMob.always(model, params, method, options);
     },
     isAccessTokenMethod : function(method) {
       var accessTokenMethods = ['accessToken',
@@ -1168,7 +1191,6 @@
         this.idAttribute = this.getPrimaryKeyField();
       },
       sync : function(method, model, options) {
-        StackMob.sync.call(this, method, this, options);
         return StackMob.sync.call(this, method, this, options);
       },
       create : function(options) {
