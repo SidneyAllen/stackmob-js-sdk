@@ -9,7 +9,6 @@ describe("Unit tests for API Redirect", function() {
 
   // Mock Ajax Calls
   var mockCreate, mockRedirectedCreate;
-  var running = true;
 
   it("should set up mock ajax", function() {
     mockCreate = $.mockjax({
@@ -32,15 +31,52 @@ describe("Unit tests for API Redirect", function() {
         sample: 'data'
       }
     });
+
+    mockRedirectedCreate = $.mockjax({
+      url: 'http://api.redirected.com/anotherthing',
+      status: 200,
+      type: 'GET',
+      responseText: {
+        sample: 'data'
+      }
+    });
   });
 
   it("should redirect API on 302 response status", function() {
-    var model, params, method;
+    var model, params, method, running = true;
 
     runs(function() {
       var Thing = StackMob.Model.extend({ schemaName: 'thing' });
       var thing = new Thing({ name: "testThing" });
       thing.create({
+        done: function(mod,p,m){
+          running = false;
+          model = mod;
+          params = p;
+          method = m;
+        }
+      });
+
+    });
+    waitsFor(function() {
+      return running === false;
+    });
+
+    runs(function() {
+      expect(params['url'].indexOf('http://api.redirected.com/')).toEqual(0);
+    });
+  });
+
+  it("should redirect subsequent requests", function() {
+    // Clear the 302 response mock
+    $.mockjaxClear(mockCreate);
+
+    var model, params, method, running = true;
+
+    runs(function() {
+      var Thing = StackMob.Model.extend({ schemaName: 'anotherthing' });
+      var thing = new Thing({ id: "id" });
+      thing.fetch({
         done: function(mod,p,m){
           running = false;
           model = mod;
