@@ -6,6 +6,7 @@
 
 * Support Backbone's use of jQuery Deferred Objects
 * Not-in query support with `mustNotBeOneOf()`
+* Support API redirection with 301 (Permanent) and 302 (Temporary) response status
 
 **Fixes**
 
