@@ -29,7 +29,7 @@ describe("Forgot Password Tests", function() {
   });
   
   //CUSTOM USER OBJECT  
-  it("should set the username field as username to confirm with the REST API sepc, even with custom login fields", function() {
+  it("should set the username field as username to conform with the REST API spec, even with custom login fields", function() {
     var Student = StackMob.User.extend({ schemaName: 'student', loginField: 'user', passworldField: 'pass' });
 
     runs(function() {
