@@ -42,7 +42,7 @@ describe("Unit tests for API Redirect", function() {
     });
   });
 
-  it("should redirect API on 302 response status", function() {
+  it("should temporary redirect API on 302 response status", function() {
     var model, params, method, running = true;
 
     runs(function() {
@@ -63,7 +63,76 @@ describe("Unit tests for API Redirect", function() {
     });
 
     runs(function() {
-      expect(params['url'].indexOf('http://api.redirected.com/')).toEqual(0);
+      expect(params['url']).toStartWith('http://api.redirected.com/');
+    });
+  });
+
+  it("should not redirect subsequent requests", function() {
+    var model, params, method, running = true;
+
+    runs(function() {
+      var Thing = StackMob.Model.extend({ schemaName: 'thing' });
+      var thing = new Thing({ id: "id" });
+      thing.create({
+        done: function(mod,p,m){
+          running = false;
+          model = mod;
+          params = p;
+          method = m;
+        }
+      });
+
+    });
+    waitsFor(function() {
+      return running === false;
+    });
+
+    runs(function() {
+      console.log(params['url']);
+      expect(params['url']).toStartWith('http://api.stackmob.com/');
+    });
+  });
+
+  it("should permanently redirect API on 301 response status", function() {
+
+    // Clear the 302 response mock
+    $.mockjaxClear(mockCreate);
+
+    // Assign a 301 response mock
+
+    mockCreate = $.mockjax({
+      url: 'http://api.stackmob.com/thing',
+      status: 301,
+      type: 'POST',
+      responseText: {
+        sample: 'data'
+      },
+      headers: {
+        location: 'http://api.redirected.com/thing'
+      }
+    });
+
+    var model, params, method, running = true;
+
+    runs(function() {
+      var Thing = StackMob.Model.extend({ schemaName: 'thing' });
+      var thing = new Thing({ name: "testThing" });
+      thing.create({
+        done: function(mod,p,m){
+          running = false;
+          model = mod;
+          params = p;
+          method = m;
+        }
+      });
+
+    });
+    waitsFor(function() {
+      return running === false;
+    });
+
+    runs(function() {
+      expect(params['url']).toStartWith('http://api.redirected.com/');
     });
   });
 
@@ -92,7 +161,7 @@ describe("Unit tests for API Redirect", function() {
 
     runs(function() {
       console.log(params['url']);
-      expect(params['url'].indexOf('http://api.redirected.com/')).toEqual(0);
+      expect(params['url']).toStartWith('http://api.redirected.com/');
     });
   });
 
