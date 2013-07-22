@@ -35,7 +35,11 @@ beforeEach(function() {
     },
 
     toHaveJSONWith: function(key, value) {
-      return this.actual['data']['key'] === value;
+      try {
+        return JSON.parse(this.actual)[key] === value;
+      } catch(e) {
+        return false;
+      }
     },
 
     toStartWith: function(value) {
