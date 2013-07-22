@@ -1533,7 +1533,9 @@
       forgotPassword : function(options) {
         options = options || {};
         options['data'] = options['data'] || {};
-        options['data'][this.loginField] = this.get(this.loginField);
+        
+        //hardcoded to "username" to match the REST API spec
+        options['data']['username'] = this.get(this.loginField);
         return (this.sync || Backbone.sync).call(this, "forgotPassword", this, options);
       },
       resetPassword : function(oldPassword, newPassword, options) {
