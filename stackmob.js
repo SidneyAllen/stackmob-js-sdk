@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.9.1
+ StackMob JS SDK Version 1.0.0
  Copyright 2012-2013 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,7 +79,7 @@
     apiVersion : 0,
 
     // The current version of the JS SDK.
-    sdkVersion : "0.9.2",
+    sdkVersion : "1.0.0",
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
