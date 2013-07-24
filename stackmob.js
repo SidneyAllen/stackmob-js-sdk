@@ -487,6 +487,8 @@
 
       this.apiVersion = options['apiVersion'] || this.DEFAULT_API_VERSION;
 
+      this.relationalSupport = (typeof Backbone.RelationalModel === "function") ? true : false;
+
       /*
        * apiURL (DEPRECATED) - Advanced Users Only.  Use apiDomain instead.
        * Used to redirect SDK requests to a different URL.
@@ -948,6 +950,27 @@
         return !_.include(['create', 'update', 'delete', 'read', 'query', 'deleteAndSave', 'appendAndSave', 'addRelationship'], method);
       }
 
+      function _prepareRelationsHeader(model, params) {
+        // If Backbone Relational is detected and this model is a RelationalModel
+        if ( StackMob.relationalSupport && model instanceof Backbone.RelationalModel) {
+          // Get a list of all related objects from Backbone Relational
+          var relations = model.getRelations(),
+              relationsToAdd = [];
+
+          // Iterate over each relation
+          _.each(relations, function(relation, i){
+
+            // TODO: This is just for a related model. Use relatedCollection for collections
+            var relationshipSchema = new relation.relatedModel().schemaName;
+
+            relationsToAdd.push( [relation.key, relationshipSchema].join('=') );
+          });
+
+          // Add relations header
+          params['headers']['X-StackMob-Relations'] = relationsToAdd.join('&');
+        }
+      }
+
       //Determine what kind of call to make: GET, POST, PUT, DELETE
       var type = options['httpVerb'] || StackMob.METHOD_MAP[method] || 'GET';
       //Prepare query configuration
@@ -963,6 +986,7 @@
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
+      _prepareRelationsHeader(model, params);
 
       return StackMob.makeAPICall(model, params, method, options);
     },
@@ -1202,7 +1226,8 @@
     /**
      * Abstract Class representing a StackMob Model
      */
-    StackMob.Model = Backbone.Model.extend({
+    // StackMob.Model = 
+    var SMModel = {
       urlRoot : StackMob.getBaseURL(),
 
       getBinaryFields: function() {
@@ -1219,11 +1244,16 @@
       },
       constructor : function() {
         this.setIDAttribute();
-        //have to do this because I want to set this.id before this.set is called in default constructor
+
         Backbone.Model.prototype.constructor.apply(this, arguments);
       },
       initialize : function(attributes, options) {
-        StackMob.getProperty(this, 'schemaName') || StackMob.throwError('A schemaName must be defined');
+        if (!StackMob.getProperty(this, 'schemaName')) StackMob.throwError('A schemaName must be defined');
+
+        // If Backbone Relational is not detected, display warning if there are relationships
+        if (!StackMob.relationalSupport && StackMob.getProperty(this, 'relations') !== null){
+          StackMob.throwError('Trying to define relationships without Backbone Relational dependency. Ensure Backbone relational is also loaded.');
+        }
         this.setIDAttribute();
       },
       setIDAttribute : function() {
@@ -1302,6 +1332,7 @@
         options = options || {};
         options[StackMob.ARRAY_FIELDNAME] = fieldName;
         options[StackMob.ARRAY_VALUES] = values;
+
         return StackMob.sync.call(this, 'appendAndSave', this, options);
       },
       deleteAndSave : function(fieldName, values, cascadeDelete, options) {
@@ -1335,20 +1366,38 @@
       decrementOnSave : function(fieldName, value) {
         this.incrementOnSave(fieldName, value * -1);
       }
-    });
+    };
+
+    StackMob.Model = Backbone.Model.extend(SMModel);
+
+    if (StackMob.relationalSupport){
+      SMModel['constructor'] = function() {
+        this.setIDAttribute();
+
+        Backbone.RelationalModel.prototype.constructor.apply(this, arguments);
+      };
+
+      StackMob.RelationalModel = Backbone.RelationalModel.extend(SMModel);
+    }
 
   };
 
   var createStackMobCollection = function() {
     StackMob.Collection = Backbone.Collection.extend({
       initialize : function() {
-        this.model || StackMob.throwError('Please specify a StackMob.Model for this collection. e.g., var Items = StackMob.Collection.extend({ model: Item });');
+        if(!this.model) StackMob.throwError('Please specify a StackMob.Model for this collection. e.g., var Items = StackMob.Collection.extend({ model: Item });');
         this.schemaName = (new this.model()).schemaName;
+        this.idAttribute = (new this.model()).idAttribute;
       },
       url : function() {
         var base = StackMob.getBaseURL();
         base += this.schemaName;
         return base;
+      },
+      // Get a model from the set by id.
+      get : function(id) {
+        if (id === null) return void 0;
+        return this._byId[id.id !== null ? id.id : (id[this.idAttribute] !== null ? id[this.idAttribute] : id )];
       },
       sync : function(method, model, options) {
         return StackMob.sync.call(this, method, this, options);

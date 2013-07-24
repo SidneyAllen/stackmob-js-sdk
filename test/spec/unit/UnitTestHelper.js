@@ -47,7 +47,7 @@ beforeEach(function() {
     },
 
     toEndWith: function(value) {
-      return this.actual.indexOf(value) === this.length - value.length;
+      return this.actual.indexOf(value) === this.actual.length - value.length;
     }
   });
 
