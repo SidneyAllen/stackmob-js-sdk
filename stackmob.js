@@ -574,6 +574,11 @@
 
   var $ = root.jQuery || root.Ext || root.Zepto;
 
+
+  function withTrailingSlash(url) {
+    return url + (url.charAt(url.length - 1) == '/' ? '' : '/');
+  }
+
   function createBaseString(ts, nonce, method, uri, host, port) {
     var nl = '\u000A';
     return ts + nl + nonce + nl + method + nl + uri + nl + host + nl + port + nl + nl;
@@ -851,11 +856,11 @@
           // Extra Method Verb? Add it to the model url. (e.g. /user/login)
           var endpoint = method;
 
-          params['url'] += (params['url'].charAt(params['url'].length - 1) == '/' ? '' : '/') + endpoint;
+          params['url'] = withTrailingSlash(params['url']) + endpoint;
 
         } else if(isArrayMethod || (notCustomCode && notNewModel && notForcedCreateRequest)) {
           // Append ID in URL if necessary
-          params['url'] += (params['url'].charAt(params['url'].length - 1) == '/' ? '' : '/') + encodeURIComponent(model.get(model.getPrimaryKeyField()));
+          params['url'] = withTrailingSlash(params['url']) + encodeURIComponent(model.get(model.getPrimaryKeyField()));
 
           if(isArrayMethod) {
             params['url'] += '/' + options[StackMob.ARRAY_FIELDNAME];
@@ -900,7 +905,7 @@
           } else if(model) {
             var json = model.toJSON();
 
-            //Let developers ignore fields
+            // Let developers ignore fields
             var ignorefields = options['remote_ignore'] || [];
             _.each(ignorefields, function(fieldname) {
               delete json[fieldname];
@@ -947,7 +952,7 @@
       function _prepareRelationsHeader(model, params) {
 
         // If this model has related schemas that are populated
-        if (model._hasExpandedRelations()){
+        if (model && model._hasExpandedRelations && model._hasExpandedRelations()){
           var relations = model._getExpandedRelations();
 
           // Add relation header for all populated and expanded
@@ -1278,13 +1283,17 @@
       save : function(updateFields, options) {
         updateFields = updateFields || {};
         // Allow overloaded method of save(options) without specifying update fields
-        var successFunc = updateFields['success'] || {},
-            errorFunc = updateFields['error'] || {};
-        if( typeof options === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
+        var containsCallback = (
+          _.isFunction(updateFields['success']) ||
+          _.isFunction(updateFields['error']) ||
+          _.isFunction(updateFields['done']) ||
+          _.isFunction(updateFields['oncomplete'])
+        );
+        if( typeof options === 'undefined' && containsCallback) {
           options = updateFields;
           updateFields = null;
         } else {
-          options = {};
+          options = options || {};
         }
 
         if (this._hasExpandedRelations()){
@@ -1306,7 +1315,7 @@
             if (relations.hasOwnProperty(relation) && typeof this.get(relation) === 'object') {
               expandedRelations.push( [relation, relations[relation]].join('=') );
             }
-          }
+            }
         }
 
         return expandedRelations;
