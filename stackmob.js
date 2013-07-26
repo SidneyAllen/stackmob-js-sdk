@@ -955,7 +955,7 @@
        * Add X-StackMob-Relations header for relationship inference and saving
        */
       function _prepareRelations(model, params, options) {
-        if (!model._hasExpandedRelations || !model._hasExpandedRelations()){
+        if (!model || !model._hasExpandedRelations || !model._hasExpandedRelations()){
           return;
         }
 
