@@ -512,7 +512,7 @@
         if (apiDomain.indexOf('http') === 0){
           throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com instead of http://api.stackmob.com. URL Scheme is determined by the 'secure' init variable.");
         } else {
-          setAPIDomain(apiDomain);
+          StackMob.setAPIDomain(apiDomain);
         }
       }
 
@@ -1152,32 +1152,15 @@
 
       switch(statusCode) {
 
-        // PERMANENT API REDIRECT
-        case 301:
+        // API REDIRECT
+        case 302:
           newLocation = response.getResponseHeader('location');
-          if(typeof newLocation === 'string' && typeof ajaxFunc === 'function'){
+          if (_.isString(newLocation) && _.isFunction(ajaxFunc)) {
             // Set new location
             params['url'] = newLocation;
 
             // Set apiDomain for subsequent requests
             StackMob.setAPIDomain( getDomain(newLocation) );
-
-            // Get auth for new location
-            authHeader = getAuthHeader(params);
-            params['headers']['Authorization'] = authHeader;
-
-            // Retry request on new location
-            ajaxFunc(params);
-          }
-
-          break;
-
-        // TEMPORARY API REDIRECT
-        case 302:
-          newLocation = response.getResponseHeader('location');
-          if(typeof newLocation === 'string' && typeof ajaxFunc === 'function'){
-            // Set new location
-            params['url'] = newLocation;
 
             // Get auth for new location
             authHeader = getAuthHeader(params);
@@ -1199,7 +1182,7 @@
 
           // If this is the first retry, set remaining attempts
           // Otherwise decrement the retry counter
-          if(typeof params['stackmob_retry'] === 'number') {
+          if( _.isNumber(params['stackmob_retry'])) {
             params['stackmob_retry'] -= 1;
             if(params['stackmob_retry'] <= 0){ return; }
           } else {
