@@ -949,17 +949,41 @@
       /**
        * Add X-StackMob-Relations header for relationship inference and saving
        */
-      function _prepareRelationsHeader(model, params) {
+      function _prepareRelations(model, params, options) {
+        if (!model._hasExpandedRelations || !model._hasExpandedRelations()){
+          return;
+        }
 
-        // If this model has related schemas that are populated
-        if (model && model._hasExpandedRelations && model._hasExpandedRelations()){
-          var relations = model._getExpandedRelations();
+        var relations;
+
+        // If deep save related objects
+        if (model && model['deepSave'] === true){
+
+          // If this model has related schemas that are populated
+          relations = model._getExpandedRelations();
 
           // Add relation header for all populated and expanded
           // (meaning not just an id value) related fields
           params['headers']['X-StackMob-Relations'] = relations.join('&');
 
+        } else {
+          // Otherwise, remote_ignore related objects
+          relations = model['relatedSchemas'];
+
+          options['remote_ignore'] = options['remote_ignore'] || [];
+          if ( typeof relations === 'object' ) {
+
+            // Get a list of all related schemas that are expanded
+            for (var relation in relations){
+              // Only count related fields that also have a value assigned in the current object
+              if (relations.hasOwnProperty(relation)) {
+                options['remote_ignore'].push(relation);
+              }
+            }
+          }
+
         }
+
       }
 
       function _isExtraMethodVerb(method) {
@@ -986,10 +1010,10 @@
 
       _prepareBaseURL(model, method, params);
       _prepareHeaders(method, params, options);
+      _prepareRelations(model, params, options);
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
-      _prepareRelationsHeader(model, params);
 
       return StackMob.makeAPICall(model, params, method, options);
     },
@@ -1262,6 +1286,7 @@
       create : function(options) {
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
+        this['deepSave'] = true;
         _.extend(newOptions, options);
         return this.save(null, newOptions);
       },
@@ -1296,7 +1321,7 @@
           options = options || {};
         }
 
-        if (this._hasExpandedRelations()){
+        if (this._hasExpandedRelations() && this['deepSave'] === true){
           options[StackMob.FORCE_CREATE_REQUEST] = true;
         }
 
@@ -1315,7 +1340,7 @@
             if (relations.hasOwnProperty(relation) && typeof this.get(relation) === 'object') {
               expandedRelations.push( [relation, relations[relation]].join('=') );
             }
-            }
+          }
         }
 
         return expandedRelations;
