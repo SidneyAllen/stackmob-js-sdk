@@ -150,7 +150,7 @@
      * Helper method that checks for callback methods in an options object
      **/
     _containsCallback : function(options, callbacks){
-      if (isUndefined(callbacks))
+      if (_.isUndefined(callbacks))
         callbacks = ['success', 'error', 'done', 'oncomplete'];
 
       return (_.isObject(options) &&
