@@ -832,18 +832,12 @@
         return false;
       }
 
-      //Override to allow 'Model#save' to force create even if the id (primary key) is set in the model and hence !isNew() in BackBone
-      var forceCreateRequest = options[StackMob.FORCE_CREATE_REQUEST] === true;
-      if(forceCreateRequest) {
-        method = 'create';
-      }
-
       function _prepareBaseURL(model, method, params) {
         params = params || {};
 
         var scheme = _getURLScheme(method, params);
 
-        //User didn't override the URL so use the one defined in the model
+        // User didn't override the URL so use the one defined in the model
         if(!params['url'] && model) {
           params['url'] = scheme + model.url();
         }
@@ -853,11 +847,14 @@
         var notForcedCreateRequest = !forceCreateRequest;
         var isArrayMethod = (method == 'addRelationship' || method == 'appendAndSave' || method == 'deleteAndSave');
 
-        if(_isExtraMethodVerb(method)) { // Extra Method Verb? Add it to the model url. (e.g. /user/login)
+        if(_isExtraMethodVerb(method)) {
+          // Extra Method Verb? Add it to the model url. (e.g. /user/login)
           var endpoint = method;
 
           params['url'] += (params['url'].charAt(params['url'].length - 1) == '/' ? '' : '/') + endpoint;
-        } else if(isArrayMethod || notCustomCode && notNewModel && notForcedCreateRequest) {//append ID in URL if necessary
+
+        } else if(isArrayMethod || (notCustomCode && notNewModel && notForcedCreateRequest)) {
+          // Append ID in URL if necessary
           params['url'] += (params['url'].charAt(params['url'].length - 1) == '/' ? '' : '/') + encodeURIComponent(model.get(model.getPrimaryKeyField()));
 
           if(isArrayMethod) {
@@ -944,14 +941,38 @@
         }
       }
 
+      /**
+       * Add X-StackMob-Relations header for relationship inference and saving
+       */
+      function _prepareRelationsHeader(model, params) {
+
+        // If this model has related schemas that are populated
+        if (model._hasExpandedRelations){
+          var relations = model._getExpandedRelations();
+
+          // Add relation header for all populated and expanded
+          // (meaning not just an id value) related fields
+          params['headers']['X-StackMob-Relations'] = relations.join('&');
+
+        }
+      }
+
       function _isExtraMethodVerb(method) {
         return !_.include(['create', 'update', 'delete', 'read', 'query', 'deleteAndSave', 'appendAndSave', 'addRelationship'], method);
       }
 
-      //Determine what kind of call to make: GET, POST, PUT, DELETE
-      var type = options['httpVerb'] || StackMob.METHOD_MAP[method] || 'GET';
-      //Prepare query configuration
 
+      // Override to allow 'Model#save' to force create even if the id (primary key) is set in the model and hence !isNew() in BackBone.
+      // This also supports Upserts
+      var forceCreateRequest = options[StackMob.FORCE_CREATE_REQUEST] === true;
+      if (forceCreateRequest) {
+        method = 'create';
+      }
+
+      // Determine what kind of call to make: GET, POST, PUT, DELETE
+      var type = options['httpVerb'] || StackMob.METHOD_MAP[method] || 'GET';
+
+      //Prepare query configuration
       var params = _.extend({
         type : type
       }, options);
@@ -963,6 +984,7 @@
       _prepareRequestBody(method, params, options);
       _prepareAjaxClientParams(params);
       _prepareAuth(method, params);
+      _prepareRelationsHeader(model, params);
 
       return StackMob.makeAPICall(model, params, method, options);
     },
@@ -1253,16 +1275,44 @@
         StackMob.wrapStackMobCallbacks.call(this, options);
         return Backbone.Model.prototype.destroy.call(this, options);
       },
-      save : function(key, value) {
-        var successFunc = key ? key['success'] : {};
-        var errorFunc = key ? key['error'] : {};
-        if( typeof value === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
-          StackMob.wrapStackMobCallbacks.call(this, key);
-          return Backbone.Model.prototype.save.call(this, null, key);
+      save : function(updateFields, options) {
+        updateFields = updateFields || {};
+        // Allow overloaded method of save(options) without specifying update fields
+        var successFunc = updateFields['success'] || {},
+            errorFunc = updateFields['error'] || {};
+        if( typeof options === 'undefined' && (_.isFunction(successFunc) || _.isFunction(errorFunc))) {
+          options = updateFields;
+          updateFields = null;
         } else {
-          StackMob.wrapStackMobCallbacks.call(this, value);
-          return Backbone.Model.prototype.save.call(this, key, value);
+          options = {};
         }
+
+        if (this._hasExpandedRelations()){
+          options[StackMob.FORCE_CREATE_REQUEST] = true;
+        }
+
+        StackMob.wrapStackMobCallbacks.call(this, options);
+        return Backbone.Model.prototype.save.call(this, updateFields, options);
+      },
+      _getExpandedRelations : function() {
+        // If this model has related schemas
+        var relations = this['relatedSchemas'],
+            expandedRelations = [];
+        if ( typeof relations === 'object' ) {
+
+          // Get a list of all related schemas that are expanded
+          for (var relation in relations){
+            // Only count related fields that also have a value assigned in the current object
+            if (relations.hasOwnProperty(relation) && typeof this.get(relation) === 'object') {
+              expandedRelations.push( [relation, relations[relation]].join('=') );
+            }
+          }
+        }
+
+        return expandedRelations;
+      },
+      _hasExpandedRelations : function() {
+        return !!this._getExpandedRelations().length;
       },
       fetchExpanded : function(depth, options) {
         if(depth < 0 || depth > 3)
