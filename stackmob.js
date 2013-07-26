@@ -947,7 +947,7 @@
       function _prepareRelationsHeader(model, params) {
 
         // If this model has related schemas that are populated
-        if (model._hasExpandedRelations){
+        if (model._hasExpandedRelations()){
           var relations = model._getExpandedRelations();
 
           // Add relation header for all populated and expanded
