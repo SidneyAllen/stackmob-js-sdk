@@ -149,9 +149,14 @@
     /**
      * Helper method that checks for callback methods in an options object
      **/
-    _containsCallbacks : function(options, callbacks){
-      return ( typeof options === "object" ) &&
-              _.some(callbacks, function(callback){ return typeof options[callback] === "function"; });
+    _containsCallback : function(options, callbacks){
+      if (isUndefined(callbacks))
+        callbacks = ['success', 'error', 'done', 'oncomplete'];
+
+      return (_.isObject(options) &&
+        _.some(callbacks, function(callback) {
+          return _.isFunction(options[callback]);
+        }));
     },
 
     /**
@@ -175,7 +180,7 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedIn : function(options) {
-      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+      if ( this._containsCallback(options, ['yes', 'no']) ){
         options = this._generateCallbacks(options, {
           'isValidResult': function(result) {
             return typeof result !== "undefined";
@@ -196,7 +201,7 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isUserLoggedIn : function(username, options) {
-      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+      if ( this._containsCallback(options, ['yes', 'no']) ){
         options = this._generateCallbacks(options, {
           'isValidResult': function(result) {
             return result == username;
@@ -217,7 +222,7 @@
      * Optionally accepts asynchronous callback methods in the options object.  When provided, this method will renew the refresh token if required.
      */
     isLoggedOut : function(options) {
-      if ( this._containsCallbacks(options, ['yes', 'no']) ){
+      if ( this._containsCallback(options, ['yes', 'no']) ){
         options = this._generateCallbacks(options, {
           'isValidResult': function(result) {
             return typeof result == "undefined";
@@ -503,7 +508,7 @@
        * Scheme will be prepended according to 'secure' init setting.
        */
       var apiDomain = options['apiDomain'];
-      if (typeof apiDomain === "string"){
+      if (_.isString(apiDomain)){
         if (apiDomain.indexOf('http') === 0){
           throw new Error("Error: apiDomain should not specify url scheme (http/https). For example, specify api.stackmob.com instead of http://api.stackmob.com. URL Scheme is determined by the 'secure' init variable.");
         } else {
@@ -520,7 +525,7 @@
        * automatically.
        */
       var isSMHosted = (this.getHostname().indexOf('.stackmobapp.com') > 0);
-      this.useRelativePathForAjax = (typeof options['useRelativePathForAjax'] === "boolean") ? options['useRelativePathForAjax'] : isSMHosted;
+      this.useRelativePathForAjax = _.isBoolean(options['useRelativePathForAjax']) ? options['useRelativePathForAjax'] : isSMHosted;
 
       /*
        * secure - Determine which requests should be done over SSL.
@@ -957,7 +962,7 @@
         var relations;
 
         // If deep save related objects
-        if (model && model['deepSave'] === true){
+        if (model && options['deepSave'] === true){
 
           // If this model has related schemas that are populated
           relations = model._getExpandedRelations();
@@ -971,7 +976,7 @@
           relations = model['relatedSchemas'];
 
           options['remote_ignore'] = options['remote_ignore'] || [];
-          if ( typeof relations === 'object' ) {
+          if ( _.isObject(relations) ) {
 
             // Get a list of all related schemas that are expanded
             for (var relation in relations){
@@ -1286,7 +1291,7 @@
       create : function(options) {
         var newOptions = {};
         newOptions[StackMob.FORCE_CREATE_REQUEST] = true;
-        this['deepSave'] = true;
+        newOptions['deepSave'] = true;
         _.extend(newOptions, options);
         return this.save(null, newOptions);
       },
@@ -1305,23 +1310,32 @@
         StackMob.wrapStackMobCallbacks.call(this, options);
         return Backbone.Model.prototype.destroy.call(this, options);
       },
-      save : function(updateFields, options) {
+      deepSave : function(updateFields, options) {
         updateFields = updateFields || {};
         // Allow overloaded method of save(options) without specifying update fields
-        var containsCallback = (
-          _.isFunction(updateFields['success']) ||
-          _.isFunction(updateFields['error']) ||
-          _.isFunction(updateFields['done']) ||
-          _.isFunction(updateFields['oncomplete'])
-        );
-        if( typeof options === 'undefined' && containsCallback) {
+        if( _.isUndefined(options) && StackMob._containsCallback(updateFields)) {
           options = updateFields;
           updateFields = null;
         } else {
           options = options || {};
         }
 
-        if (this._hasExpandedRelations() && this['deepSave'] === true){
+        // Force deep save
+        options['deepSave'] = true;
+
+        return this.save(updateFields, options);
+      },
+      save : function(updateFields, options) {
+        updateFields = updateFields || {};
+        // Allow overloaded method of save(options) without specifying update fields
+        if( _.isUndefined(options) && StackMob._containsCallback(updateFields)) {
+          options = updateFields;
+          updateFields = null;
+        } else {
+          options = options || {};
+        }
+
+        if (this._hasExpandedRelations() && options['deepSave'] === true){
           options[StackMob.FORCE_CREATE_REQUEST] = true;
         }
 
@@ -1332,12 +1346,12 @@
         // If this model has related schemas
         var relations = this['relatedSchemas'],
             expandedRelations = [];
-        if ( typeof relations === 'object' ) {
+        if ( _.isObject(relations) ) {
 
           // Get a list of all related schemas that are expanded
-          for (var relation in relations){
+          for (var relation in relations) {
             // Only count related fields that also have a value assigned in the current object
-            if (relations.hasOwnProperty(relation) && typeof this.get(relation) === 'object') {
+            if (relations.hasOwnProperty(relation) && _.isObject(this.get(relation))) {
               expandedRelations.push( [relation, relations[relation]].join('=') );
             }
           }
@@ -1540,10 +1554,10 @@
       },
       isLoggedIn : function(options) {
         options = options || {};
-        if ( StackMob._containsCallbacks(options, ['yes', 'no']) ){
+        if ( StackMob._containsCallback(options, ['yes', 'no']) ){
           options = StackMob._generateCallbacks(options, {
             'isValidResult': function(result) {
-              return typeof result !== "undefined";
+              return _.isUndefined(result);
             },
             'yes': options['yes'],
             'no': options['no'],
@@ -1556,7 +1570,7 @@
       },
       login : function(keepLoggedIn, options) {
         options = options || {};
-        var remember = ( typeof keepLoggedIn === 'undefined') ? false : keepLoggedIn;
+        var remember = _.isUndefined(keepLoggedIn) ? false : keepLoggedIn;
 
         StackMob.keepLoggedIn(remember);
 
@@ -1805,7 +1819,7 @@
          * Naming convention: A.or(B)
          */
 
-        if (typeof this.orId == "undefined"){
+        if ( _.isUndefined(this.orId) ){
           /*
            * If A is a normal AND query:
            * Clone A into newQuery
