@@ -1,0 +1,27 @@
+{
+  "name": "stackmob-js-sdk",
+  "version": "1.0.0",
+  "description": "StackMob JavaScript SDK",
+  "main": "Gruntfile.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-contrib-jshint": "~0.6.2",
+    "grunt-contrib-watch": "~0.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stackmob/stackmob-js-sdk.git"
+  },
+  "keywords": [
+    "stackmob"
+  ],
+  "author": "StackMob",
+  "bugs": {
+    "url": "https://github.com/stackmob/stackmob-js-sdk/issues"
+  }
+}
