@@ -6,6 +6,9 @@
   "directories": {
     "test": "test"
   },
+  "scripts": {
+    "test": "grunt test"
+  }
   "dependencies": {
     "backbone": "~1.0.0",
     "json2": "~0.4.0",
