@@ -21,6 +21,8 @@ module.exports = function(grunt) {
                     'node_modules/json2/lib/JSON2/static/json2.js',
                     'node_modules/underscore/underscore.js',
                     'node_modules/backbone/backbone.js',
+                    'node_modules/crypto-js/hmac-sha1.js',
+                    'node_modules/crypto-js/enc-base64-min.js',
                     'stackmob.js'
                 ],
                 dest: 'stackmob-<%= pkg.version %>.min.js'
