@@ -1,7 +1,7 @@
 stackmob-js-sdk
 ===============
 
-[![Build Status](https://travis-ci.org/[YOUR_GITHUB_USERNAME]/[YOUR_PROJECT_NAME].png)](https://travis-ci.org/[YOUR_GITHUB_USERNAME]/[YOUR_PROJECT_NAME])
+[![Build Status](https://travis-ci.org/stackmob/stackmob-js-sdk.png)](https://travis-ci.org/stackmob/stackmob-js-sdk)
 
 # StackMob Javascript SDK
 
