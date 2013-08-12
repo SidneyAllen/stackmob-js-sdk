@@ -79,7 +79,7 @@
     apiVersion : 0,
 
     // The current version of the JS SDK.
-    sdkVersion : "0.0.0",
+    sdkVersion : "1.0.0",
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,

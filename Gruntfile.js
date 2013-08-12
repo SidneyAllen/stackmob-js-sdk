@@ -47,16 +47,22 @@ module.exports = function(grunt) {
             }
         },
         'regex-replace': {
-            src: 'stackmob.js',
-            actions: [
-                {
-                    name: 'version',
-                    search: 'sdkVersion[ ]?:.*,',
-                    replace: 'sdkVersion : \"<%= pkg.version %>\"',
-                    flags: ''
-                }
-            ]
-
+            version: {
+                src: ['stackmob.js'],
+                actions: [
+                    {
+                        name: 'version',
+                        search: 'sdkVersion[ ]?:.*',
+                        replace: 'sdkVersion : \"<%= pkg.version %>\",',
+                        flags: ''
+                    }, {
+                        name: 'version',
+                        search: 'StackMob JS SDK Version.*',
+                        replace: 'StackMob JS SDK Version <%= pkg.version %>',
+                        flags: ''
+                    }
+                ]
+            }
         }
     });
 
