@@ -22,6 +22,8 @@ describe("Unit tests for queries", function() {
   var notJohn = new StackMob.Collection.Query().notEquals("name", "john").equals("location", "NYC");
   var notMary = new StackMob.Collection.Query().equals("location", "SF").notEquals("name", "mary");
   var isLA    = new StackMob.Collection.Query().equals("location", "LA");
+  var isIn    = new StackMob.Collection.Query().mustBeOneOf("location", "SF,LA");
+  var isNin   = new StackMob.Collection.Query().mustNotBeOneOf("location", "SF,LA");
 
   it("should query AND", function() {
     runs(function() {
@@ -100,6 +102,34 @@ describe("Unit tests for queries", function() {
     });
   });
 
+  it("should query for in", function() {
+    runs(function() {
+
+      var q = isIn;
+
+      var expectation = {
+        "location[in]": "SF,LA"
+      };
+
+      expect(q['params']).toEqual(expectation);
+
+    });
+  });
+
+  it("should query for not in", function() {
+    runs(function() {
+
+      var q = isNin;
+
+      var expectation = {
+        "location[nin]": "SF,LA"
+      };
+
+      expect(q['params']).toEqual(expectation);
+
+    });
+  });
+
   it("should query for empty string", function() {
     runs(function() {
 
@@ -128,38 +158,6 @@ describe("Unit tests for queries", function() {
       expect(q['params']).toEqual(expectation);
 
     });
-  });
-
-  it("should query for empty string", function() {
-    runs(function() {
-
-      var q = new StackMob.Collection.Query();
-      q.equals("name","");
-
-      var expectation = {
-        "name[empty]": true
-      };
-
-      expect(q['params']).toEqual(expectation);
-
-    });
-
-  });
-
-  it("should query for non-empty string", function() {
-    runs(function() {
-
-      var q = new StackMob.Collection.Query();
-      q.notEquals("name","");
-
-      var expectation = {
-        "name[empty]": false
-      };
-
-      expect(q['params']).toEqual(expectation);
-
-    });
-
   });
 
   it("should not alter query object on count query", function() {

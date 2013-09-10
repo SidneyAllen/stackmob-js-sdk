@@ -1,5 +1,5 @@
 /*
- StackMob JS SDK Version 0.9.1
+ StackMob JS SDK Version 1.0.0
  Copyright 2012-2013 StackMob Inc.
 
  Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,7 +79,7 @@
     apiVersion : 0,
 
     // The current version of the JS SDK.
-    sdkVersion : "0.9.2",
+    sdkVersion : "1.0.0",
 
     // This holds the application public key when the JS SDK is initialized to connect to StackMob's services via OAuth 2.0.
     publicKey : null,
@@ -1167,14 +1167,6 @@
       setIDAttribute : function() {
         this.idAttribute = this.getPrimaryKeyField();
       },
-      parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] === '')))
-          return data;
-
-        var attrs = JSON.parse(data['text']);
-
-        return attrs;
-      },
       sync : function(method, model, options) {
         StackMob.sync.call(this, method, this, options);
         return StackMob.sync.call(this, method, this, options);
@@ -1296,13 +1288,6 @@
         var base = StackMob.getBaseURL();
         base += this.schemaName;
         return base;
-      },
-      parse : function(data, xhr) {
-        if(!data || (data && (!data['text'] || data['text'] === '')))
-          return data;
-
-        var attrs = JSON.parse(data['text']);
-        return attrs;
       },
       sync : function(method, model, options) {
         return StackMob.sync.call(this, method, this, options);
@@ -1548,7 +1533,9 @@
       forgotPassword : function(options) {
         options = options || {};
         options['data'] = options['data'] || {};
-        options['data'][this.loginField] = this.get(this.loginField);
+        
+        //hardcoded to "username" to match the REST API spec
+        options['data']['username'] = this.get(this.loginField);
         return (this.sync || Backbone.sync).call(this, "forgotPassword", this, options);
       },
       resetPassword : function(oldPassword, newPassword, options) {
@@ -1849,18 +1836,22 @@
       },
       mustBeOneOf : function(field, value) {
         var inValue = '';
-        if(_.isArray(value)) {
-          var newValue = '';
-          var size = value.length;
-          for(var i = 0; i < size; i++) {
-            inValue += value[i];
-            if(i + 1 < size)
-              inValue += ',';
-          }
-        } else
+        if(_.isArray(value))
+          inValue = value.join();
+        else
           inValue = value;
 
         this.params[field + '[in]'] = inValue;
+        return this;
+      },
+      mustNotBeOneOf : function(field, value) {
+        var ninValue = '';
+        if(_.isArray(value))
+          ninValue = value.join();
+        else
+          ninValue = value;
+
+        this.params[field + '[nin]'] = ninValue;
         return this;
       },
       orderAsc : function(field) {

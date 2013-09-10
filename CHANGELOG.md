@@ -1,5 +1,17 @@
 <h2> StackMob JavaScript SDK Change Log </h2>
 
+<h3>v1.0.0</h3>
+
+**Features**
+
+* Support Backbone's use of jQuery Deferred Objects
+* Not-in query support with `mustNotBeOneOf()`
+
+**Fixes**
+
+* Bug with fields of name `text`
+* More code formatting fixes from linter
+
 <h3>v0.9.2 - May 23, 2013</h3>
 
 **Features**
