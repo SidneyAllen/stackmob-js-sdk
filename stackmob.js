@@ -1914,6 +1914,8 @@
   _.extend(StackMob, {
     ajaxOptions : {
       'sencha' : function(model, params, method, options) {
+        var dfd = new _.Deferred();
+
         var hash = {};
 
         // Set up success callback
@@ -1933,7 +1935,7 @@
             result = response;
 
           StackMob.onsuccess(model, method, params, result, success, options);
-
+          dfd.resolve(model, result, options);
         };
         params['success'] = defaultSuccess;
 
@@ -1951,14 +1953,19 @@
         var defaultError = function(response, options) {
           var responseText = response.responseText || response.text;
           StackMob.onerror(response, responseText, $.Ajax.request, model, hash, error, options);
+          dfd.reject(model, responseText, options);
         };
         params['error'] = defaultError;
         hash['failure'] = params['error'];
 
-        return $.Ajax.request(hash);
+        $.Ajax.request(hash);
+
+        return dfd.promise();
       },
 
       'zepto' : function(model, params, method, options) {
+
+        var dfd = new _.Deferred();
 
         // Set up success callback
         var success = params['success'];
@@ -1970,6 +1977,7 @@
           } catch(e) {}
 
           StackMob.onsuccess(model, method, params, result, success, options);
+          dfd.resolve(model, method, params)
         };
         params['success'] = defaultSuccess;
 
@@ -1978,6 +1986,7 @@
         var defaultError = function(xhr, errorType, err) {
           var responseText = xhr.responseText || xhr.text;
           StackMob.onerror(xhr, responseText, $.ajax, model, params, error, options);
+          dfd.reject(model, responseText, options);
         };
         params['error'] = defaultError;
 
@@ -1991,7 +2000,9 @@
         hash['success'] = defaultSuccess;
         hash['error'] = defaultError;
 
-        return $.ajax(hash);
+        $.ajax(hash);
+
+        return dfd.promise();
       },
 
       'jquery' : function(model, params, method, options) {

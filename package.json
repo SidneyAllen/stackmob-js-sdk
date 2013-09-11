@@ -13,6 +13,7 @@
     "backbone": "~1.0.0",
     "json2": "~0.4.0",
     "underscore": "~1.5.1",
+    "underscore.deferred": "~0.4.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
