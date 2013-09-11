@@ -13,7 +13,6 @@
     "backbone": "~1.0.0",
     "json2": "~0.4.0",
     "underscore": "~1.5.1",
-    "crypto-js": "~3.1.2-1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
