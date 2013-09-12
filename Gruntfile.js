@@ -22,17 +22,17 @@ module.exports = function(grunt) {
           'node_modules/underscore/underscore.js',
           'node_modules/underscore.deferred/underscore.deferred.js',
           'node_modules/backbone/backbone.js',
+          'stackmob.js',
           'lib/cryptojs-3.1.2/rollups/hmac-sha1.js',
-          'lib/cryptojs-3.1.2/components/enc-base64.js',
-          'stackmob.js'
+          'lib/cryptojs-3.1.2/components/enc-base64.js'
         ],
         dest: 'dist/stackmob-js-<%= pkg.version %>-bundled-min.js'
       },
       min: {
         src: [
+          'stackmob.js',
           'lib/cryptojs-3.1.2/rollups/hmac-sha1.js',
-          'lib/cryptojs-3.1.2/components/enc-base64.js',
-          'stackmob.js'
+          'lib/cryptojs-3.1.2/components/enc-base64.js'
         ],
         dest: 'dist/stackmob-js-<%= pkg.version %>-min.js'
       }
@@ -40,9 +40,9 @@ module.exports = function(grunt) {
     'concat': {
       dev: {
         src: [
+          'stackmob.js',
           'lib/cryptojs-3.1.2/rollups/hmac-sha1.js',
-          'lib/cryptojs-3.1.2/components/enc-base64.js',
-          'stackmob.js'
+          'lib/cryptojs-3.1.2/components/enc-base64.js'
         ],
         dest: 'dist/stackmob-js-<%= pkg.version %>.js'
       }
