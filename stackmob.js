@@ -334,7 +334,7 @@
         options['success'] = function(input){
           var creds = StackMob.getOAuthCredentials();
 
-          var loginField =  (creds['oauth2.userSchemaInfo'] && creds['oauth2.userSchemaInfo']['loginField']) ?
+          var loginField = (creds['oauth2.userSchemaInfo'] && creds['oauth2.userSchemaInfo']['loginField']) ?
             creds['oauth2.userSchemaInfo']['loginField'] : this['loginField'];
           originalSuccess( input[loginField]);
         };
@@ -823,13 +823,7 @@
 
       if( StackMob.needsToBlock(method) ) {
 
-        StackMob.createCallBlocker();
-
-        StackMob.refreshSession.call(StackMob, {
-          oncomplete : function() { // oncomplete because we don't care whether success or error
-            StackMob.unblockCalls();
-          }
-        });
+        StackMob.refreshSession.call(StackMob);
 
       }
 
@@ -969,42 +963,49 @@
     },
     refreshSession : function(options) {
 
-      //Make an ajax call here hitting the refreshToken access point and oncomplete, run whatever was passed in
+      // Block all API calls while refreshing the user session
+      StackMob.createCallBlocker();
+
+      // Make an ajax call here hitting the refreshToken access point and oncomplete, run whatever was passed in
       var refreshOptions = {};
 
       _.extend(refreshOptions, options);
 
-      if(StackMob.hasRefreshToken()) {
+      if (StackMob.hasRefreshToken()) {
         var userSchema = StackMob.getOAuthCredentials()['oauth2.userSchemaInfo'] ? StackMob.getOAuthCredentials()['oauth2.userSchemaInfo']['schemaName'] : StackMob['userSchema'];
 
-        //set request call details
+        // Set request call details
         refreshOptions['url'] = _getURLScheme('refreshToken') + this.getBaseURL() + userSchema;
         refreshOptions['contentType'] = 'application/x-www-form-urlencoded';
         refreshOptions['data'] = {
-          refresh_token : StackMob.getOAuthCredentials()[StackMob.REFRESH_TOKEN_KEY],
-          grant_type : 'refresh_token',
-          token_type : 'mac',
-          mac_algorithm : 'hmac-sha1'
+          refresh_token: StackMob.getOAuthCredentials()[StackMob.REFRESH_TOKEN_KEY],
+          grant_type: 'refresh_token',
+          token_type: 'mac',
+          mac_algorithm: 'hmac-sha1'
         };
 
-        //Set oncomplete callback
-        var originalOncomplete = options['oncomplete'];
-        if ( originalOncomplete ) {
-          refreshOptions['oncomplete'] = function() {
-            originalOncomplete();
-          };
-        }
+        // Set oncomplete callback
+        var developersOnComplete = options['oncomplete'];
 
-        if ( options && options['success'] ){
+        refreshOptions['oncomplete'] = function() {
+
+          // When we get a refresh token, unblock all other API calls
+          StackMob.unblockCalls();
+
+          if (developersOnComplete) developersOnComplete();
+        };
+
+        if (options && options['success']) {
           refreshOptions['success'] = options['success'];
         }
 
         refreshOptions['stackmob_onrefreshToken'] = StackMob.processLogin;
-        //Set onerror callback
+        // Set onerror callback
         refreshOptions['error'] = function() {
-          if ( options && options['error'] )
+          if (options && options['error'])
             options['error']();
-          //invalidate the refresh token
+
+          // Invalidate the refresh token
           StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
         };
 
