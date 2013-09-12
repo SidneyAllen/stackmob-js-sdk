@@ -807,6 +807,7 @@
     },
 
     unblockCalls : function() {
+      // Resolve the current callBlocker promise so that any new API calls will be executed immediately
       StackMob['callBlocker'].resolve();
     },
 
@@ -815,6 +816,7 @@
     },
 
     createCallBlocker : function() {
+      // Set callBlocker promise to "pending" so that any new API calls will postponse execution until session is refreshed
       StackMob['callBlocker'] = new _.Deferred();
     },
 
