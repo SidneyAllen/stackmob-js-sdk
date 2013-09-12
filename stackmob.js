@@ -472,6 +472,10 @@
       this.passwordField = options['passwordField'];  // DEPRECATED: Use StackMob.User.extend({ passwordField: 'custompasswordfield' });
       /* DEPRECATED METHODS ABOVE */
 
+      // Default callBlocker promise to resolved (not blocking API calls)
+      this.createCallBlocker();
+      this.callBlocker.resolve();
+
       this.newPasswordField = 'new_password';
 
       this.publicKey = options['publicKey'];
@@ -801,26 +805,32 @@
         }
       }
     },
+
+    unblockCalls : function() {
+      StackMob['callBlocker'].resolve();
+    },
+
+    needsToBlock : function(method) {
+      return !StackMob.isAccessTokenMethod(method) && StackMob.shouldSendRefreshToken() && StackMob['callBlocker'].state() !== "pending";
+    },
+
+    createCallBlocker : function() {
+      StackMob['callBlocker'] = new _.Deferred();
+    },
+
     sync : function(method, model, options) {
       options = options || {};
 
-      if(!StackMob.isAccessTokenMethod(method) && StackMob.shouldSendRefreshToken() && options['stackmob_attempted_refresh'] !== true) {
+      if( StackMob.needsToBlock(method) ) {
 
-        var originalMethod = method;
-        var originalOptions = options;
-
-        originalOptions['stackmob_attempted_refresh'] = true;
-
-        var originalModel = model;
-        var originalThis = this;
+        StackMob.createCallBlocker();
 
         StackMob.refreshSession.call(StackMob, {
           oncomplete : function() { // oncomplete because we don't care whether success or error
-            StackMob.sync.call(originalThis, originalMethod, originalModel, originalOptions);
+            StackMob.unblockCalls();
           }
         });
 
-        return false;
       }
 
       //Override to allow 'Model#save' to force create even if the id (primary key) is set in the model and hence !isNew() in BackBone
@@ -998,7 +1008,7 @@
           StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
         };
 
-        (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
+        return (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
       } else {
         if (options && options['error']) {
           options['error']();
@@ -1168,7 +1178,6 @@
         this.idAttribute = this.getPrimaryKeyField();
       },
       sync : function(method, model, options) {
-        StackMob.sync.call(this, method, this, options);
         return StackMob.sync.call(this, method, this, options);
       },
       create : function(options) {
@@ -1958,7 +1967,9 @@
         params['error'] = defaultError;
         hash['failure'] = params['error'];
 
-        $.Ajax.request(hash);
+        StackMob['callBlocker'].done(function(){
+          $.Ajax.request(hash);
+        });
 
         return dfd.promise();
       },
@@ -1977,7 +1988,7 @@
           } catch(e) {}
 
           StackMob.onsuccess(model, method, params, result, success, options);
-          dfd.resolve(model, method, params)
+          dfd.resolve(model, results, options);
         };
         params['success'] = defaultSuccess;
 
@@ -2000,12 +2011,17 @@
         hash['success'] = defaultSuccess;
         hash['error'] = defaultError;
 
-        $.ajax(hash);
+        
+        StackMob['callBlocker'].done(function(){
+          $.ajax(hash);
+        });
 
         return dfd.promise();
       },
 
       'jquery' : function(model, params, method, options) {
+
+        var dfd = new _.Deferred();
 
         // Revert jQuery 1.9.1 update to treat
         // empty HTTP responses as errors.
@@ -2040,6 +2056,7 @@
           }
           var responseText = jqXHR.responseText || jqXHR.text;
           StackMob.onerror(jqXHR, responseText, $.ajax, model, params, error, options);
+          dfd.reject(model, responseText, options);
         };
 
         // Set up success callback
@@ -2061,11 +2078,20 @@
             result = response;
           }
           StackMob.onsuccess(model, method, params, result, success, options);
+          dfd.resolve(model, result, options);
 
         };
         params['success'] = defaultSuccess;
 
-        return $.ajax(params);
+        if (method === "refreshToken") {
+          $.ajax(params);
+        } else {
+          StackMob['callBlocker'].done(function(){
+            $.ajax(params);
+          });
+        }
+
+        return dfd.promise();
       }
 
     }
