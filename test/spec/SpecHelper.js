@@ -201,7 +201,7 @@ function deleteMultipleCreatedUsers(howMany) {
 
    users.query(q, {
     success : function(collection) {
-     for (var i = 0; i < collection.models.length; ++i) {
+     for (var i = 0; i < collection.models.length; i++) {
       var user = new StackMob.User({ username : collection.models[i]['id'] });
       user.destroy({
        success : function() {

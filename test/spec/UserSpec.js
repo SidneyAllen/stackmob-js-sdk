@@ -64,9 +64,9 @@ describe("Simple select functionality (standalone) on a model", function() {
   });
 
   deleteMultipleCreatedUsers(1);
-  });
+});
 
-  describe("Testing combination of select functionality on a collection", function() {
+describe("Testing combination of select functionality on a collection", function() {
     var howMany = 10;
   var newAge = 21; // needs to be > 20. Look at the implementation of createMultipleUser
   var count = 0;
