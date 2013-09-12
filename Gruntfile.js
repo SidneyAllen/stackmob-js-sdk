@@ -62,6 +62,14 @@ module.exports = function(grunt) {
           flags: ''
         }]
       }
+    },
+    jasmine: {
+      test: {
+        src: 'dist/stackmob-js-*-bundled-min.js',
+        options: {
+          specs: 'spec/*.js'
+        }
+      }
     }
   });
 
@@ -70,11 +78,14 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-jasmine');
 
   // Default use from command line
   grunt.registerTask('default', ['regex-replace', 'lint', 'uglify', 'concat']);
 
   grunt.registerTask('lint', ['jshint']);
+
+  grunt.registerTask('test', ['jasmine']);
 
   // Default task for Travis CI
   grunt.registerTask('travis', ['default']);
