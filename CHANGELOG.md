@@ -4,13 +4,17 @@
 
 **Features**
 
-* Support Backbone's use of jQuery Deferred Objects
+* Add support for [Underscore.Deferred](https://github.com/wookiehangover/underscore.deferred)
 * Not-in query support with `mustNotBeOneOf()`
 
 **Fixes**
 
 * Bug with fields of name `text`
 * More code formatting fixes from linter
+
+**Tests**
+
+* Unit Tests are now runnable with grunt by running `grunt test`
 
 <h3>v0.9.2 - May 23, 2013</h3>
 

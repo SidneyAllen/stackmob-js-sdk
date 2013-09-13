@@ -28,6 +28,18 @@ This is the home of the StackMob JS SDK.  The state of the repo does not necessa
 
 Interested in contributing to the JS SDK?  This is an open source project!  Submit enhancements or any potential fixes as a pull request.  We are building for the community - and we're happy to take your feedback.
 
+## Compilation
+
+You must have [NodeJS](http://nodejs.org/) installed to compile this project.
+
+You'll also need [grunt](http://gruntjs.com/). If you don't have it, rung `sudo npm install -g grunt-cli` to install it for global use.
+
+1. Run `npm install` in the root directory of this project
+2. Run `grunt`
+
+## Running test suite
+
+2. Run `grunt test`
 
 # Copyright
 
