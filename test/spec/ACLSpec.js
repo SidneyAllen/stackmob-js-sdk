@@ -24,7 +24,7 @@ function userWorks(userType){
   });
 }
 function aclLoginUser(user){
-  if (user.get("username") == null)
+  if (user.get("username") === null)
     return;
 
   var loginFlag;
@@ -49,8 +49,8 @@ function aclLogoutUser(user){
 
   runs(function(){
     user.logout({
-      success: function(){ logoutFlag = true },
-      error: function(){ logoutFlag = false }
+      success: function(){ logoutFlag = true; },
+      error: function(){ logoutFlag = false; }
     });
   });
 
@@ -64,14 +64,15 @@ function aclLogoutUser(user){
 }
 
 var makeACLTest = function( opt ){
-    var dis = ( opt.expectation == HTTP_RESPONSE.SUCCESS ) ? "" : "dis"
+    var dis = ( opt.expectation == HTTP_RESPONSE.SUCCESS ) ? "" : "dis";
 
     it("should " + dis + "allow CRUD actions on " + opt.schema + " performed by (" + opt.loginType.username + ")", function(){
         var Class = StackMob.Model.extend({ schemaName: opt.schema });
         var obj = new Class({ name: "test" });
+        var logoutFlag, reloginFlag;
 
         var idFieldName = opt.schema + "_id";
-        var randomID = Math.floor( Math.random() * 110 )
+        var randomID = Math.floor( Math.random() * 110 );
         obj.set(idFieldName, "id" + randomID);
 
         var user = new StackMob.User( opt.loginType );
@@ -92,8 +93,8 @@ var makeACLTest = function( opt ){
                         success: function(){ loginFlag = true; },
                         error: function(){ loginFlag = false; }
                     });
-                    opt.original_expectation = opt.expectation
-                    opt.expectation = HTTP_RESPONSE.SUCCESS
+                    opt.original_expectation = opt.expectation;
+                    opt.expectation = HTTP_RESPONSE.SUCCESS;
 
                     waitsFor(function() {
                         return (loginFlag === true || loginFlag === false);
@@ -103,7 +104,7 @@ var makeACLTest = function( opt ){
 
             default:
                 runs(function(){
-                    if ( opt.loginType.username != null ){
+                    if ( opt.loginType.username !== null ){
                         // Optional Login
                         var loginFlag;
 
@@ -132,13 +133,13 @@ var makeACLTest = function( opt ){
               obj.set("collaborators", ["acl_relationship"]);
 
             obj.create({
-                success: function(){ response = HTTP_RESPONSE.SUCCESS },
-                error: function(m,r){ response = r.error }
+                success: function(){ response = HTTP_RESPONSE.SUCCESS; },
+                error: function(m,r){ response = r.error; }
             });
         });
 
         waitsFor(function() {
-            return ( response != null );
+            return ( response !== null );
         });
 
         // Different setup procedures per test type
@@ -146,10 +147,9 @@ var makeACLTest = function( opt ){
           case "perm_logged_in_relationship":
             case "perm_logged_in_owner":
                 // Switch back to original user
-                var logoutFlag;
                 runs(function(){
                     user.logout({
-                        success: function(){ logoutFlag = true }
+                        success: function(){ logoutFlag = true; }
                     });
                 });
 
@@ -158,7 +158,7 @@ var makeACLTest = function( opt ){
                 }, "user to logout", 10000);
 
                 runs(function(){
-                    if ( opt.loginType.username != null ){
+                    if ( opt.loginType.username !== null ){
                         user = new StackMob.User( opt.loginType );
                         var loginFlag;
                         runs(function(){
@@ -183,18 +183,18 @@ var makeACLTest = function( opt ){
         var readFlag;
         runs(function() {
             expect(response).toEqual(opt.expectation);
-            if ( opt.original_expectation != null )
-                opt.expectation = opt.original_expectation
+            if ( opt.original_expectation !== null )
+                opt.expectation = opt.original_expectation;
             response = null;
 
             obj.fetch({
-                success: function(){ response = HTTP_RESPONSE.SUCCESS },
-                error: function(m,r){ response = r.error }
+                success: function(){ response = HTTP_RESPONSE.SUCCESS; },
+                error: function(m,r){ response = r.error; }
             });
         });
 
         waitsFor(function() {
-            return ( response != null );
+            return ( response !== null );
         });
 
         /******************
@@ -207,13 +207,13 @@ var makeACLTest = function( opt ){
             response = null;
 
             obj.save({ name: "test2" }, {
-                success: function(){ response = HTTP_RESPONSE.SUCCESS },
-                error: function(m,r){ response = r.error }
+                success: function(){ response = HTTP_RESPONSE.SUCCESS; },
+                error: function(m,r){ response = r.error; }
             });
         });
 
         waitsFor(function() {
-            return ( response != null );
+            return ( response !== null );
         });
 
         /******************
@@ -225,13 +225,13 @@ var makeACLTest = function( opt ){
             response = null;
 
             obj.destroy({
-                success: function(){ response = HTTP_RESPONSE.SUCCESS },
-                error: function(m,r){ response = r.error }
+                success: function(){ response = HTTP_RESPONSE.SUCCESS; },
+                error: function(m,r){ response = r.error; }
             });
         });
 
         waitsFor(function() {
-            return ( response != null );
+            return ( response !== null );
         });
 
         runs(function() {
@@ -242,11 +242,10 @@ var makeACLTest = function( opt ){
         });
 
         // logout and wait
-        if ( opt.loginType.username != null ){
-          var logoutFlag;
+        if ( opt.loginType.username !== null ){
           runs(function(){
               user.logout({
-                  success: function(){ logoutFlag = true }
+                  success: function(){ logoutFlag = true; }
               });
           });
 
@@ -258,7 +257,6 @@ var makeACLTest = function( opt ){
         // Different teardown procedures depending on schema
         switch ( opt.schema ){
           case "perm_logged_in_relationship":
-                var reloginFlag;
                 runs(function(){
                     // If testing owner, delete under OWNER
                     user = new StackMob.User( LOGIN_TYPE.RELATIONSHIP );
@@ -275,13 +273,12 @@ var makeACLTest = function( opt ){
                 runs(function(){
                     response = null;
                     obj.destroy({
-                        success: function(){ response = HTTP_RESPONSE.SUCCESS },
-                        error: function(m,r){ response = r.error }
+                        success: function(){ response = HTTP_RESPONSE.SUCCESS; },
+                        error: function(m,r){ response = r.error; }
                     });
                 });
                 break;
             case "perm_logged_in_owner":
-                var reloginFlag;
                 runs(function(){
                     // If testing owner, delete under OWNER
                     user = new StackMob.User( LOGIN_TYPE.OWNER );
@@ -298,14 +295,14 @@ var makeACLTest = function( opt ){
                 runs(function(){
                     response = null;
                     obj.destroy({
-                        success: function(){ response = HTTP_RESPONSE.SUCCESS },
-                        error: function(m,r){ response = r.error }
+                        success: function(){ response = HTTP_RESPONSE.SUCCESS; },
+                        error: function(m,r){ response = r.error; }
                     });
                 });
                 break;
         }
     });
-}
+};
 
 describe("Access Control Users Work", function(){
   userWorks(LOGIN_TYPE.ANY);
@@ -430,4 +427,4 @@ describe("Locked down user schema tests", function(){
     });
   });
 
-})
+});

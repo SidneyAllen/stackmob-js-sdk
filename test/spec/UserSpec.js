@@ -254,7 +254,7 @@ describe("User", function() {
 		runs(function() {
 			expect(count).toEqual(howMany);
 		});
-	}); 
+	});
 
 	it("should fetch users whose age is greater than " + (initAge), function () {
 		var count = 0;
@@ -562,8 +562,8 @@ describe("User", function() {
 
 	var moneyTemp = [];
 	maxTemp = howMany - 1 + initMoney;
-	for (var i = initMoney; i <= maxTemp; ++i) {
-		moneyTemp.push(i);
+	for (var x = initMoney; x <= maxTemp; ++x) {
+		moneyTemp.push(x);
 	}
 
 	it("should fetch users whose money matches one of the following " + moneyTemp + " i.e. all multiple created users", function () {
@@ -726,9 +726,9 @@ describe("add messages to user and query with setExpand level 1", function() {
 					if (collection.models[i]['attributes']['username'] === usr) {
 						var max = collection.models[i]['attributes']['messages'].length;
 						var messages = collection.models[i]['attributes']['messages'];
-						for (var i = 0; i < max; ++i) {
+						for (var j = 0; j < max; ++j){
 							count = count + 1;
-							msgIDs.push(messages[i]['messages_id']);
+							msgIDs.push(messages[j]['messages_id']);
 						}
 						break;
 					}

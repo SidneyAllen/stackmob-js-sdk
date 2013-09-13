@@ -3,6 +3,10 @@ module.exports = function(grunt) {
 
   grunt.initConfig({
     'pkg': grunt.file.readJSON('package.json'),
+    'meta': {
+      sha1: 'lib/cryptojs-3.1.2/hmac-sha1.js',
+      encbase64: 'lib/cryptojs-3.1.2/enc-base64.js'
+    },
     'watch': {
       files: '<%= jshint.all %>',
       tasks: 'lint'
@@ -11,7 +15,15 @@ module.exports = function(grunt) {
       options: {
         '-W069': true // ignore jshint suggestion to use dot notation
       },
-      all: ['stackmob.js']
+      sdk: {
+        src: ['stackmob.js']
+      },
+      tests: {
+        options: {
+          '-W083': true // ignore jshint suggestion not to create a function in a loop
+        },
+        src: ['test/spec/*Spec.js', 'test/spec/unit/*Spec.js']
+      }
     },
     'uglify': {
       options: {
@@ -25,16 +37,16 @@ module.exports = function(grunt) {
           'node_modules/underscore.deferred/underscore.deferred.js',
           'node_modules/backbone/backbone.js',
           'stackmob.js',
-          'lib/cryptojs-3.1.2/hmac-sha1.js',
-          'lib/cryptojs-3.1.2/enc-base64.js'
+          '<%= meta.sha1 %>',
+          '<%= meta.encbase64 %>'
         ],
         dest: 'dist/stackmob-js-<%= pkg.version %>-bundled-min.js'
       },
       min: {
         src: [
           'stackmob.js',
-          'lib/cryptojs-3.1.2/hmac-sha1.js',
-          'lib/cryptojs-3.1.2/enc-base64.js'
+          '<%= meta.sha1 %>',
+          '<%= meta.encbase64 %>'
         ],
         dest: 'dist/stackmob-js-<%= pkg.version %>-min.js'
       }
@@ -43,8 +55,8 @@ module.exports = function(grunt) {
       dev: {
         src: [
           'stackmob.js',
-          'lib/cryptojs-3.1.2/hmac-sha1.js',
-          'lib/cryptojs-3.1.2/enc-base64.js'
+          '<%= meta.sha1 %>',
+          '<%= meta.encbase64 %>'
         ],
         dest: 'dist/stackmob-js-<%= pkg.version %>.js'
       }
@@ -129,9 +141,9 @@ module.exports = function(grunt) {
   // Default use from command line
   grunt.registerTask('default', ['regex-replace', 'lint', 'uglify', 'concat']);
 
-  grunt.registerTask('lint', ['jshint']);
+  grunt.registerTask('lint', ['jshint:sdk']);
 
-  grunt.registerTask('test', ['default', 'jasmine:unit']);
+  grunt.registerTask('test', ['default', 'jshint:tests', 'jasmine:unit']);
 
   grunt.registerTask('jquery', ['default', 'jasmine:jquery']);
 

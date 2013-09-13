@@ -18,25 +18,25 @@ describe("Custom Code OAuth Signing Tests", function() {
 
       runs(function(response) { check(response); });
     });
-  }
+  };
 
   var makeLegitOAuthCustomCodeCall = function(verb) {
     customCodeCall(verb, 'hello_world', "should recognize the logged in user in custom code " + verb + " requests", function(response) {
-        return function() { expect(response['msg']).toMatch(userpass); }
+        return function() { expect(response['msg']).toMatch(userpass); };
     });
-  }
+  };
 
   var makeIncorrectOAuthCustomCodeCall = function(verb) {
     customCodeCall(verb, 'hello_world', "should NOT recognize a logged out user in custom code " + verb + " requests", function(response) {
-      return function() { expect(response['msg']).toBeNull(); }
+      return function() { expect(response['msg']).toBeNull(); };
     });
-  }
+  };
 
   var makeCamelCaseCall = function(verb, method) {
     customCodeCall(verb, method, "should recognize the logged in user for camelcase custom code " + verb + " requests", function(response) {
-      return function() { expect(response['msg']).toMatch(userpass); }
+      return function() { expect(response['msg']).toMatch(userpass); };
     });
-  }
+  };
 
   createSimpleUser(userpass);
   loginUser(userpass);
@@ -62,7 +62,7 @@ describe("Custom Code OAuth Signing Tests", function() {
   makeCamelCaseCall('GET', 'camelcase');
   makeCamelCaseCall('POST', 'camelcase');
   makeCamelCaseCall('PUT', 'camelcase');
-  makeCamelCaseCall('DELETE', 'camelcase');  
+  makeCamelCaseCall('DELETE', 'camelcase');
 
   logoutUser(userpass);
 

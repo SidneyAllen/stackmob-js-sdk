@@ -257,7 +257,7 @@ describe("asyncronous authentication methods", function(){
   });
 
   it("should not be logged in", function(){
-    var loggedIn = undefined;
+    var loggedIn;
 
     runs(function(){
       StackMob.isLoggedIn({
@@ -274,7 +274,7 @@ describe("asyncronous authentication methods", function(){
     });
 
     waitsFor(function(){
-      return !(typeof loggedIn === "undefined");
+      return (typeof loggedIn !== "undefined");
     }, "user '" + usr + "' should not be logged in");
 
     runs(function(){
