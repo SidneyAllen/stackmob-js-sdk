@@ -1675,7 +1675,7 @@
         var a = this,
             newQuery;
 
-        if (typeof this.orId == "undefined"){
+        if (typeof this.orId === "undefined"){
           /*
            * If A is a normal AND query:
            * Clone A into newQuery
@@ -1689,7 +1689,7 @@
            */
 
           (function() {
-            newQuery = this.clone();
+            newQuery = a.clone();
 
             newQuery['params'] = {};  // Reset params that will be populated below
             newQuery['orId'] = 1;     // Only allowed one OR, otherwise orCount++;
@@ -1744,7 +1744,7 @@
            */
 
           (function() {
-            newQuery = this.clone();
+            newQuery = a.clone();
 
             // Determine [and#] prefix for B
             var keys = _.keys(b.params);
