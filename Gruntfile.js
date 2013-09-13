@@ -63,25 +63,58 @@ module.exports = function(grunt) {
           replace: 'StackMob JS SDK Version <%= pkg.version %>',
           flags: ''
         }]
+      },
+      testVersions: {
+        src: ['test/specs-*.html'],
+        actions: [{
+          name: 'version',
+          search: /stackmob-js-\d*\.\d*\.\d*/g,
+          replace: 'stackmob-js-<%= pkg.version %>',
+          flags: ''
+        }]
       }
     },
     jasmine: {
-      src: 'spec/init.js',
-      options: {
-        specs: [
-          'test/spec/unit/*Spec.js'
-        ],
-        vendor: [
-          'vendor/jquery.js',
-          'test/lib/jquery.mockjax.js'
-        ],
-        helpers: [
-          'dist/stackmob-js-*-bundled-min.js',
-          'test/spec/unit/UnitTestHelper.js',
-          'test/spec/unit/SetupUnitTests.js',
-          'test/spec/unit/*Helper.js',
-          'test/spec/unit/modifyExpiry.js'
-        ]
+      unit: {
+        src: 'spec/init.js',
+        options: {
+          junit: {
+            path: 'results'
+          },
+          specs: [
+            'test/spec/unit/*Spec.js'
+          ],
+          vendor: [
+            'vendor/jquery.js',
+            'test/lib/jquery.mockjax.js'
+          ],
+          helpers: [
+            'dist/stackmob-js-<%= pkg.version %>-bundled-min.js',
+            'test/spec/unit/UnitTestHelper.js',
+            'test/spec/unit/SetupUnitTests.js',
+            'test/spec/unit/*Helper.js',
+            'test/spec/modifyExpiry.js'
+          ]
+        }
+      },
+      jquery: {
+        src: 'spec/init.js',
+        options: {
+          junit: {
+            path: 'results'
+          },
+          specs: [
+            'test/spec/*Spec.js'
+          ],
+          vendor: [
+            'vendor/jquery.js'
+          ],
+          helpers: [
+            'dist/stackmob-js-<%= pkg.version %>-bundled-min.js',
+            'test/spec/SpecHelper.js',
+            'test/spec/modifyExpiry.js'
+          ]
+        }
       }
     }
   });
@@ -98,7 +131,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('lint', ['jshint']);
 
-  grunt.registerTask('test', ['default', 'jasmine']);
+  grunt.registerTask('test', ['default', 'jasmine:unit']);
+
+  grunt.registerTask('jquery', ['default', 'jasmine:jquery']);
 
   // Default task for Travis CI
   grunt.registerTask('travis', ['test']);
