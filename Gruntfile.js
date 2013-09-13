@@ -76,7 +76,7 @@ module.exports = function(grunt) {
     },
     jasmine: {
       unit: {
-        src: 'spec/init.js',
+        src: 'test/init.js',
         options: {
           junit: {
             path: 'results'
@@ -98,7 +98,7 @@ module.exports = function(grunt) {
         }
       },
       jquery: {
-        src: 'spec/init.js',
+        src: 'test/init.js',
         options: {
           junit: {
             path: 'results'
