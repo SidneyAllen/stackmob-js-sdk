@@ -1,4 +1,6 @@
 module.exports = function(grunt) {
+  'use strict';
+
   grunt.initConfig({
     'pkg': grunt.file.readJSON('package.json'),
     'watch': {
@@ -64,11 +66,22 @@ module.exports = function(grunt) {
       }
     },
     jasmine: {
-      test: {
-        src: 'dist/stackmob-js-*-bundled-min.js',
-        options: {
-          specs: 'spec/*.js'
-        }
+      src: 'spec/init.js',
+      options: {
+        specs: [
+          'test/spec/unit/*Spec.js'
+        ],
+        vendor: [
+          'vendor/jquery.js',
+          'test/lib/jquery.mockjax.js'
+        ],
+        helpers: [
+          'dist/stackmob-js-*-bundled-min.js',
+          'test/spec/unit/UnitTestHelper.js',
+          'test/spec/unit/SetupUnitTests.js',
+          'test/spec/unit/*Helper.js',
+          'test/spec/unit/modifyExpiry.js'
+        ]
       }
     }
   });
@@ -85,8 +98,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('lint', ['jshint']);
 
-  grunt.registerTask('test', ['jasmine']);
+  grunt.registerTask('test', ['default', 'jasmine']);
 
   // Default task for Travis CI
-  grunt.registerTask('travis', ['default']);
+  grunt.registerTask('travis', ['test']);
 };
