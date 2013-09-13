@@ -36,19 +36,20 @@ beforeEach(function() {
 });
 
 function generateURL(relativePath) {
+  // Fix for running tests in PhantomJS
+  var protocol = window.location.protocol;
+  if (protocol === "file:") protocol = "https:";
+
   if (StackMob['useRelativePathForAjax'] === true) {
-    return window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/' + relativePath;
+    return protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/' + relativePath;
   } else {
     switch (StackMob.secure){
       case StackMob.SECURE_ALWAYS:
         return "https://" + StackMob.getBaseURL() + relativePath;
-        break;
       case StackMob.SECURE_NEVER:
         return "http://" + StackMob.getBaseURL() + relativePath;
-        break;
       case StackMob.SECURE_MIXED:
-        return window.location.protocol + "//" + StackMob.getBaseURL() + relativePath;
-        break;
+        return protocol + "//" + StackMob.getBaseURL() + relativePath;
     }
   }
 }

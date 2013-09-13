@@ -1,3 +1,7 @@
 .DS_Store
 thumbs.db
 node_modules
+results
+dist
+.grunt
+_SpecRunner.html

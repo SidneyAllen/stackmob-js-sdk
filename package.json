@@ -21,7 +21,8 @@
     "grunt-contrib-watch": "~0.5.1",
     "jasmine-node": "~1.11.0",
     "grunt-contrib-concat": "~0.3.0",
-    "grunt-regex-replace": "~0.2.5"
+    "grunt-regex-replace": "~0.2.5",
+    "grunt-contrib-jasmine": "~0.5.2"
   },
   "repository": {
     "type": "git",
