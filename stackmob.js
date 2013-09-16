@@ -305,14 +305,14 @@
     hasValidOAuth : function(options) {
       options = options || {};
 
-      //If we aren't running in OAuth 2.0 mode, then kick out early.
+      // If we aren't running in OAuth 2.0 mode, then kick out early.
       if(!this.isOAuth2Mode()){
         if (options && options['error'])
           options['error']();
         return false;
       }
 
-      //Check to see if we have all the necessary OAuth 2.0 credentials locally AND if the credentials have expired.
+      // Check to see if we have all the necessary OAuth 2.0 credentials locally AND if the credentials have expired.
       var creds = this.getOAuthCredentials();
       var expires =  (creds && creds['oauth2.expires']) || 0;
 
@@ -330,23 +330,24 @@
         return this.Storage.retrieve('oauth2.user');
       } else if ( options && options['success']) {
         //If expired and async
-        var originalSuccess = options['success'];
-        options['success'] = function(input){
+
+        StackMob.refreshSession.call(StackMob).then(function() {
+          // Success
           var creds = StackMob.getOAuthCredentials();
 
           var loginField = (creds['oauth2.userSchemaInfo'] && creds['oauth2.userSchemaInfo']['loginField']) ?
             creds['oauth2.userSchemaInfo']['loginField'] : this['loginField'];
-          originalSuccess( input[loginField]);
-        };
-        this.initiateRefreshSessionCall(options);
+
+          options['success'](loginField);
+        }, function() {
+          // Error
+          options['error']();
+        });
       } else {
         //If expired and sync
         return false;
       }
 
-    },
-    initiateRefreshSessionCall: function(options) {
-      StackMob.refreshSession.call(StackMob, options);
     },
     shouldSendRefreshToken : function() {
       return this.hasExpiredOAuth() && this.hasRefreshToken() && this.shouldKeepLoggedIn();
@@ -963,15 +964,15 @@
 
       return StackMob.makeAPICall(model, params, method, options);
     },
-    refreshSession : function(options) {
+    refreshSession : function() {
 
       // Block all API calls while refreshing the user session
-      StackMob.createCallBlocker();
+      if (StackMob['callBlocker'].state() === "pending") {
+        return StackMob['callBlocker'];
+      }
 
       // Make an ajax call here hitting the refreshToken access point and oncomplete, run whatever was passed in
       var refreshOptions = {};
-
-      _.extend(refreshOptions, options);
 
       if (StackMob.hasRefreshToken()) {
         var userSchema = StackMob.getOAuthCredentials()['oauth2.userSchemaInfo'] ? StackMob.getOAuthCredentials()['oauth2.userSchemaInfo']['schemaName'] : StackMob['userSchema'];
@@ -986,37 +987,19 @@
           mac_algorithm: 'hmac-sha1'
         };
 
-        // Set oncomplete callback
-        var developersOnComplete = options['oncomplete'];
-
-        refreshOptions['oncomplete'] = function() {
-
-          // When we get a refresh token, unblock all other API calls
-          StackMob.unblockCalls();
-
-          if (developersOnComplete) developersOnComplete();
-        };
-
-        if (options && options['success']) {
-          refreshOptions['success'] = options['success'];
-        }
-
         refreshOptions['stackmob_onrefreshToken'] = StackMob.processLogin;
+        
         // Set onerror callback
         refreshOptions['error'] = function() {
-          if (options && options['error'])
-            options['error']();
-
           // Invalidate the refresh token
           StackMob.Storage.remove(StackMob.REFRESH_TOKEN_KEY);
         };
-
-        return (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
-      } else {
-        if (options && options['error']) {
-          options['error']();
-        }
+        
+        // Creat new callBlocker
+        StackMob['callBlocker'] = (this.sync || Backbone.sync).call(this, 'refreshToken', this, refreshOptions);
       }
+    
+      return StackMob['callBlocker'];
     },
     makeAPICall : function(model, params, method, options) {
       if(StackMob['ajax']) {
@@ -2086,13 +2069,12 @@
         };
         params['success'] = defaultSuccess;
 
-        if (method === "refreshToken") {
+
+        StackMob['callBlocker'].then(function(){
           $.ajax(params);
-        } else {
-          StackMob['callBlocker'].done(function(){
-            $.ajax(params);
-          });
-        }
+        },function(){
+          $.ajax(params);
+        });
 
         return dfd.promise();
       }
