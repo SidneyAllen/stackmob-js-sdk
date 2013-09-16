@@ -89,7 +89,6 @@ describe("Unit tests for API Redirect", function() {
     });
 
     runs(function() {
-      console.log(params['url']);
       expect(params['url']).toStartWith('http://api.redirected.com/');
     });
   });
