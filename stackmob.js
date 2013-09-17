@@ -2041,7 +2041,11 @@
               result = response.responseText || response.text;
             }
           } else if(response) {
-            result = response;
+             try {
+              result = JSON.parse(response);
+            } catch(e) {
+              result = response;
+            }
           }
           StackMob.onsuccess(model, method, params, result, success, options);
 
