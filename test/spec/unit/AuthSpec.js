@@ -44,7 +44,7 @@ describe("Unit tests for Authentication", function() {
   it("should use base url for refreshToken method", function() {
     runs(function(){
       StackMob.refreshSession.call(StackMob, {
-        done: function(model, params, method){
+        inspectParams: function(model, params, method){
           expect(params['url']).toEqual( generateURL("user/refreshToken") );
           expect(method).toEqual("refreshToken");
         }

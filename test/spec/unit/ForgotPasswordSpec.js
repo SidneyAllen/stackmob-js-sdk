@@ -21,7 +21,7 @@ describe("Forgot Password Tests", function() {
     runs(function() {
       var s = new StackMob.User({ username: 'testUser'});
       s.forgotPassword({
-        done: function(model, params, method) {
+        inspectParams: function(model, params, method) {
           expect(params['data']).toHaveJSONWith('username', 'testUser');
         }
       });
@@ -41,7 +41,7 @@ describe("Forgot Password Tests", function() {
     runs(function() {
       var s = new Student({ user: 'testUser'});
       s.forgotPassword({
-        done: function(model, params, method) {
+        inspectParams: function(model, params, method) {
           expect(params['data']).toHaveJSONWith('username', 'testUser');
         }
       });

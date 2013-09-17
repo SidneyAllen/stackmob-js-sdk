@@ -15,7 +15,7 @@ describe("Unit tests for Custom Code", function() {
     var theMethod = 'cc-method';
 
     StackMob.customcode(theMethod, {'param': 'value'}, 'POST', {
-      done: function(model, params, method, options){
+      inspectParams: function(model, params, method, options){
         expect(method).toEqual(theMethod);
         expect(options['httpVerb']).toEqual('POST');
       }
@@ -28,7 +28,7 @@ describe("Unit tests for Custom Code", function() {
     var theMethod = 'cc-method';
 
     StackMob.customcode(theMethod, {'param': 'value'}, {
-      done: function(model, params, method, options){
+      inspectParams: function(model, params, method, options){
         expect(method).toEqual(theMethod);
         expect(options['httpVerb']).toEqual('GET');
       }
@@ -40,7 +40,7 @@ describe("Unit tests for Custom Code", function() {
     runs(function() {
       StackMob.customcode('hello_world', {}, 'GET', {
         headers: {'a': 'b'},
-        done: function(model, param, method) {
+        inspectParams: function(model, param, method) {
           expect(param['headers']['a']).toEqual('b');
         }
       });
@@ -53,7 +53,7 @@ describe("Unit tests for Custom Code", function() {
     runs(function() {
       StackMob.customcode('hello_world', {}, 'GET', {
         headers: {'Accept': 'b'},
-        done: function(model, param, method) {
+        inspectParams: function(model, param, method) {
           expect(param['headers']['Accept']).toNotEqual('b');
         }
       });

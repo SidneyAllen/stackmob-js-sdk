@@ -38,7 +38,7 @@ describe("Unit tests for security modes", function() {
       var Thing = StackMob.Model.extend({ schemaName: 'thing' });
       var thing = new Thing({ name: "testThing" });
       thing.create({
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
 
           running = false;
           model = mod;
@@ -62,7 +62,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.create({
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -78,7 +78,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.linkUserWithFacebook("fakeAccessToken", {
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -94,7 +94,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.login(true, {
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -118,7 +118,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.create({
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -134,7 +134,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.login(true, {
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -160,7 +160,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.create({
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -176,7 +176,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.login(true, {
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -192,7 +192,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.create({
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -209,7 +209,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.linkUserWithFacebook("fakeAccessToken", {
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;
@@ -225,7 +225,7 @@ describe("Unit tests for security modes", function() {
       var model, params, method;
       var user = new StackMob.User({username: "testUser", password: "testUser"});
       user.linkUserWithFacebook("fakeAccessToken", {
-        done: function(mod,p,m){
+        inspectParams: function(mod,p,m){
           model = mod;
           params = p;
           method = m;

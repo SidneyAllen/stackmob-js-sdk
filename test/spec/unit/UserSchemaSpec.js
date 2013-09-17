@@ -23,7 +23,7 @@ describe("User Schema Tests", function() {
     runs(function() {
       var s = new Student({ username: 'testUser', password: 'testPass'});
       s.login(true, {
-        done: function(model, params, method) {
+        inspectParams: function(model, params, method) {
           expect(params).toHaveParam('username', 'testUser');
           expect(params).toHaveParam('password', 'testPass');
         }
@@ -44,7 +44,7 @@ describe("User Schema Tests", function() {
     runs(function() {
       var s = new Student({ name: 'testUser', pass: 'testPass'});
       s.login(true, {
-        done: function(model, params, method) {
+        inspectParams: function(model, params, method) {
           expect(params).toHaveParam('name', 'testUser');
           expect(params).toHaveParam('pass', 'testPass');
         }
@@ -60,7 +60,7 @@ describe("User Schema Tests", function() {
 
       // TODO: test with custom user schema
       user.loginWithTempAndSetNewPassword('tempPassword', 'newPassword', false, {
-        done: function(model, params, method){
+        inspectParams: function(model, params, method){
           expect(model.get(model['loginField'])).toEqual('testUser');
           expect(model.get(model['passwordField'])).toEqual('tempPassword');
 

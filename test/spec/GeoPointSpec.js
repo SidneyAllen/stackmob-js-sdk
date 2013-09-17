@@ -210,7 +210,7 @@ describe("Geo points query", function() {
 		});
 
 		waitsFor(function() {
-			return count != 0;
+			return count !== 0;
 		}, "count to be equal to 1");
 
 		runs(function() {

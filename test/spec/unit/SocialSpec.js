@@ -69,7 +69,7 @@ describe("Social Unit Tests", function() {
       expectEndpoint(user, ['', false],'loginWithFacebookAutoCreate', 'POST', 'user/facebookAccessTokenWithCreate');
 
       user.loginWithFacebookAutoCreate('token', false, {
-        done: function(model, params, method){
+        inspectParams: function(model, params, method){
           expect(params['data']).toContain(model['loginField'] + "=testUser");
         }
       });

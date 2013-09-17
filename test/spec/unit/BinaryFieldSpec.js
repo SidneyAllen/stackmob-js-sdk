@@ -30,7 +30,7 @@ describe("Binary Field Unit Tests", function() {
       });
 
       p.save(null, {
-        done: function(model, param, method) {
+        inspectParams: function(model, param, method) {
           expect(JSON.parse(param['data'])).toEqual({
             profile_id: '123',
             item: 'stuff',

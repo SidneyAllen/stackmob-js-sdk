@@ -169,7 +169,7 @@ describe("Unit tests for queries", function() {
           q = new StackMob.Collection.Query();
 
       itemsCount.count(q, {
-        done: function(count) {
+        inspectParams: function(count) {
           // No need to do anything
         }
       });

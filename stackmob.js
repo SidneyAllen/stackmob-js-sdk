@@ -289,12 +289,7 @@
       var accessToken = creds['oauth2.accessToken'];
       var refreshToken = creds[StackMob.REFRESH_TOKEN_KEY];
 
-      //Because the server sends back how long the credentials are valid for and not the expiration date, we construct the expiration date on the client side.  For the login scenario where we are using OAuth 2.0's redirect URL mechanism and where a user refreshes the logged-in redirected URL page, we don't want to incorrectly generate and save a new expiration date.  If the access token is the same, then leave the expiration date as is.
-      //FIXME:  don't even pass in the expires value if we dont' intend to save it.  Move this logic out to handleOAuthCallback.  This check is happening too late down the line.
-      if(this.Storage.retrieve('oauth2.accessToken') != accessToken) {
-        this.Storage.persist('oauth2.expires', creds['oauth2.expires']);
-      }
-
+      this.Storage.persist('oauth2.expires', creds['oauth2.expires']);
       this.Storage.persist('oauth2.accessToken', accessToken);
       this.Storage.persist(StackMob.REFRESH_TOKEN_KEY, refreshToken);
       this.Storage.persist('oauth2.macKey', creds['oauth2.macKey']);
@@ -1001,10 +996,17 @@
     
       return StackMob['callBlocker'];
     },
+    _modifyParams: function(params) {
+      // Stubbed out for mockJax testing
+    },
     makeAPICall : function(model, params, method, options) {
-      if(StackMob['ajax']) {
-        return StackMob['ajax'](model, params, method, options);
-      } else if(StackMob.isSencha()) {
+      // Used for tests
+      StackMob._modifyParams(params);
+      if (typeof options['inspectParams'] === 'function'){
+        options['inspectParams'](model, params, method, options);
+      }
+
+      if(StackMob.isSencha()) {
         return StackMob['ajaxOptions']['sencha'](model, params, method, options);
       } else if(StackMob.isZepto()) {
         return StackMob['ajaxOptions']['zepto'](model, params, method, options);
